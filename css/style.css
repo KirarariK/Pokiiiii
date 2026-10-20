@@ -1775,3 +1775,151 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Compat / extras (classes utilisées par ui.js + main) ─── */
+.dmg-float {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: #fff;
+  text-shadow: 0 2px 0 #000, 0 0 12px rgba(0, 0, 0, 0.6);
+  animation: dmg-float 0.9s ease-out forwards;
+  pointer-events: none;
+  z-index: 6;
+  white-space: nowrap;
+}
+
+.dmg-float.super,
+.dmg-float.dmg-super,
+.dmg-num.super {
+  color: #fde68a;
+  font-size: 1.55rem;
+}
+
+.dmg-float.resist,
+.dmg-float.dmg-resist,
+.dmg-num.resist {
+  color: #93c5fd;
+  font-size: 1.1rem;
+}
+
+.dmg-float.immune,
+.dmg-float.dmg-immune,
+.dmg-num.immune {
+  color: #a3a3a3;
+}
+
+.dmg-float.normal {
+  color: #fff;
+}
+
+.vs-badge {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.battle-vs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.turn-badge {
+  font-size: 0.68rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+}
+
+.shiny-glow {
+  filter: drop-shadow(0 0 12px rgba(255, 203, 5, 0.65))
+    drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+}
+
+.lead-tag {
+  display: inline-block;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--accent);
+  background: rgba(255, 203, 5, 0.12);
+  border: 1px solid rgba(255, 203, 5, 0.35);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.tiny {
+  font-size: 0.72rem;
+  margin-top: 0.25rem;
+}
+
+.dex-gen {
+  font-size: 0.62rem;
+  color: var(--muted);
+  font-family: var(--font-display);
+  margin-top: 0.1rem;
+}
+
+.starter-gen-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  line-height: 1.15;
+  padding: 0.4rem 0.75rem;
+}
+
+.starter-gen-chip small {
+  font-weight: 500;
+  font-size: 0.65rem;
+  opacity: 0.85;
+  font-family: var(--font);
+}
+
+.starter-gen-chip.active small {
+  color: inherit;
+  opacity: 0.9;
+}
+
+.chip-gen {
+  font-weight: 700;
+}
+
+.region-title h3,
+.zone-region-head.region-title h3 {
+  margin: 0;
+}
+
+.hp-text {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Zones list host (#zones-list) may wrap .zones-map */
+#zones-list .zones-map {
+  width: 100%;
+}
+
+.panel-head small {
+  font-weight: 500;
+  font-size: 0.8rem;
+}

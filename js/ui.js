@@ -113,7 +113,15 @@ export function renderPokeCard(poke, opts = {}) {
 
 function floatHtml(float, side) {
   if (!float || float.side !== side) return '';
-  return `<div class="dmg-float dmg-num ${float.kind || ''}">${float.text}</div>`;
+  const kindClass =
+    float.kind === 'super'
+      ? 'dmg-super'
+      : float.kind === 'resist'
+        ? 'dmg-resist'
+        : float.kind === 'immune'
+          ? 'dmg-immune'
+          : '';
+  return `<span class="dmg-num ${kindClass}">${float.text}</span>`;
 }
 
 export function renderBattle(state, battle) {
@@ -127,14 +135,37 @@ export function renderBattle(state, battle) {
   const wSp = getSpecies(wild.speciesId);
   const fSp = getSpecies(fighter.speciesId);
   const float = battle.lastFloat;
-  const regionLabel = REGION_FR[zone?.region] || zone?.region || '';
+  const label = battle.lastLabel;
+  const next = battle.nextActor;
+  const actingAlly = !battle.over && next === 'player';
+  const actingEnemy = !battle.over && next === 'wild';
+  const regionKey = (zone?.region || '').toLowerCase();
+  const regionLabel = REGION_FR[regionKey] || zone?.region || '';
+  const labelKind =
+    battle.lastAttack?.typeMult === 0
+      ? 'immune'
+      : (battle.lastAttack?.typeMult ?? 1) >= 2
+        ? 'super'
+        : (battle.lastAttack?.typeMult ?? 1) < 1
+          ? 'resist'
+          : '';
+  const turnHint = battle.over
+    ? battle.result === 'win'
+      ? 'Victoire'
+      : battle.result === 'catch'
+        ? 'Capturé'
+        : 'Défaite'
+    : actingAlly
+      ? `${pokeName(fighter)} attaque`
+      : `${pokeName(wild)} attaque`;
 
   return `
     <div class="battle-arena duel" style="--zone-bg:${zone?.bg || '#1a1a2e'}">
       <div class="battle-zone-label">${zone?.name || ''}${regionLabel ? ` · ${regionLabel}` : ''} · Gen ${zone?.gen || '?'} · 1v1</div>
       <div class="battle-layout duel-grid">
-        <div class="battle-side ally" data-side="ally">
+        <div class="battle-side ally ${actingAlly ? 'acting' : ''}" data-side="ally">
           <div class="battle-info">
+            <div class="battle-role">Votre Pokémon</div>
             <div class="battle-name">
               ${pokeName(fighter)}${fighter.shiny ? ' <span class="shiny-inline">✨</span>' : ''}
               <span>N.${fighter.level}</span>
@@ -154,10 +185,11 @@ export function renderBattle(state, battle) {
 
         <div class="battle-vs">
           <span class="vs-badge">VS</span>
-          <div class="turn-badge">Tour ${battle.turn || 0}</div>
+          <div class="turn-badge">Tour ${battle.turn || 0} · ${turnHint}</div>
+          ${label ? `<div class="eff-banner ${labelKind}">${label}</div>` : ''}
         </div>
 
-        <div class="battle-side enemy" data-side="enemy">
+        <div class="battle-side enemy ${actingEnemy ? 'acting' : ''}" data-side="enemy">
           <div class="sprite-wrap enemy-wrap">
             ${wild.shiny ? '<div class="shiny-burst" aria-hidden="true"></div>' : ''}
             <img class="battle-sprite enemy-sprite ${wild.hp <= 0 ? 'faint' : ''} ${wild.shiny ? 'shiny-glow shiny-sparkle' : ''}"
@@ -167,6 +199,7 @@ export function renderBattle(state, battle) {
             <div class="battle-platform enemy-platform" aria-hidden="true"></div>
           </div>
           <div class="battle-info">
+            <div class="battle-role">Sauvage</div>
             <div class="battle-name">
               ${pokeName(wild)}${wild.shiny ? ' <span class="shiny-inline">✨</span>' : ''}
               <span>N.${wild.level}</span>
@@ -200,6 +233,22 @@ export function playCaptureShake() {
   setTimeout(() => el.classList.remove('capture-shake'), 900);
 }
 
+/** Shake automatique au clic Ball (sans toucher main.js) */
+let captureShakeBound = false;
+function ensureCaptureShake() {
+  if (captureShakeBound || typeof document === 'undefined') return;
+  captureShakeBound = true;
+  document.addEventListener(
+    'click',
+    (e) => {
+      const btn = e.target.closest?.('[data-catch]');
+      if (btn && !btn.disabled) playCaptureShake();
+    },
+    true
+  );
+}
+ensureCaptureShake();
+
 export function applyBattleFx(events = []) {
   for (const ev of events) {
     if (ev.type === 'attack') {
@@ -209,15 +258,18 @@ export function applyBattleFx(events = []) {
 }
 
 export function renderTeam(state) {
+  const fighter = state.team.find((x) => x.hp > 0);
   return state.team
     .map((p, i) => {
+      const isFighter = fighter === p;
       const actions = `
         <div class="card-actions">
+          ${isFighter ? '<em class="lead-tag">Combattant 1v1</em>' : ''}
           ${canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Évoluer</button>` : ''}
           ${state.team.length > 1 ? `<button data-act="box" data-uid="${p.uid}">→ PC</button>` : ''}
-          ${i > 0 ? `<button data-act="up" data-i="${i}">↑ Lead</button>` : '<em class="lead-tag">Lead 1v1</em>'}
+          ${i > 0 ? `<button data-act="up" data-i="${i}">↑ Lead</button>` : ''}
         </div>`;
-      return renderPokeCard(p, { actions });
+      return renderPokeCard(p, { actions, selected: isFighter });
     })
     .join('');
 }

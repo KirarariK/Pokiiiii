@@ -56,6 +56,7 @@ export function getZone(id) {
 
 export function saveGame(state) {
   state.lastTick = Date.now();
+  state.version = 2;
   localStorage.setItem(SAVE_KEY, JSON.stringify(state));
 }
 

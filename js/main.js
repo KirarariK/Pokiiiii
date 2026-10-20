@@ -392,15 +392,17 @@ function gameTick() {
   const events = battleTick(state, battle);
   if (events.length) {
     refreshAll();
-    const hit = events.find((e) => e.type === 'attack');
-    if (hit) {
-      const sel = hit.who === 'player' ? '.enemy-sprite' : '.ally-sprite';
-      const el = UI.$(sel);
-      if (el) {
-        el.classList.add('hit');
-        setTimeout(() => el.classList.remove('hit'), 180);
+    if (typeof UI.applyBattleFx === 'function') UI.applyBattleFx(events);
+    else {
+      const hit = events.find((e) => e.type === 'attack');
+      if (hit) {
+        const sel = hit.who === 'player' ? '.enemy-sprite' : '.ally-sprite';
+        const el = UI.$(sel);
+        if (el) {
+          el.classList.add('hit');
+          setTimeout(() => el.classList.remove('hit'), 180);
+        }
       }
-      /* damage numbers animate via .dmg-num CSS */
     }
   }
 }
