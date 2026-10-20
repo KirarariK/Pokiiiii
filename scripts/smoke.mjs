@@ -185,3 +185,14 @@ main().catch((err) => {
   console.error('Smoke runner crashed:', err);
   process.exit(1);
 });
+
+  // --- summon / invocation pull ---
+  {
+    const summon = await import(pathToFileURL(path.join(ROOT, 'js/summon.js')).href);
+    assert(state.summon && typeof state.summon.tickets === 'number', 'summon state present');
+    assert(state.summon.tickets >= 1, 'has free ticket');
+    const before = state.team.length + state.box.length;
+    const res = summon.pullOnce(state);
+    assert(res.ok && res.pokemon, 'pullOnce ok');
+    assert(state.team.length + state.box.length === before + 1, 'pokemon placed');
+  }

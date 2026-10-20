@@ -19,6 +19,7 @@ import {
 } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { ensureDaily, initDailyBaselines } from './quests.js';
+import { ensureSummon } from './summon.js';
 import { ensureExpeditions, expeditionBusyUids } from './expedition.js';
 import { ensureDaycare, daycareBusyUids } from './daycare.js';
 import { eventMultipliers } from './events.js';
@@ -76,10 +77,12 @@ export function createNewGame(starterId) {
     log: [],
     daily: null,
     dailyBaselines: null,
+    summon: null,
     expeditions: [],
     daycare: [],
   };
   initDailyBaselines(state);
+  ensureSummon(state);
   return state;
 }
 
@@ -129,6 +132,7 @@ export function loadGame() {
     if (typeof state.ascensionLevel !== 'number') state.ascensionLevel = 0;
     initDailyBaselines(state);
     ensureDaily(state);
+    ensureSummon(state);
     // Ensure current zone still exists
     if (!getZone(state.currentZone)) {
       state.currentZone = ZONES[0].id;

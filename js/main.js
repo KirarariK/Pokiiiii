@@ -39,6 +39,7 @@ import {
   claimDaycare,
   daycareBusyUids,
 } from './daycare.js';
+import { pullOnce, pullMulti, buyTickets } from './summon.js';
 import * as Audio from './audio.js';
 import {
   shouldShowTutorial,
@@ -232,6 +233,10 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-summon" class="panel">
+          <div id="summon-view"></div>
+        </section>
+
         <section id="panel-ascension" class="panel">
           <div id="ascension-view"></div>
         </section>
@@ -349,6 +354,7 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    summon: 'summon',
     ascension: 'ascension',
     settings: 'settings',
     heal: 'battle',
@@ -602,6 +608,31 @@ function onClick(e) {
     return;
   }
 
+
+  const summonPull = e.target.closest('[data-summon-pull]');
+  if (summonPull) {
+    const n = Number(summonPull.dataset.summonPull) || 1;
+    const res = n >= 10 ? pullMulti(state, n) : pullOnce(state);
+    if (!res.ok) {
+      UI.toast(res.reason === 'no-ticket' ? 'Pas assez de tickets' : 'Invocation impossible');
+      refreshAll();
+      return;
+    }
+    const results = res.results || [res];
+    UI.toast(n >= 10 ? `${results.length} invocations` : `Invocation : ${pokeName(res.pokemon)}`);
+    refreshAll();
+    showSummonReveal(results);
+    return;
+  }
+  const summonBuy = e.target.closest('[data-summon-buy]');
+  if (summonBuy) {
+    const qty = Number(summonBuy.dataset.summonBuy) || 1;
+    const res = buyTickets(state, qty);
+    UI.toast(res.ok ? `+${qty} ticket(s)` : 'Pas assez d’argent');
+    refreshAll();
+    return;
+  }
+
   const buy = e.target.closest('[data-buy]');
   if (buy) {
     const ok = buyBall(state, buy.dataset.buy, Number(buy.dataset.qty));
@@ -643,6 +674,18 @@ function onClick(e) {
   }
 }
 
+
+function showSummonReveal(results) {
+  const host = UI.$('#summon-reveal');
+  if (!host || !results?.length) return;
+  host.hidden = false;
+  host.classList.add('is-animating');
+  host.innerHTML = `<div class="summon-reveal-grid">${results
+    .map((r, i) => Shell.renderSummonRevealCard(r, i * 90))
+    .join('')}</div>`;
+  setTimeout(() => host.classList.remove('is-animating'), 900 + results.length * 90);
+}
+
 function showCatchModal(poke) {
   const sp = getSpecies(poke.speciesId);
   UI.showModal(`
@@ -673,8 +716,9 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
-  if (UI.$('#expeditions-view')) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
-  if (UI.$('#pension-view')) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
+  if (UI.$('#summon-view')) UI.$('#summon-view').innerHTML = Shell.renderSummonPanel(state);
+  if (UI.$('#expeditions-view') && Shell.renderExpeditionsPanel) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
+  if (UI.$('#pension-view') && Shell.renderPensionPanel) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
   if (UI.$('#ascension-view')) UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
