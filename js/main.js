@@ -1034,16 +1034,21 @@ function showSummonReveal(results) {
   const host = UI.$('#summon-reveal');
   if (!host || !results?.length) return;
   host.hidden = false;
-  host.classList.remove('is-animating');
-  // reflow pour relancer l’anim
-  void host.offsetWidth;
-  host.classList.add('is-animating');
+  host.classList.remove('is-animating', 'is-revealed');
   host.innerHTML = `<div class="summon-reveal-head"><strong>Résultat</strong><span class="muted">${results.length} carte${results.length > 1 ? 's' : ''}</span></div>
     <div class="summon-reveal-grid">${results
       .map((r, i) => Shell.renderSummonRevealCard(r, 80 + i * 110))
       .join('')}</div>`;
+  // reflow pour relancer l’anim de flip
+  void host.offsetWidth;
+  host.classList.add('is-animating');
   host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  setTimeout(() => host.classList.remove('is-animating'), 1100 + results.length * 110);
+  const holdMs = 1100 + results.length * 110;
+  setTimeout(() => {
+    // Garde la face visible après la fin de l’animation
+    host.classList.add('is-revealed');
+    host.classList.remove('is-animating');
+  }, holdMs);
 }
 
 function showCatchModal(poke) {
