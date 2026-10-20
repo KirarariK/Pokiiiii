@@ -1,4 +1,4 @@
-const CACHE = 'pokiiiii-shell-v1';
+const CACHE = 'pokiiiii-shell-v2';
 const ASSETS = [
   './',
   './index.html',

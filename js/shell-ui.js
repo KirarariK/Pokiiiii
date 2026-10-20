@@ -555,39 +555,75 @@ export function renderSummonPanel(state) {
   const canMulti = sm.tickets >= SUMMON.MULTI_COUNT;
   const canBuy = state.money >= SUMMON.TICKET_PRICE;
   return `
-    <div class="panel-head"><h2>Invocation</h2><span class="muted">${sm.totalPulls} tirages · Gen ${playGen}</span></div>
-    <div class="summon-hero">
-      <div class="summon-hero-ico">${icon('summon')}</div>
-      <div>
-        <strong>Portail Pokiiiii</strong>
-        <p class="muted">Invoque un Pokémon de la <strong>Gen ${playGen}</strong> (zone actuelle). Ticket gratuit chaque jour.</p>
+    <div class="summon-panel panel-enter">
+      <div class="panel-head">
+        <h2>${icon('summon')} Invocation</h2>
+        <span class="muted">${sm.totalPulls} tirages · Gen ${playGen}</span>
+      </div>
+
+      <div class="summon-stage" id="summon-stage">
+        <div class="summon-portal" aria-hidden="true">
+          <span class="portal-ring portal-ring-a"></span>
+          <span class="portal-ring portal-ring-b"></span>
+          <span class="portal-ring portal-ring-c"></span>
+          <span class="portal-glow"></span>
+          <span class="portal-core">
+            <span class="portal-ball"></span>
+          </span>
+          <span class="portal-spark s1"></span>
+          <span class="portal-spark s2"></span>
+          <span class="portal-spark s3"></span>
+          <span class="portal-spark s4"></span>
+        </div>
+        <div class="summon-stage-copy">
+          <strong>Portail Gen ${playGen}</strong>
+          <p>Invoque un Pokémon de la génération de ta zone. Ticket gratuit chaque jour.</p>
+        </div>
+        <div class="summon-actions">
+          <button type="button" class="btn-primary summon-pull summon-btn-main" data-summon-pull="1" ${canPull ? '' : 'disabled'}>
+            ${icon('summon')} Invoquer ×1
+          </button>
+          <button type="button" class="btn-secondary summon-pull" data-summon-pull="10" ${canMulti ? '' : 'disabled'}>
+            ${icon('dice')} ×${SUMMON.MULTI_COUNT}
+          </button>
+        </div>
         <div class="summon-stats">
           <span class="pi-pill">${icon('gift')} ${sm.tickets} ticket${sm.tickets !== 1 ? 's' : ''}</span>
           <span class="pi-pill">${icon('crown')} Pity ${pity.pity}/${SUMMON.PITY_LEGENDARY}</span>
+          <span class="pi-pill">${icon('coin')} ${price} ₽</span>
         </div>
       </div>
-    </div>
-    <div class="pity-block">
-      <div class="pity-row"><span>Rare+ garanti</span><strong class="${pity.untilRare === 0 ? 'pity-ready' : ''}">${pity.untilRare === 0 ? 'Prêt' : `dans ${pity.untilRare}`}</strong></div>
-      <div class="pity-bar ${pity.untilRare === 0 ? 'is-ready' : ''}" role="progressbar" aria-valuenow="${Math.round(pity.rarePct)}" aria-valuemin="0" aria-valuemax="100"><div class="pity-fill pity-fill-rare" style="width:${pity.rarePct}%"></div></div>
-      <div class="pity-row"><span>Légendaire garanti</span><strong class="${pity.untilLegendary === 0 ? 'pity-ready' : ''}">${pity.untilLegendary === 0 ? 'Prêt' : `dans ${pity.untilLegendary}`}</strong></div>
-      <div class="pity-bar ${pity.untilLegendary === 0 ? 'is-ready' : ''}" role="progressbar" aria-valuenow="${Math.round(pity.legendaryPct)}" aria-valuemin="0" aria-valuemax="100"><div class="pity-fill pity-fill-legendary" style="width:${pity.legendaryPct}%"></div></div>
-    </div>
-    <div class="summon-actions">
-      <button type="button" class="btn-primary summon-pull" data-summon-pull="1" ${canPull ? '' : 'disabled'}>${icon('summon')} Invoquer ×1</button>
-      <button type="button" class="btn-secondary summon-pull" data-summon-pull="10" ${canMulti ? '' : 'disabled'}>${icon('dice')} Invoquer ×${SUMMON.MULTI_COUNT}</button>
-    </div>
-    <div class="summon-buy">
-      <p class="muted">Ticket : ${price} ₽ · Gratuit / jour : ${SUMMON.FREE_DAILY}</p>
-      <div class="summon-buy-row">
-        <button type="button" class="btn-secondary" data-summon-buy="1" ${canBuy ? '' : 'disabled'}>Acheter ×1</button>
-        <button type="button" class="btn-secondary" data-summon-buy="10" ${state.money >= SUMMON.TICKET_PRICE * 10 ? '' : 'disabled'}>Acheter ×10</button>
+
+      <div id="summon-reveal" class="summon-reveal" hidden></div>
+
+      <div class="summon-side-grid">
+        <div class="pity-block">
+          <div class="pity-row"><span>Rare+ garanti</span><strong class="${pity.untilRare === 0 ? 'pity-ready' : ''}">${pity.untilRare === 0 ? 'Prêt' : `dans ${pity.untilRare}`}</strong></div>
+          <div class="pity-bar ${pity.untilRare === 0 ? 'is-ready' : ''}" role="progressbar" aria-valuenow="${Math.round(pity.rarePct)}" aria-valuemin="0" aria-valuemax="100"><div class="pity-fill pity-fill-rare" style="width:${pity.rarePct}%"></div></div>
+          <div class="pity-row"><span>Légendaire garanti</span><strong class="${pity.untilLegendary === 0 ? 'pity-ready' : ''}">${pity.untilLegendary === 0 ? 'Prêt' : `dans ${pity.untilLegendary}`}</strong></div>
+          <div class="pity-bar ${pity.untilLegendary === 0 ? 'is-ready' : ''}" role="progressbar" aria-valuenow="${Math.round(pity.legendaryPct)}" aria-valuemin="0" aria-valuemax="100"><div class="pity-fill pity-fill-legendary" style="width:${pity.legendaryPct}%"></div></div>
+        </div>
+        <div class="summon-buy">
+          <p class="muted">Acheter des tickets · ${SUMMON.FREE_DAILY} gratuit / jour</p>
+          <div class="summon-buy-row">
+            <button type="button" class="btn-secondary" data-summon-buy="1" ${canBuy ? '' : 'disabled'}>Acheter ×1</button>
+            <button type="button" class="btn-secondary" data-summon-buy="10" ${state.money >= SUMMON.TICKET_PRICE * 10 ? '' : 'disabled'}>Acheter ×10</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="summon-pools"><h3 class="subhead">Pools</h3><div class="stat-grid">
-      ${Object.entries(RARITY_LABELS).map(([k, label]) => `<div class="stat-box rarity-${k}"><span>${label}</span><strong>${pools[k] ?? 0}</strong></div>`).join('')}
-    </div></div>
-    <div id="summon-reveal" class="summon-reveal" hidden></div>`;
+
+      <div class="summon-pools">
+        <h3 class="subhead">Pools Gen ${playGen}</h3>
+        <div class="stat-grid summon-pool-grid">
+          ${Object.entries(RARITY_LABELS)
+            .map(
+              ([k, label]) =>
+                `<div class="stat-box rarity-${k}"><span>${label}</span><strong>${pools[k] ?? 0}</strong></div>`,
+            )
+            .join('')}
+        </div>
+      </div>
+    </div>`;
 }
 
 export function renderSummonRevealCard(result, delayMs = 0) {
@@ -595,12 +631,13 @@ export function renderSummonRevealCard(result, delayMs = 0) {
   const sp = result.species || getSpecies(poke.speciesId);
   const rarity = result.rarity || 'common';
   const label = RARITY_LABELS[rarity] || rarity;
-  return `<article class="summon-card rarity-${rarity}" style="animation-delay:${delayMs}ms">
+  return `<article class="summon-card rarity-${rarity}" style="--delay:${delayMs}ms">
       <div class="summon-card-inner">
         <div class="summon-card-back"><span class="summon-flash">${icon('summon')}</span></div>
         <div class="summon-card-front">
           <span class="summon-rarity">${label}</span>
-          <img src="${artUrl(poke.speciesId)}" alt="" loading="lazy" />
+          <img src="${artUrl(poke.speciesId)}" alt="" loading="lazy"
+            onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
           <strong>${displayName(sp)}</strong>
           <small>N.${poke.level}${poke.shiny ? ' · Chromatique' : ''} · Gen ${sp?.generation ?? '?'}</small>
         </div>

@@ -1,6 +1,6 @@
 /** Icônes SVG exclusives Pokiiiii — aucun emoji */
 const S = (body, view = '0 0 24 24') =>
-  `<svg class="ico" viewBox="${view}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+  `<svg class="ico" width="24" height="24" viewBox="${view}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
 export const ICO = {
   logo: S(
@@ -16,7 +16,7 @@ export const ICO = {
   profile: S(`<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"/>`),
   dex: S(`<path d="M5 4h9a2 2 0 012 2v14l-4-2-4 2V6a2 2 0 00-2-2H5z"/><path d="M8 8h5M8 12h5"/>`),
   bolt: S(`<path d="M13 2L4 14h7l-1 8 10-14h-7l1-6z"/>`),
-  summon: S(`<path d="M12 3l2.2 4.5L19 8.2l-3.5 3.4.8 4.9L12 14.2 7.7 16.5l.8-4.9L5 8.2l4.8-.7L12 3z"/><circle cx="12" cy="12" r="9" opacity=".35"/>`),
+  summon: S(`<path d="M12 3l2.2 4.5L19 8.2l-3.5 3.4.8 4.9L12 14.2 7.7 16.5l.8-4.9L5 8.2l4.8-.7L12 3z"/>`),
   dice: S(`<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/>`),
   badge: S(`<circle cx="12" cy="10" r="5"/><path d="M9 14l-2 7 5-3 5 3-2-7"/>`),
   gymbadge: S(

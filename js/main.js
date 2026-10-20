@@ -885,16 +885,24 @@ function onClick(e) {
   const summonPull = e.target.closest('[data-summon-pull]');
   if (summonPull) {
     const n = Number(summonPull.dataset.summonPull) || 1;
+    const stage = UI.$('#summon-stage');
+    stage?.classList.add('is-summoning');
     const res = n >= 10 ? pullMulti(state, n) : pullOnce(state);
     if (!res.ok) {
+      stage?.classList.remove('is-summoning');
       UI.toast(res.reason === 'no-ticket' ? 'Pas assez de tickets' : 'Invocation impossible');
       refreshAll();
       return;
     }
     const results = res.results || [res];
     UI.toast(n >= 10 ? `${results.length} invocations` : `Invocation : ${pokeName(res.pokemon)}`);
-    refreshAll();
-    showSummonReveal(results);
+    Audio.play('catch');
+    // Laisse le burst du portail, puis reveal
+    setTimeout(() => {
+      refreshAll();
+      showSummonReveal(results);
+      UI.$('#summon-stage')?.classList.remove('is-summoning');
+    }, 420);
     return;
   }
   const summonBuy = e.target.closest('[data-summon-buy]');
@@ -963,11 +971,16 @@ function showSummonReveal(results) {
   const host = UI.$('#summon-reveal');
   if (!host || !results?.length) return;
   host.hidden = false;
+  host.classList.remove('is-animating');
+  // reflow pour relancer l’anim
+  void host.offsetWidth;
   host.classList.add('is-animating');
-  host.innerHTML = `<div class="summon-reveal-grid">${results
-    .map((r, i) => Shell.renderSummonRevealCard(r, i * 90))
-    .join('')}</div>`;
-  setTimeout(() => host.classList.remove('is-animating'), 900 + results.length * 90);
+  host.innerHTML = `<div class="summon-reveal-head"><strong>Résultat</strong><span class="muted">${results.length} carte${results.length > 1 ? 's' : ''}</span></div>
+    <div class="summon-reveal-grid">${results
+      .map((r, i) => Shell.renderSummonRevealCard(r, 80 + i * 110))
+      .join('')}</div>`;
+  host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(() => host.classList.remove('is-animating'), 1100 + results.length * 110);
 }
 
 function showCatchModal(poke) {
