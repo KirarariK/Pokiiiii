@@ -115,6 +115,8 @@ let dexQuery = '';
 let hubOpen = false;
 let tutorialStep = 0;
 let logFilter = 'all';
+/** Pause courte après KO pour éviter le « flash » nouveau combat. */
+let victoryHoldUntil = 0;
 
 const TICK_BASE_MS = 750;
 
@@ -1162,8 +1164,14 @@ function gameTick() {
   state.stats.playTime += TICK_BASE_MS / 1000 / (state.battleSpeed || 1);
 
   if (battle.over) {
+    if (!victoryHoldUntil) {
+      victoryHoldUntil = Date.now() + 520;
+      refreshBattleLive({ syncQuests: true });
+      return;
+    }
+    if (Date.now() < victoryHoldUntil) return;
+    victoryHoldUntil = 0;
     battle = createBattle(state);
-    // Soft swap du sauvage — pas de hard refresh
     refreshBattleLive({ syncQuests: true });
     return;
   }
@@ -1177,7 +1185,7 @@ function gameTick() {
         if (res.ok && res.success) {
           Audio.play('catch');
           UI.toast(`Auto-capture : ${pokeName(res.pokemon)}`);
-          battle = createBattle(state);
+          victoryHoldUntil = Date.now() + 480;
           refreshBattleLive({ syncQuests: true });
           return;
         }

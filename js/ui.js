@@ -328,32 +328,37 @@ function patchSideIdentity(sideRoot, img, poke, role) {
   img.classList.toggle('shiny-sparkle', !!poke.shiny);
   if (role === 'enemy') img.classList.toggle('shiny-glow', !!poke.shiny);
 
-  const nameEl = sideRoot.querySelector('.battle-name');
-  if (nameEl) {
-    nameEl.innerHTML = `${pokeName(poke)}${
-      poke.shiny ? ` <span class="shiny-inline">${icon('sparkle')}</span>` : ''
-    } <span>N.${poke.level}</span>`;
-  }
-  const types = sideRoot.querySelector('.types');
-  if (types) types.innerHTML = typeBadges(sp?.types);
-
-  if (role === 'enemy') {
-    const meta = sideRoot.querySelector('.muted.tiny');
-    if (meta) {
-      meta.textContent = `#${String(poke.speciesId).padStart(4, '0')} · G${sp?.generation || '?'}`;
+  if (changed) {
+    const nameEl = sideRoot.querySelector('.battle-name');
+    if (nameEl) {
+      nameEl.innerHTML = `${pokeName(poke)}${
+        poke.shiny ? ` <span class="shiny-inline">${icon('sparkle')}</span>` : ''
+      } <span>N.${poke.level}</span>`;
     }
-    const wrap = sideRoot.querySelector('.enemy-wrap');
-    if (wrap) {
-      let burst = wrap.querySelector('.shiny-burst');
-      if (poke.shiny && !burst) {
-        burst = document.createElement('div');
-        burst.className = 'shiny-burst';
-        burst.setAttribute('aria-hidden', 'true');
-        wrap.insertBefore(burst, wrap.firstChild);
-      } else if (!poke.shiny && burst) {
-        burst.remove();
+    const types = sideRoot.querySelector('.types');
+    if (types) types.innerHTML = typeBadges(sp?.types);
+
+    if (role === 'enemy') {
+      const meta = sideRoot.querySelector('.muted.tiny');
+      if (meta) {
+        meta.textContent = `#${String(poke.speciesId).padStart(4, '0')} · G${sp?.generation || '?'}`;
+      }
+      const wrap = sideRoot.querySelector('.enemy-wrap');
+      if (wrap) {
+        let burst = wrap.querySelector('.shiny-burst');
+        if (poke.shiny && !burst) {
+          burst = document.createElement('div');
+          burst.className = 'shiny-burst';
+          burst.setAttribute('aria-hidden', 'true');
+          wrap.insertBefore(burst, wrap.firstChild);
+        } else if (!poke.shiny && burst) {
+          burst.remove();
+        }
       }
     }
+  } else {
+    const lvl = sideRoot.querySelector('.battle-name > span:last-child');
+    if (lvl && lvl.textContent !== `N.${poke.level}`) lvl.textContent = `N.${poke.level}`;
   }
 
   patchHpRow(sideRoot, poke.hp, poke.maxHp);
