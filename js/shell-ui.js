@@ -13,20 +13,21 @@ import {
 
 export function renderTopbar(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
-  const lvl = Math.max(...state.team.map((p) => p.level), 1);
+  const lvl = Math.max(1, ...state.team.map((p) => p.level || 1));
+  const caught = Object.keys(state.caught || {}).length;
   return `
     <header class="pi-topbar">
       <div class="pi-brand">
         <span class="pi-logo">${icon('logo')}</span>
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
-          <small>${state.playerName} · N.${lvl} · ${zone?.region || '—'}</small>
+          <small>${state.playerName || 'Dresseur'} · N.${lvl} · ${zone?.region || '—'}</small>
         </div>
       </div>
       <div class="pi-hud">
-        <div class="pi-pill gold">${icon('coin')}<span id="money">0</span></div>
-        <div class="pi-pill">${icon('team')}<span id="team-count">0/6</span></div>
-        <div class="pi-pill">${icon('dex')}<span id="dex-count">0/${speciesCount()}</span></div>
+        <div class="pi-pill gold">${icon('coin')}<span id="money">${(state.money || 0).toLocaleString('fr-FR')} ₽</span></div>
+        <div class="pi-pill">${icon('team')}<span id="team-count">${state.team.length}/6</span></div>
+        <div class="pi-pill">${icon('dex')}<span id="dex-count">${caught}/${speciesCount()}</span></div>
       </div>
     </header>`;
 }

@@ -453,8 +453,8 @@ function showCatchModal(poke) {
 function refreshAll() {
   if (!state) return;
   syncQuestProgress(state);
-  UI.updateHud(state);
   refreshChrome();
+  UI.updateHud(state);
 
   if (UI.$('#battle-view')) UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
   if (UI.$('#catch-btns')) UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
