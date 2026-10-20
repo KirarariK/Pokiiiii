@@ -211,7 +211,7 @@ export function renderBattle(state, battle) {
           <div class="battle-info">
             <div class="battle-role">Sauvage</div>
             <div class="battle-name">
-              ${pokeName(wild)}${wild.shiny ? ' <span class="shiny-inline">✨</span>' : ''}
+              ${pokeName(wild)}${wild.shiny ? ` <span class="shiny-inline">${icon('sparkle')}</span>` : ''}
               <span>N.${wild.level}</span>
             </div>
             <div class="types">${typeBadges(wSp?.types)}</div>

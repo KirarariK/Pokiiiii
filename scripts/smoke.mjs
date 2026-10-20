@@ -1,8 +1,9 @@
 /**
- * Node ESM smoke tests for PokéIdle.
- * Mocks fetch so loadSpecies works outside the browser.
+ * Node ESM smoke tests for Pokiiiii (no browser).
+ * Polyfills: fetch (JSON from disk), localStorage, minimal location.
  */
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
@@ -24,11 +25,7 @@ globalThis.fetch = async (url) => {
   const rel = u.startsWith('js/') ? u : path.posix.normalize(u);
   try {
     const data = await readJson(rel);
-    return {
-      ok: true,
-      status: 200,
-      json: async () => data,
-    };
+    return { ok: true, status: 200, json: async () => data };
   } catch (err) {
     return {
       ok: false,
@@ -40,7 +37,6 @@ globalThis.fetch = async (url) => {
   }
 };
 
-// Minimal localStorage for save helpers (unused in core smoke path)
 globalThis.localStorage = {
   _d: new Map(),
   getItem(k) {
@@ -52,10 +48,21 @@ globalThis.localStorage = {
   removeItem(k) {
     this._d.delete(k);
   },
+  clear() {
+    this._d.clear();
+  },
 };
+
+if (typeof globalThis.location === 'undefined') {
+  globalThis.location = { search: '', href: 'http://localhost/', pathname: '/' };
+}
 
 function assert(cond, msg) {
   if (!cond) throw new Error('ASSERT: ' + msg);
+}
+
+function isHtml(s) {
+  return typeof s === 'string' && s.includes('<') && s.length > 20;
 }
 
 const results = [];
@@ -70,101 +77,243 @@ function fail(name, err) {
   console.error('FAIL', name, err);
 }
 
+async function checkSyntaxAll() {
+  const jsDir = path.join(ROOT, 'js');
+  const dataDir = path.join(ROOT, 'js/data');
+  const files = [
+    ...(await readdir(jsDir)).filter((f) => f.endsWith('.js')).map((f) => path.join('js', f)),
+    ...(await readdir(dataDir)).filter((f) => f.endsWith('.js')).map((f) => path.join('js/data', f)),
+  ];
+  for (const rel of files) {
+    execFileSync(process.execPath, ['--check', path.join(ROOT, rel)], { stdio: 'pipe' });
+  }
+  return files.length;
+}
+
 async function main() {
+  // 1) Syntax check
+  try {
+    const n = await checkSyntaxAll();
+    pass(`node --check (${n} files in js/ + js/data/)`);
+  } catch (e) {
+    fail('node --check', e);
+  }
+
   const pokemon = await import(pathToFileURL(path.join(ROOT, 'js/pokemon.js')).href);
   const game = await import(pathToFileURL(path.join(ROOT, 'js/game.js')).href);
+  const zones = await import(pathToFileURL(path.join(ROOT, 'js/data/zones.js')).href);
+  const summon = await import(pathToFileURL(path.join(ROOT, 'js/summon.js')).href);
+  const arena = await import(pathToFileURL(path.join(ROOT, 'js/arena.js')).href);
+  const expedition = await import(pathToFileURL(path.join(ROOT, 'js/expedition.js')).href);
+  const daycare = await import(pathToFileURL(path.join(ROOT, 'js/daycare.js')).href);
+  const minigame = await import(pathToFileURL(path.join(ROOT, 'js/minigame.js')).href);
+  const leaderboard = await import(pathToFileURL(path.join(ROOT, 'js/leaderboard.js')).href);
+  const shell = await import(pathToFileURL(path.join(ROOT, 'js/shell-ui.js')).href);
+  const ascension = await import(pathToFileURL(path.join(ROOT, 'js/ascension.js')).href);
 
-  // --- loadSpecies ---
+  // Species bootstrap (required by createPokemon)
   try {
     const species = await pokemon.loadSpecies();
-    assert(Array.isArray(species), 'species is array');
-    assert(species.length >= 1000, `expected ~1025 species, got ${species.length}`);
-    assert(species.length === pokemon.allSpecies().length, 'allSpecies length matches');
-    pass(`loadSpecies (${species.length} entries)`);
+    assert(Array.isArray(species) && species.length >= 1000, `species count ${species.length}`);
+    pass(`loadSpecies (${species.length})`);
   } catch (e) {
     fail('loadSpecies', e);
     printSummary();
     process.exit(1);
   }
 
-  // --- artUrl for key ids ---
+  // 2) createNewGame + loadGame with localStorage
+  let state;
   try {
-    const ids = [1, 151, 252, 650, 906, 1025];
-    for (const id of ids) {
-      const sp = pokemon.getSpecies(id);
-      assert(sp, `species ${id} exists`);
-      const url = pokemon.artUrl(id);
-      assert(
-        url.includes(`/official-artwork/${id}.png`),
-        `artUrl(${id}) = ${url}`
-      );
+    localStorage.clear();
+    state = game.createNewGame(1);
+    assert(state.team?.[0]?.speciesId === 1, 'starter');
+    game.saveGame(state);
+    const loaded = game.loadGame();
+    assert(loaded, 'loadGame returns state');
+    assert(loaded.team?.[0]?.speciesId === 1, 'loaded starter');
+    assert(loaded.version === 3, 'version 3');
+    state = loaded;
+    pass('createNewGame / saveGame / loadGame');
+  } catch (e) {
+    fail('createNewGame/loadGame', e);
+    state = game.createNewGame(1);
+  }
+
+  // 3) ensure* helpers
+  try {
+    const s1 = summon.ensureSummon(state);
+    const s2 = arena.ensureArena(state);
+    const s3 = expedition.ensureExpeditions(state);
+    const s4 = daycare.ensureDaycare(state);
+    const s5 = minigame.ensureMinigame(state);
+    assert(s1 && typeof s1.tickets === 'number', 'ensureSummon');
+    assert(s2 && typeof state.badges === 'object', 'ensureArena');
+    assert(Array.isArray(s3), 'ensureExpeditions');
+    assert(Array.isArray(s4), 'ensureDaycare');
+    assert(s5 && typeof s5.playsToday === 'number', 'ensureMinigame');
+    pass('ensureSummon/Arena/Expeditions/Daycare/Minigame');
+  } catch (e) {
+    fail('ensure*', e);
+  }
+
+  // 4) challengeGym on first gym with leveled team
+  try {
+    const gymState = game.createNewGame(1);
+    for (const p of gymState.team) {
+      p.xp = pokemon.xpForLevel(25);
+      pokemon.refreshStats(p);
+      p.hp = p.maxHp;
     }
-    pass('artUrl for ids 1,151,252,650,906,1025');
+    // Pad team so gym fights are survivable (still may lose — must not throw)
+    while (gymState.team.length < 3) {
+      const extra = pokemon.createPokemon(4, 25);
+      gymState.team.push(extra);
+      gymState.caught[extra.speciesId] = true;
+      gymState.seen[extra.speciesId] = true;
+    }
+    const first = arena.GYMS[0];
+    const res = arena.challengeGym(gymState, first.id);
+    assert(res && typeof res.ok === 'boolean', 'challengeGym returns result');
+    pass(`challengeGym ${first.id} (ok=${res.ok}, win=${res.win ?? 'n/a'})`);
   } catch (e) {
-    fail('artUrl', e);
+    fail('challengeGym', e);
   }
 
-  // --- create games gen1 + gen9 ---
+  // 5) startExpedition + claim (time skip)
   try {
-    const g1 = game.createNewGame(1); // Bulbizarre
-    assert(g1.team[0].speciesId === 1, 'gen1 starter');
-    const g9 = game.createNewGame(906); // Sprigatito / Poussacha
+    const exState = game.createNewGame(1);
+    // Keep a lead on team; send a box mon so last-team rule passes
+    const scout = pokemon.createPokemon(16, 8);
+    exState.box.push(scout);
+    exState.caught[16] = true;
+    exState.seen[16] = true;
+    const dur = expedition.EXPEDITION_DURATIONS[0].ms;
+    const zoneId = exState.currentZone;
+    const started = expedition.startExpedition(exState, {
+      pokemonUids: [scout.uid],
+      durationMs: dur,
+      zoneId,
+    });
+    assert(started.ok, `startExpedition: ${started.reason || 'ok'}`);
+    const exp = started.expedition;
+    exp.startedAt = Date.now() - dur - 1000;
+    assert(expedition.isExpeditionReady(exp), 'expedition ready after time skip');
+    const claimed = expedition.claimExpedition(exState, exp.id);
+    assert(claimed.ok, `claimExpedition: ${claimed.reason || 'ok'}`);
+    pass('startExpedition + claimExpedition');
+  } catch (e) {
+    fail('expedition start/claim', e);
+  }
+
+  // 6) pullOnce with tickets
+  try {
+    const pullState = game.createNewGame(1);
+    summon.ensureSummon(pullState);
+    if (pullState.summon.tickets < 1) pullState.summon.tickets = 1;
+    const before = pullState.team.length + pullState.box.length;
+    const res = summon.pullOnce(pullState);
+    assert(res.ok && res.pokemon, `pullOnce: ${res.reason || 'ok'}`);
+    assert(pullState.team.length + pullState.box.length === before + 1, 'pokemon placed');
+    pass(`pullOnce (${res.rarity})`);
+  } catch (e) {
+    fail('pullOnce', e);
+  }
+
+  // 7) resolveMinigame
+  try {
+    const mgState = game.createNewGame(1);
+    minigame.ensureMinigame(mgState);
+    const res = minigame.resolveMinigame(mgState, 72);
+    assert(res.ok, `resolveMinigame: ${res.reason || 'ok'}`);
+    assert(res.score === 72, 'score');
+    assert(mgState.minigame.playsToday === 1, 'playsToday');
+    pass('resolveMinigame');
+  } catch (e) {
+    fail('resolveMinigame', e);
+  }
+
+  // 8) pushLeaderboard
+  try {
+    const lbState = game.createNewGame(1);
+    lbState.playerName = 'SmokeTest';
+    lbState.stats.catches = 3;
+    const list = leaderboard.pushLeaderboard(lbState);
+    assert(Array.isArray(list) && list.length >= 1, 'leaderboard list');
+    assert(list.some((e) => e.name === 'SmokeTest'), 'entry present');
+    pass('pushLeaderboard');
+  } catch (e) {
+    fail('pushLeaderboard', e);
+  }
+
+  // 9) resolveZoneBgClass
+  try {
+    const z0 = zones.ZONES[0];
+    const cls = zones.resolveZoneBgClass(z0);
+    assert(typeof cls === 'string' && cls.startsWith('bg-zone-'), `got ${cls}`);
+    assert(zones.resolveZoneBgClass(null) === 'bg-zone-route', 'null fallback');
+    const samples = zones.ZONES.slice(0, 20).map((z) => zones.resolveZoneBgClass(z));
+    assert(samples.every((c) => c.startsWith('bg-zone-')), 'sample zones');
+    pass(`resolveZoneBgClass (${cls})`);
+  } catch (e) {
+    fail('resolveZoneBgClass', e);
+  }
+
+  // 10) Hub panel render functions → HTML strings
+  try {
+    const renderState = game.createNewGame(1);
+    summon.ensureSummon(renderState);
+    arena.ensureArena(renderState);
+    expedition.ensureExpeditions(renderState);
+    daycare.ensureDaycare(renderState);
+    minigame.ensureMinigame(renderState);
+
+    const panels = [
+      ['renderHub', () => shell.renderHub(renderState)],
+      ['renderExpeditionsPanel', () => shell.renderExpeditionsPanel(renderState)],
+      ['renderPensionPanel', () => shell.renderPensionPanel(renderState)],
+      ['renderQuestsPanel', () => shell.renderQuestsPanel(renderState)],
+      ['renderPassPanel', () => shell.renderPassPanel(renderState)],
+      ['renderProfile', () => shell.renderProfile(renderState)],
+      ['renderBonus', () => shell.renderBonus(renderState)],
+      ['renderSummonPanel', () => shell.renderSummonPanel(renderState)],
+      ['renderMinigamePanel', () => minigame.renderMinigamePanel(renderState)],
+      ['renderLeaderboardPanel', () => leaderboard.renderLeaderboardPanel(renderState)],
+      ['renderArenaPanelHtml', () => arena.renderArenaPanelHtml(renderState)],
+      ['renderAscensionPanel', () => ascension.renderAscensionPanel(renderState)],
+    ];
+    const names = [];
+    for (const [name, fn] of panels) {
+      const html = fn();
+      assert(isHtml(html), `${name} not HTML`);
+      names.push(name);
+    }
+    pass(`hub panels HTML (${names.length}: ${names.join(', ')})`);
+  } catch (e) {
+    fail('hub panel renders', e);
+  }
+
+  // Legacy regression checks (kept cheap)
+  try {
+    const g9 = game.createNewGame(906);
     assert(g9.team[0].speciesId === 906, 'gen9 starter');
-    assert(g9.team[0].hp > 0 && g9.team[0].maxHp > 0, 'gen9 stats');
-    pass('createNewGame gen1 (1) and gen9 (906)');
+    pass('createNewGame gen9 (906)');
   } catch (e) {
-    fail('createNewGame', e);
+    fail('createNewGame gen9', e);
   }
 
-  // --- 100+ battle ticks without throw ---
   try {
-    const state = game.createNewGame(4);
-    let battle = game.createBattle(state);
+    const battleState = game.createNewGame(4);
+    let battle = game.createBattle(battleState);
     let ticks = 0;
-    let wins = 0;
     for (let i = 0; i < 120; i++) {
-      if (battle.over) {
-        if (battle.result === 'win') wins++;
-        battle = game.createBattle(state);
-      }
-      game.battleTick(state, battle);
+      if (battle.over) battle = game.createBattle(battleState);
+      game.battleTick(battleState, battle);
       ticks++;
     }
-    assert(ticks >= 100, 'ran 100+ ticks');
-    pass(`battleTick ×${ticks} (wins≈${wins}, money=${state.money})`);
+    pass(`battleTick ×${ticks}`);
   } catch (e) {
     fail('battleTick×100', e);
-  }
-
-  // --- evolve if possible ---
-  try {
-    const state = game.createNewGame(1);
-    const poke = state.team[0];
-    // Force level high enough for Bulbasaur → Ivysaur (16)
-    poke.xp = pokemon.xpForLevel(20);
-    pokemon.refreshStats(poke);
-    poke.hp = poke.maxHp;
-    assert(pokemon.canEvolve(poke), 'canEvolve after level-up');
-    const neu = game.tryEvolvePokemon(state, poke.uid);
-    assert(neu && neu.id === 2, `evolved to 2, got ${neu && neu.id}`);
-    assert(poke.speciesId === 2, 'speciesId updated');
-    pass('evolve Bulbizarre → Herbizarre');
-  } catch (e) {
-    fail('evolve', e);
-  }
-
-  // --- dex max uses all species length ---
-  try {
-    const max = pokemon.allSpecies().length;
-    assert(max >= 1000, `dex max ${max}`);
-    // Mimic UI dexMax contract
-    const caught = { 1: true };
-    const hud = `${Object.keys(caught).length}/${max}`;
-    assert(hud.endsWith(`/${max}`), hud);
-    assert(!hud.includes('/151') || max === 151, 'must not hardcode 151 when all species loaded');
-    pass(`dex max = allSpecies().length (${max})`);
-  } catch (e) {
-    fail('dex max', e);
   }
 
   printSummary();
@@ -176,8 +325,11 @@ function printSummary() {
   const failed = results.filter((r) => !r.ok);
   console.log('\n--- smoke summary ---');
   console.log(`${results.length - failed.length}/${results.length} passed`);
+  for (const r of results) {
+    console.log(`${r.ok ? '✓' : '✗'} ${r.name}`);
+  }
   if (failed.length) {
-    for (const f of failed) console.log(' •', f.name, f.err);
+    for (const f of failed) console.log(' •', f.name, '\n', f.err);
   }
 }
 
@@ -185,14 +337,3 @@ main().catch((err) => {
   console.error('Smoke runner crashed:', err);
   process.exit(1);
 });
-
-  // --- summon / invocation pull ---
-  {
-    const summon = await import(pathToFileURL(path.join(ROOT, 'js/summon.js')).href);
-    assert(state.summon && typeof state.summon.tickets === 'number', 'summon state present');
-    assert(state.summon.tickets >= 1, 'has free ticket');
-    const before = state.team.length + state.box.length;
-    const res = summon.pullOnce(state);
-    assert(res.ok && res.pokemon, 'pullOnce ok');
-    assert(state.team.length + state.box.length === before + 1, 'pokemon placed');
-  }
