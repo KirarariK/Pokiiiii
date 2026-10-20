@@ -78,7 +78,9 @@ async function boot() {
     demo === 'pass' ||
     demo === 'quests' ||
     demo === 'ascension' ||
-    demo === 'tutorial'
+    demo === 'tutorial' ||
+    demo === 'expeditions' ||
+    demo === 'pension'
   ) {
     startNew(4);
     if (demo !== 'tutorial') {
@@ -93,6 +95,8 @@ async function boot() {
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
     if (demo === 'ascension') setTimeout(() => setTab('ascension'), 80);
+    if (demo === 'expeditions') setTimeout(() => setTab('expeditions'), 50);
+    if (demo === 'pension') setTimeout(() => setTab('pension'), 50);
     return;
   }
 
@@ -232,6 +236,14 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-expeditions" class="panel">
+          <div id="expeditions-view"></div>
+        </section>
+
+        <section id="panel-pension" class="panel">
+          <div id="pension-view"></div>
+        </section>
+
         <section id="panel-ascension" class="panel">
           <div id="ascension-view"></div>
         </section>
@@ -247,6 +259,7 @@ function renderShell() {
               <input type="checkbox" id="opt-mute" ${state.settings?.mute ? 'checked' : ''} />
               ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
             </label>
+            <button id="btn-tutorial" class="btn-secondary" type="button">${icon('help')} Revoir le tutoriel</button>
             <button id="btn-save" class="btn-primary" type="button">Sauvegarder</button>
             <button id="btn-reset" class="btn-danger" type="button">Réinitialiser la partie</button>
             <p class="muted disclaimer">Fan-game non officiel. Sprites © Pokémon / Nintendo / Creatures / Game Freak — via PokéAPI.</p>
@@ -305,6 +318,14 @@ function bindShell() {
     if (!state.settings.mute) Audio.play('ui');
   });
 
+  UI.$('#btn-tutorial')?.addEventListener('click', () => {
+    Audio.play('ui');
+    state.tutorialDone = false;
+    tutorialStep = 0;
+    saveGame(state);
+    showTutorialOverlay();
+  });
+
   UI.$('#btn-save')?.addEventListener('click', () => {
     Audio.play('ui');
     const name = UI.$('#player-name')?.value?.trim();
@@ -349,6 +370,8 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    expeditions: 'expeditions',
+    pension: 'pension',
     ascension: 'ascension',
     settings: 'settings',
     heal: 'battle',

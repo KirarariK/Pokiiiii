@@ -125,8 +125,22 @@ export function loadGame() {
     if (!state.settings) state.settings = { mute: false };
     if (typeof state.settings.mute !== 'boolean') state.settings.mute = false;
     if (typeof state.tutorialDone !== 'boolean') state.tutorialDone = true;
-    if (!Array.isArray(state.badges)) state.badges = [];
+    // Soft migrate: region badges array, or object map → region strings
+    if (Array.isArray(state.badges)) {
+      /* ok */
+    } else if (state.badges && typeof state.badges === 'object') {
+      const regions = new Set();
+      for (const [k, v] of Object.entries(state.badges)) {
+        if (k.startsWith('region:')) regions.add(k.slice(7));
+        else if (v?.region) regions.add(v.region);
+      }
+      state.badges = [...regions];
+    } else {
+      state.badges = [];
+    }
     if (typeof state.ascensionLevel !== 'number') state.ascensionLevel = 0;
+    ensureExpeditions(state);
+    ensureDaycare(state);
     initDailyBaselines(state);
     ensureDaily(state);
     // Ensure current zone still exists

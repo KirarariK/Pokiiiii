@@ -18,11 +18,22 @@ export function ascensionBonuses(state) {
   };
 }
 
+function badgeList(state) {
+  const b = state?.badges;
+  if (Array.isArray(b)) return b;
+  if (b && typeof b === 'object') {
+    return Object.entries(b)
+      .filter(([k]) => k.startsWith('region:'))
+      .map(([k]) => k.slice(7));
+  }
+  return [];
+}
+
 export function canAscend(state) {
   if (!state) return false;
   const zones = state.unlockedZones?.length || 0;
   const catches = state.stats?.catches || 0;
-  const badges = state.badges?.length || 0;
+  const badges = badgeList(state).length;
   return zones >= 5 || catches >= 15 || badges >= 2;
 }
 
@@ -33,7 +44,7 @@ export function ascendPreview(state) {
     xpMult: 1 + next * XP_PER_LEVEL,
     moneyMult: 1 + next * MONEY_PER_LEVEL,
     keepDex: Object.keys(state.caught || {}).length,
-    keepBadges: (state.badges || []).length,
+    keepBadges: badgeList(state).length,
   };
 }
 
@@ -50,7 +61,7 @@ export function performAscension(state) {
     STARTERS[0];
   const keptSeen = { ...(state.seen || {}) };
   const keptCaught = { ...(state.caught || {}) };
-  const keptBadges = [...(state.badges || [])];
+  const keptBadges = [...badgeList(state)];
   const settings = { ...(state.settings || { mute: false }) };
   const playerName = state.playerName || 'Dresseur';
   const stats = { ...(state.stats || { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 }) };
@@ -81,6 +92,8 @@ export function performAscension(state) {
   state.log = [];
   state.daily = null;
   state.dailyBaselines = null;
+  state.expeditions = [];
+  state.daycare = [];
   state.tutorialDone = true;
   initDailyBaselines(state);
 
@@ -95,7 +108,7 @@ export function performAscension(state) {
 
 export function tryAwardRegionBadge(state, zone) {
   if (!state || !zone?.region) return false;
-  if (!state.badges) state.badges = [];
+  if (!Array.isArray(state.badges)) state.badges = badgeList(state);
   if (state.badges.includes(zone.region)) return false;
   // Badge région dès qu’une zone payante (ou 2e zone) est débloquée
   const regionZones = ZONES.filter((z) => z.region === zone.region);
@@ -110,7 +123,7 @@ export function renderAscensionPanel(state) {
   const bonus = ascensionBonuses(state);
   const preview = ascendPreview(state);
   const ok = canAscend(state);
-  const badgeList = (state.badges || [])
+  const chips = badgeList(state)
     .map((b) => `<span class="badge-chip">${icon('badge')} ${b}</span>`)
     .join('');
 
@@ -125,9 +138,9 @@ export function renderAscensionPanel(state) {
     </div>
     <div class="ascend-keep">
       <p><strong>Conservé</strong> : Pokédex (${preview.keepDex}), badges (${preview.keepBadges}), bonus d’ascension.</p>
-      <p><strong>Réinitialisé</strong> : argent, zones, équipe, boîte PC.</p>
+      <p><strong>Réinitialisé</strong> : argent, zones, équipe, boîte PC, expéditions, pension.</p>
     </div>
-    <div class="badge-row">${badgeList || '<span class="muted">Aucun badge région pour l’instant</span>'}</div>
+    <div class="badge-row">${chips || '<span class="muted">Aucun badge région pour l’instant</span>'}</div>
     <p class="muted">Condition : 5 zones débloquées, 15 captures, ou 2 badges.</p>
     <button type="button" class="btn-primary" data-ascend-open ${ok ? '' : 'disabled'}>
       Ascension → N.${preview.nextLevel} (XP ×${preview.xpMult.toFixed(2)} · ₽ ×${preview.moneyMult.toFixed(2)})
