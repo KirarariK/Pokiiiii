@@ -11,13 +11,6 @@ import {
   hubBadgeCount,
 } from './quests.js';
 import {
-  SUMMON,
-  RARITY_LABELS,
-  ensureSummon,
-  pityProgress,
-  poolStats,
-} from './summon.js';
-import {
   ensureExpeditions,
   getExpeditionDurations,
   expeditionRemainingMs,
@@ -111,7 +104,6 @@ export function renderHub(state) {
           <div class="hub-grid">
             ${tile('quests', 'Quêtes', 'quest', q)}
             ${tile('pass', 'Pass', 'pass', pendingPassCount(state))}
-            ${tile('summon', 'Invocation', 'summon', state.summon?.tickets || 0)}
             ${tile('profile', 'Profil', 'profile')}
           </div>
         </div>
@@ -148,6 +140,7 @@ export function renderHub(state) {
       </div>
     </div>`;
 }
+
 
 export function renderExpeditionsPanel(state) {
   ensureExpeditions(state);
@@ -258,10 +251,10 @@ export function renderPensionPanel(state) {
           const ready = isDaycareReady(j);
           const names = (j.parentUids || [])
             .map((uid) => {
-              const p =
+              const poke =
                 state.team.find((x) => x.uid === uid) ||
                 state.box.find((x) => x.uid === uid);
-              return p ? pokeName(p) : '?';
+              return poke ? pokeName(poke) : '?';
             })
             .join(' + ');
           return `
@@ -379,7 +372,7 @@ export function renderProfile(state) {
       <div class="profile-avatar">${icon('profile')}</div>
       <div>
         <strong>${state.playerName}</strong>
-        <p class="muted">Début : ${new Date(state.startedAt).toLocaleDateString('fr-FR')}</p>
+        <p class="muted">Région : ${new Date(state.startedAt).toLocaleDateString('fr-FR')}</p>
       </div>
     </div>
     <div class="stat-grid">
@@ -409,105 +402,4 @@ export function renderBonus(state) {
         <p class="muted">Via Quêtes + Pass — disponibles dans le Hub.</p>
       </div>
     </div>`;
-}
-
-export function renderSummonPanel(state) {
-  ensureSummon(state);
-  const sm = state.summon;
-  const pity = pityProgress(state);
-  const pools = poolStats();
-  const price = SUMMON.TICKET_PRICE.toLocaleString('fr-FR');
-  const canPull = sm.tickets >= 1;
-  const canMulti = sm.tickets >= SUMMON.MULTI_COUNT;
-  const canBuy = state.money >= SUMMON.TICKET_PRICE;
-
-  return `
-    <div class="panel-head">
-      <h2>Invocation</h2>
-      <span class="muted">${sm.totalPulls} tirages</span>
-    </div>
-
-    <div class="summon-hero">
-      <div class="summon-hero-ico">${icon('summon')}</div>
-      <div>
-        <strong>Portail Pokiiiii</strong>
-        <p class="muted">Invoque un Pokémon aléatoire Gen I–IX. Ticket gratuit chaque jour.</p>
-        <div class="summon-stats">
-          <span class="pi-pill">${icon('gift')} ${sm.tickets} ticket${sm.tickets !== 1 ? 's' : ''}</span>
-          <span class="pi-pill">${icon('crown')} Pity ${pity.pity}/${SUMMON.PITY_LEGENDARY}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="pity-block">
-      <div class="pity-row">
-        <span>Rare+ garanti</span>
-        <strong>${pity.untilRare === 0 ? 'Prêt' : `dans ${pity.untilRare}`}</strong>
-      </div>
-      <div class="quest-bar"><div style="width:${pity.rarePct}%"></div></div>
-      <div class="pity-row">
-        <span>Légendaire garanti</span>
-        <strong>${pity.untilLegendary === 0 ? 'Prêt' : `dans ${pity.untilLegendary}`}</strong>
-      </div>
-      <div class="quest-bar"><div style="width:${pity.legendaryPct}%"></div></div>
-    </div>
-
-    <div class="summon-actions">
-      <button type="button" class="btn-primary summon-pull" data-summon-pull="1" ${canPull ? '' : 'disabled'}>
-        ${icon('summon')} Invoquer ×1
-      </button>
-      <button type="button" class="btn-secondary summon-pull" data-summon-pull="10" ${canMulti ? '' : 'disabled'}>
-        ${icon('dice')} Invoquer ×${SUMMON.MULTI_COUNT}
-      </button>
-    </div>
-
-    <div class="summon-buy">
-      <p class="muted">Ticket : ${price} ₽ · Gratuit / jour : ${SUMMON.FREE_DAILY}</p>
-      <div class="summon-buy-row">
-        <button type="button" class="btn-secondary" data-summon-buy="1" ${canBuy ? '' : 'disabled'}>
-          Acheter ×1
-        </button>
-        <button type="button" class="btn-secondary" data-summon-buy="10" ${state.money >= SUMMON.TICKET_PRICE * 10 ? '' : 'disabled'}>
-          Acheter ×10
-        </button>
-      </div>
-    </div>
-
-    <div class="summon-pools">
-      <h3 class="subhead">Pools</h3>
-      <div class="stat-grid">
-        ${Object.entries(RARITY_LABELS)
-          .map(
-            ([k, label]) => `
-          <div class="stat-box rarity-${k}">
-            <span>${label}</span>
-            <strong>${pools[k] ?? 0}</strong>
-          </div>`
-          )
-          .join('')}
-      </div>
-    </div>
-
-    <div id="summon-reveal" class="summon-reveal" hidden></div>`;
-}
-
-export function renderSummonRevealCard(result, delayMs = 0) {
-  const poke = result.pokemon;
-  const sp = result.species || getSpecies(poke.speciesId);
-  const rarity = result.rarity || 'common';
-  const label = RARITY_LABELS[rarity] || rarity;
-  return `
-    <article class="summon-card rarity-${rarity}" style="animation-delay:${delayMs}ms">
-      <div class="summon-card-inner">
-        <div class="summon-card-back">
-          <span class="summon-flash">${icon('summon')}</span>
-        </div>
-        <div class="summon-card-front">
-          <span class="summon-rarity">${label}</span>
-          <img src="${artUrl(poke.speciesId)}" alt="" loading="lazy" />
-          <strong>${displayName(sp)}</strong>
-          <small>N.${poke.level}${poke.shiny ? ' · Chromatique' : ''} · Gen ${sp?.generation ?? '?'}</small>
-        </div>
-      </div>
-    </article>`;
 }
