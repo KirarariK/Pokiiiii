@@ -295,11 +295,18 @@ async function main() {
 
   // Legacy regression checks (kept cheap)
   try {
+    // Nouvelle partie force Gen 1 même si on passe un id Gen 9
     const g9 = game.createNewGame(906);
-    assert(g9.team[0].speciesId === 906, 'gen9 starter');
-    pass('createNewGame gen9 (906)');
+    assert(g9.team[0].speciesId === 1, 'new game forces gen1 starter');
+    assert(Array.isArray(g9.unlockedGens) && g9.unlockedGens.length === 1 && g9.unlockedGens[0] === 1, 'only gen1 unlocked');
+    assert(game.currentPlayGen(g9) === 1, 'play gen 1');
+    const unlocked = game.unlockGen(g9, 2);
+    assert(unlocked.ok, 'unlock gen2');
+    assert(g9.unlockedGens.includes(2), 'gen2 in list');
+    assert([152, 155, 158].includes(unlocked.pokemon?.speciesId), 'gen2 starter gift');
+    pass('gen lock: new game Gen1 + unlockGen(2)');
   } catch (e) {
-    fail('createNewGame gen9', e);
+    fail('gen lock', e);
   }
 
   try {

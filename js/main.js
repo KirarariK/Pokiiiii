@@ -18,6 +18,9 @@ import {
   tryEvolvePokemon,
   autoEvolveAll,
   applyOfflineProgress,
+  unlockGen,
+  currentPlayGen,
+  isGenUnlocked,
   BALLS,
   BRAND,
 } from './game.js';
@@ -72,16 +75,28 @@ function handleGymChallenge(gymId) {
     const msg =
       res.reason === 'already'
         ? 'Badge déjà obtenu'
-        : res.reason === 'locked'
-          ? res.needLeader
-            ? `Battre ${res.needLeader} ou N.${res.need}`
-            : `Niveau N.${res.need} requis`
-          : 'Défi impossible';
+        : res.reason === 'no-gen-fighter'
+          ? res.message || `Il faut un Pokémon Gen ${res.needGen}`
+          : res.reason === 'locked'
+            ? res.needLeader
+              ? `Battre ${res.needLeader} ou N.${res.need}`
+              : `Niveau N.${res.need} requis`
+            : 'Défi impossible';
     UI.toast(msg);
   } else if (res.win) {
     const label = res.badgeName || res.badgeId || res.badge || 'Badge';
     UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
     Audio.play('win');
+    // Champion de région → débloque la génération suivante
+    if (res.gym?.champion) {
+      const next = (Number(res.gym.gen) || 1) + 1;
+      const unlocked = unlockGen(state, next);
+      if (unlocked.ok) {
+        UI.toast(
+          `Gen ${unlocked.meta?.roman || next} (${unlocked.meta?.name || ''}) débloquée · ${unlocked.pokemon ? 'starter offert' : ''}`,
+        );
+      }
+    }
   } else {
     UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
   }
@@ -903,13 +918,24 @@ function onClick(e) {
   if (zoneBtn) {
     const id = zoneBtn.dataset.zone;
     if (state.unlockedZones.includes(id)) {
-      setZone(state, id);
-      battle = createBattle(state);
-      UI.toast('Nouvelle zone');
+      if (!setZone(state, id)) {
+        UI.toast('Génération verrouillée');
+      } else {
+        battle = createBattle(state);
+        UI.toast(`Zone Gen ${currentPlayGen(state)}`);
+      }
     } else {
-      const ok = unlockZone(state, id);
-      UI.toast(ok ? 'Zone débloquée' : 'Fonds insuffisants');
-      if (ok) {
+      const res = unlockZone(state, id);
+      if (!res?.ok) {
+        UI.toast(
+          res?.reason === 'gen-locked'
+            ? `Gen ${res.gen} verrouillée — battez le Champion précédent`
+            : res?.reason === 'no-money'
+              ? 'Fonds insuffisants'
+              : 'Zone indisponible',
+        );
+      } else {
+        UI.toast('Zone débloquée');
         setZone(state, id);
         battle = createBattle(state);
       }

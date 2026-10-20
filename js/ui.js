@@ -10,7 +10,17 @@ import {
   speciesCount,
   allSpecies,
 } from './pokemon.js';
-import { BALLS, ZONES, BRAND, isPokemonBusy } from './game.js';
+import {
+  BALLS,
+  ZONES,
+  BRAND,
+  isPokemonBusy,
+  currentPlayGen,
+  isPokemonOfGen,
+  isGenUnlocked,
+  ensureUnlockedGens,
+  activeFighter,
+} from './game.js';
 import { resolveZoneBgClass } from './data/zones.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
 import { icon } from './icons.js';
@@ -268,20 +278,27 @@ export function applyBattleFx(events = []) {
 }
 
 export function renderTeam(state) {
-  const fighter = state.team.find((x) => x.hp > 0 && !isPokemonBusy(state, x.uid));
+  const playGen = currentPlayGen(state);
+  const fighter = activeFighter(state);
   return state.team
     .map((p, i) => {
       const busy = isPokemonBusy(state, p.uid);
+      const ofGen = isPokemonOfGen(p, playGen);
       const isFighter = fighter === p;
       const actions = `
         <div class="card-actions">
           ${busy ? '<em class="busy-tag">Indisponible</em>' : ''}
+          ${!ofGen ? `<em class="busy-tag">Hors Gen ${playGen}</em>` : ''}
           ${isFighter ? '<em class="lead-tag">Combattant 1v1</em>' : ''}
           ${!busy && canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Évoluer</button>` : ''}
           ${!busy && state.team.length > 1 ? `<button data-act="box" data-uid="${p.uid}">→ PC</button>` : ''}
-          ${!busy && i > 0 ? `<button data-act="up" data-i="${i}">↑ Lead</button>` : ''}
+          ${!busy && ofGen && i > 0 ? `<button data-act="up" data-i="${i}">↑ Lead</button>` : ''}
         </div>`;
-      return renderPokeCard(p, { actions, selected: isFighter, className: busy ? 'busy' : '' });
+      return renderPokeCard(p, {
+        actions,
+        selected: isFighter,
+        className: busy || !ofGen ? 'busy' : '',
+      });
     })
     .join('');
 }
@@ -413,7 +430,14 @@ export function renderZones(state) {
     byRegion.get(key).push(z);
   }
 
-  const nextUnlocks = ZONES.filter((z) => !state.unlockedZones.includes(z.id) && z.unlockCost > 0)
+  ensureUnlockedGens(state);
+  const playGen = currentPlayGen(state);
+  const nextUnlocks = ZONES.filter(
+    (z) =>
+      !state.unlockedZones.includes(z.id) &&
+      z.unlockCost > 0 &&
+      isGenUnlocked(state, z.gen || 1),
+  )
     .slice()
     .sort((a, b) => a.unlockCost - b.unlockCost || a.gen - b.gen)
     .slice(0, 4);
@@ -440,23 +464,27 @@ export function renderZones(state) {
       </ul>
     </div>`;
 
-  let html = `<div class="zones-map">${preview}`;
+  let html = `<div class="zones-map">
+    <p class="muted zones-gen-hint">Combat & invocations : <strong>Gen ${playGen}</strong> uniquement (zone actuelle). Les gens suivantes se débloquent en battant le Champion.</p>
+    ${preview}`;
   for (const [key, list] of byRegion) {
     const [gen, region] = key.split('|');
     const regionName = REGION_FR[region] || region;
+    const genOpen = isGenUnlocked(state, Number(gen) || 1);
     html += `
-      <section class="zone-region" data-region="${region}">
+      <section class="zone-region ${genOpen ? '' : 'gen-locked'}" data-region="${region}">
         <header class="zone-region-head region-title">
-          <h3>Gen ${gen} — ${regionName}</h3>
-          <span class="muted">${list.length} zone${list.length > 1 ? 's' : ''}</span>
+          <h3>Gen ${gen} — ${regionName}${genOpen ? '' : ' · Verrouillé'}</h3>
+          <span class="muted">${genOpen ? `${list.length} zone${list.length > 1 ? 's' : ''}` : 'Champion précédent requis'}</span>
         </header>
         <div class="zones-list zone-region-grid">`;
     html += list
       .map((z) => {
         const unlocked = state.unlockedZones.includes(z.id);
         const active = state.currentZone === z.id;
+        const canBuy = genOpen && !unlocked;
         return `
-      <button class="zone-card ${unlocked ? 'unlocked' : 'locked'} ${active ? 'active' : ''}" data-zone="${z.id}" type="button">
+      <button class="zone-card ${unlocked ? 'unlocked' : 'locked'} ${active ? 'active' : ''} ${genOpen ? '' : 'gen-locked'}" data-zone="${z.id}" type="button" ${genOpen || unlocked ? '' : 'disabled'}>
         <div class="zone-preview" style="background:${z.bg}"></div>
         <div class="zone-meta">
           <strong>${z.name}</strong>
@@ -467,7 +495,9 @@ export function renderZones(state) {
               ? active
                 ? '<em class="tag">En cours</em>'
                 : '<em class="tag go">Explorer</em>'
-              : `<em class="tag cost">${z.unlockCost.toLocaleString('fr-FR')} ₽</em>`
+              : genOpen
+                ? `<em class="tag cost">${z.unlockCost.toLocaleString('fr-FR')} ₽</em>`
+                : '<em class="tag">Gen verrouillée</em>'
           }
         </div>
       </button>`;
@@ -597,19 +627,23 @@ export function toast(msg, ms = 2200) {
 }
 
 export function renderStarterSelect(selectedGen = 1) {
+  // Nouvelle partie : Gen 1 uniquement. Les autres gens se débloquent via les champions.
+  const unlocked = [1];
+  const playableGen = unlocked.includes(selectedGen) ? selectedGen : 1;
   const gens = Object.keys(STARTERS_BY_GEN).map(Number);
   const tabs = gens
     .map((g) => {
       const meta = GEN_META[g];
-      return `<button type="button" class="chip starter-gen-chip ${selectedGen === g ? 'active' : ''}" data-starter-gen="${g}">
+      const open = unlocked.includes(g);
+      return `<button type="button" class="chip starter-gen-chip ${playableGen === g ? 'active' : ''} ${open ? '' : 'locked'}" data-starter-gen="${g}" ${open ? '' : 'disabled'} title="${open ? meta.name : 'Battez le Champion de la gen précédente'}">
         <span class="chip-gen">Gen ${meta.roman}</span>
-        <small>${meta.name}</small>
+        <small>${open ? meta.name : 'Verrouillé'}</small>
       </button>`;
     })
     .join('');
 
-  const starters = STARTERS_BY_GEN[selectedGen] || STARTERS_BY_GEN[1];
-  const meta = GEN_META[selectedGen] || GEN_META[1];
+  const starters = STARTERS_BY_GEN[playableGen] || STARTERS_BY_GEN[1];
+  const meta = GEN_META[playableGen] || GEN_META[1];
   const cards = starters
     .map((s) => {
       const sp = getSpecies(s.id);
@@ -643,10 +677,10 @@ export function renderStarterSelect(selectedGen = 1) {
       <div class="starter-hero">
         <p class="brand-mark">${icon('logo')} ${BRAND.name}</p>
         <h1>Choisissez votre starter</h1>
-        <p class="subtitle">${BRAND.tagline} · ${speciesCount()} Pokémon</p>
+        <p class="subtitle">${BRAND.tagline} · Début obligatoirement en Gen I (Kanto)</p>
       </div>
       <div class="chip-row starter-gens">${tabs}</div>
-      <p class="starter-region">Région · ${meta.name}</p>
+      <p class="starter-region">Région · ${meta.name} · Gen II–IX via chaque Champion de Ligue</p>
       <div class="starter-grid">${cards}</div>
       ${
         hasSave

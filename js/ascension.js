@@ -85,6 +85,7 @@ export function performAscension(state) {
   state.badges = keptBadges;
   state.unlockedZones = [ZONES[0].id];
   state.currentZone = ZONES[0].id;
+  state.unlockedGens = [1];
   state.autoCatch = false;
   state.autoCatchBall = 'pokeball';
   state.battleSpeed = state.battleSpeed || 1;

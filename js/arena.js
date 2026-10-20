@@ -13,8 +13,15 @@ import { icon } from './icons.js';
 
 const MAX_TURNS = 80;
 
-function activeFighter(state) {
-  return state.team.find((p) => p.hp > 0) || null;
+function activeFighter(state, gen = null) {
+  return (
+    state.team.find((p) => {
+      if (!(p.hp > 0)) return false;
+      if (gen == null) return true;
+      const g = Number(getSpecies(p.speciesId)?.generation) || 1;
+      return g === Number(gen);
+    }) || null
+  );
 }
 
 function healTeamSilent(state) {
@@ -107,15 +114,25 @@ export function challengeGym(state, gymId) {
   if (!gate.ok) return { ok: false, ...gate };
 
   healTeamSilent(state);
+  const gymGen = Number(gym.gen) || 1;
   const gymTeam = gym.pokemon.filter((e) => getSpecies(e.speciesId)).map(buildGymFighter);
   if (!gymTeam.length) return { ok: false, reason: 'empty-team' };
+
+  if (!activeFighter(state, gymGen)) {
+    return {
+      ok: false,
+      reason: 'no-gen-fighter',
+      needGen: gymGen,
+      message: `Il faut un Pokémon Gen ${gymGen} vivant dans l’équipe pour ce défi.`,
+    };
+  }
 
   const duelLogs = [];
   let gymIdx = 0;
   let playerFaints = 0;
 
   while (gymIdx < gymTeam.length) {
-    const fighter = activeFighter(state);
+    const fighter = activeFighter(state, gymGen);
     if (!fighter) {
       addLog(state, `Défaite contre ${gym.leaderName}…`, 'faint');
       healTeamSilent(state);

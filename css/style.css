@@ -1906,6 +1906,30 @@ select {
   opacity: 0.9;
 }
 
+.starter-gen-chip.locked,
+.starter-gen-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.65);
+}
+
+.zone-region.gen-locked {
+  opacity: 0.55;
+}
+
+.zone-card.gen-locked {
+  pointer-events: none;
+}
+
+.zones-gen-hint {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  background: #152033;
+  border: 1px solid #2a3a55;
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
 .chip-gen {
   font-weight: 700;
 }

@@ -1,6 +1,6 @@
 import { icon } from './icons.js';
 import { speciesCount, allSpecies, artUrl, displayName, getSpecies, pokeName, spriteUrl } from './pokemon.js';
-import { ZONES, BRAND, BALLS, busyPokemonUids } from './game.js';
+import { ZONES, BRAND, BALLS, busyPokemonUids, currentPlayGen } from './game.js';
 import { GEN_META } from './data/starters.js';
 import {
   QUEST_DEFS,
@@ -50,7 +50,7 @@ export function renderTopbar(state) {
         <span class="pi-logo">${icon('logo')}</span>
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
-          <small>${state.playerName || 'Dresseur'} · N.${lvl} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
+          <small>${state.playerName || 'Dresseur'} · N.${lvl} · Gen ${zone?.gen || 1} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
         </div>
       </div>
       <div class="pi-hud">
@@ -548,18 +548,19 @@ export function renderSummonPanel(state) {
   ensureSummon(state);
   const sm = state.summon;
   const pity = pityProgress(state);
-  const pools = poolStats();
+  const playGen = currentPlayGen(state);
+  const pools = poolStats(playGen);
   const price = SUMMON.TICKET_PRICE.toLocaleString('fr-FR');
   const canPull = sm.tickets >= 1;
   const canMulti = sm.tickets >= SUMMON.MULTI_COUNT;
   const canBuy = state.money >= SUMMON.TICKET_PRICE;
   return `
-    <div class="panel-head"><h2>Invocation</h2><span class="muted">${sm.totalPulls} tirages</span></div>
+    <div class="panel-head"><h2>Invocation</h2><span class="muted">${sm.totalPulls} tirages · Gen ${playGen}</span></div>
     <div class="summon-hero">
       <div class="summon-hero-ico">${icon('summon')}</div>
       <div>
         <strong>Portail Pokiiiii</strong>
-        <p class="muted">Invoque un Pokémon aléatoire Gen I–IX. Ticket gratuit chaque jour.</p>
+        <p class="muted">Invoque un Pokémon de la <strong>Gen ${playGen}</strong> (zone actuelle). Ticket gratuit chaque jour.</p>
         <div class="summon-stats">
           <span class="pi-pill">${icon('gift')} ${sm.tickets} ticket${sm.tickets !== 1 ? 's' : ''}</span>
           <span class="pi-pill">${icon('crown')} Pity ${pity.pity}/${SUMMON.PITY_LEGENDARY}</span>

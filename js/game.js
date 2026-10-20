@@ -25,6 +25,7 @@ import { ensureDaycare, daycareBusyUids } from './daycare.js';
 import { ensureArena } from './arena.js';
 import { eventMultipliers } from './events.js';
 import { ascensionBonuses, tryAwardRegionBadge } from './ascension.js';
+import { GEN_META } from './data/starters.js';
 
 const SAVE_KEY = 'pokiiiii_save_v3';
 const SAVE_KEY_LEGACY = ['pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
@@ -51,20 +52,90 @@ export const BRAND = {
   tagline: 'Idle national · 1v1 · Gen I–IX',
 };
 
+/** Génération de la zone actuelle (combat / invocations). */
+export function currentPlayGen(state) {
+  return Number(getZone(state?.currentZone)?.gen) || 1;
+}
+
+export function pokemonGen(pokeOrId) {
+  const id = typeof pokeOrId === 'object' ? pokeOrId?.speciesId : pokeOrId;
+  return Number(getSpecies(id)?.generation) || 1;
+}
+
+export function isPokemonOfGen(poke, gen) {
+  return pokemonGen(poke) === Number(gen);
+}
+
+export function ensureUnlockedGens(state) {
+  if (!Array.isArray(state.unlockedGens) || !state.unlockedGens.length) {
+    const fromZones = (state.unlockedZones || [])
+      .map((id) => Number(getZone(id)?.gen) || 1);
+    const max = Math.max(1, ...fromZones, pokemonGen(state.starterId || state.team?.[0]));
+    state.unlockedGens = [];
+    for (let g = 1; g <= max; g++) state.unlockedGens.push(g);
+  }
+  state.unlockedGens = [...new Set(state.unlockedGens.map(Number))].sort((a, b) => a - b);
+  if (!state.unlockedGens.includes(1)) state.unlockedGens.unshift(1);
+  return state.unlockedGens;
+}
+
+export function isGenUnlocked(state, gen) {
+  ensureUnlockedGens(state);
+  return state.unlockedGens.includes(Number(gen));
+}
+
+export function maxUnlockedGen(state) {
+  ensureUnlockedGens(state);
+  return Math.max(...state.unlockedGens);
+}
+
+/** Débloque une gen suivante (séquentielle) + offre un starter de cette gen. */
+export function unlockGen(state, gen) {
+  ensureUnlockedGens(state);
+  const g = Number(gen);
+  if (!g || g < 2 || g > 9) return { ok: false, reason: 'invalid' };
+  if (state.unlockedGens.includes(g)) return { ok: false, reason: 'already' };
+  if (g !== maxUnlockedGen(state) + 1) return { ok: false, reason: 'order' };
+
+  state.unlockedGens.push(g);
+  state.unlockedGens.sort((a, b) => a - b);
+
+  const starterIds = ALL_STARTERS[g] || STARTERS;
+  const sid = starterIds[Math.floor(Math.random() * starterIds.length)] || starterIds[0];
+  const gift = createPokemon(sid, 5);
+  state.caught[sid] = true;
+  state.seen[sid] = true;
+  if (state.team.length < 6) state.team.push(gift);
+  else state.box.push(gift);
+
+  const meta = GEN_META[g] || { name: `Gen ${g}`, roman: String(g) };
+  addLog(
+    state,
+    `Génération ${meta.roman} (${meta.name}) débloquée ! ${pokeName(gift)} rejoint l’aventure.`,
+    'unlock'
+  );
+  return { ok: true, gen: g, pokemon: gift, meta };
+}
+
 export function createNewGame(starterId) {
-  const starter = createPokemon(starterId, 5);
+  const sp = getSpecies(starterId);
+  const starterGen = Number(sp?.generation) || 1;
+  // Nouvelle partie : Gen 1 uniquement (les gens suivantes se débloquent en jeu)
+  const safeId = starterGen === 1 ? starterId : STARTERS[0];
+  const starter = createPokemon(safeId, 5);
   const state = {
     version: 3,
     playerName: 'Dresseur',
-    starterId,
+    starterId: safeId,
     money: 800,
     balls: { pokeball: 15, greatball: 2, ultraball: 0, masterball: 0 },
     team: [starter],
     box: [],
-    seen: { [starterId]: true },
-    caught: { [starterId]: true },
+    seen: { [safeId]: true },
+    caught: { [safeId]: true },
     unlockedZones: [ZONES[0].id],
     currentZone: ZONES[0].id,
+    unlockedGens: [1],
     autoCatch: false,
     autoCatchBall: 'pokeball',
     battleSpeed: 1,
@@ -89,6 +160,7 @@ export function createNewGame(starterId) {
   ensureExpeditions(state);
   ensureDaycare(state);
   ensureArena(state);
+  ensureUnlockedGens(state);
   return state;
 }
 
@@ -138,6 +210,7 @@ export function loadGame() {
     ensureExpeditions(state);
     ensureDaycare(state);
     ensureArena(state);
+    ensureUnlockedGens(state);
     if (!state.minigame) state.minigame = { playsToday: 0, day: null, best: 0 };
     initDailyBaselines(state);
     ensureDaily(state);
@@ -183,16 +256,23 @@ function randomFrom(arr) {
 
 export function spawnWild(state) {
   const zone = getZone(state.currentZone) || ZONES[0];
-  let speciesId = randomFrom(zone.pokemon);
+  const zoneGen = Number(zone.gen) || 1;
+  const pool = (zone.pokemon || []).filter((id) => {
+    const sp = getSpecies(id);
+    return sp && (Number(sp.generation) || 1) === zoneGen;
+  });
+  let speciesId = randomFrom(pool.length ? pool : zone.pokemon);
   if (zone.rare?.length) {
     for (const r of zone.rare) {
-      if (Math.random() < r.chance && getSpecies(r.id)) {
+      const sp = getSpecies(r.id);
+      if (!sp || (Number(sp.generation) || 1) !== zoneGen) continue;
+      if (Math.random() < r.chance) {
         speciesId = r.id;
         break;
       }
     }
   }
-  if (!getSpecies(speciesId)) speciesId = zone.pokemon.find((id) => getSpecies(id)) || 1;
+  if (!getSpecies(speciesId)) speciesId = (pool.length ? pool : zone.pokemon).find((id) => getSpecies(id)) || 1;
   const level =
     zone.minLevel + Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1));
   const shinyRate = (1 / 4096) * rewardMults(state).shiny;
@@ -206,7 +286,10 @@ export function spawnWild(state) {
 
 export function activeFighter(state) {
   const busy = busyPokemonUids(state);
-  return state.team.find((p) => p.hp > 0 && !busy.has(p.uid)) || null;
+  const gen = currentPlayGen(state);
+  return (
+    state.team.find((p) => p.hp > 0 && !busy.has(p.uid) && isPokemonOfGen(p, gen)) || null
+  );
 }
 
 export function healTeam(state) {
@@ -219,17 +302,20 @@ export function healTeam(state) {
 
 export function unlockZone(state, zoneId) {
   const zone = getZone(zoneId);
-  if (!zone || state.unlockedZones.includes(zoneId)) return false;
-  if (state.money < zone.unlockCost) return false;
+  if (!zone || state.unlockedZones.includes(zoneId)) return { ok: false, reason: 'unavailable' };
+  if (!isGenUnlocked(state, zone.gen || 1)) return { ok: false, reason: 'gen-locked', gen: zone.gen };
+  if (state.money < zone.unlockCost) return { ok: false, reason: 'no-money', need: zone.unlockCost };
   state.money -= zone.unlockCost;
   state.unlockedZones.push(zoneId);
   addLog(state, `Zone débloquée : ${zone.name} !`, 'unlock');
   tryAwardRegionBadge(state, zone);
-  return true;
+  return { ok: true, zone };
 }
 
 export function setZone(state, zoneId) {
   if (!state.unlockedZones.includes(zoneId)) return false;
+  const zone = getZone(zoneId);
+  if (zone && !isGenUnlocked(state, zone.gen || 1)) return false;
   state.currentZone = zoneId;
   return true;
 }

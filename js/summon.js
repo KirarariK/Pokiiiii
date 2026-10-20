@@ -1,6 +1,7 @@
 import { createPokemon, allSpecies, getSpecies, displayName, pokeName } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { todayKey } from './quests.js';
+import { currentPlayGen } from './game.js';
 
 /** Configuration Invocation / gacha Pokiiiii */
 export const SUMMON = {
@@ -109,24 +110,32 @@ export function classifyRarity(sp) {
   return 'common';
 }
 
-function buildPools() {
+function buildPools(genFilter = null) {
   const pools = { common: [], uncommon: [], rare: [], legendary: [] };
-  for (const sp of allSpecies()) {
-    if (!sp?.id) continue;
+  const all = allSpecies().filter((sp) => {
+    if (!sp?.id) return false;
+    if (genFilter == null) return true;
+    return (Number(sp.generation) || 1) === Number(genFilter);
+  });
+  for (const sp of all) {
     const r = classifyRarity(sp);
     pools[r].push(sp);
   }
   for (const key of RARITY_ORDER) {
     if (!pools[key].length) {
-      pools[key] = allSpecies().slice(0, 50);
+      pools[key] = all.slice(0, 50);
     }
   }
   return pools;
 }
 
-export function getPools() {
-  if (!poolsCache || !poolsCache.common.length) poolsCache = buildPools();
-  return poolsCache;
+export function getPools(genFilter = null) {
+  const key = genFilter == null ? 'all' : `g${genFilter}`;
+  if (!poolsCache) poolsCache = {};
+  if (!poolsCache[key] || !poolsCache[key].common?.length) {
+    poolsCache[key] = buildPools(genFilter);
+  }
+  return poolsCache[key];
 }
 
 /** Invalide le cache (tests / reload espèces). */
@@ -201,7 +210,8 @@ export function pullOnce(state) {
   ensureSummon(state);
   if ((state.summon.tickets || 0) < 1) return { ok: false, reason: 'no-ticket' };
 
-  const pools = getPools();
+  const playGen = currentPlayGen(state);
+  const pools = getPools(playGen);
   const pityBefore = state.summon.pity;
   const pityTriggered =
     pityBefore + 1 >= SUMMON.PITY_RARE || pityBefore + 1 >= SUMMON.PITY_LEGENDARY;
@@ -279,8 +289,8 @@ export function pityProgress(state) {
   };
 }
 
-export function poolStats() {
-  const pools = getPools();
+export function poolStats(genFilter = null) {
+  const pools = getPools(genFilter);
   return Object.fromEntries(RARITY_ORDER.map((k) => [k, pools[k].length]));
 }
 
