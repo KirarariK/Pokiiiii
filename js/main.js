@@ -54,6 +54,8 @@ import {
   renderAscendConfirmModal,
 } from './ascension.js';
 import { icon } from './icons.js';
+import { renderMinigamePanel, bindMinigameHandlers, ensureMinigame } from './minigame.js';
+import { renderLeaderboardPanel, pushLeaderboard } from './leaderboard.js';
 
 function handleGymChallenge(gymId) {
   ensureArena(state);
@@ -71,6 +73,7 @@ function handleGymChallenge(gymId) {
   } else if (res.win) {
     const label = res.badgeName || res.badgeId || res.badge || 'Badge';
     UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
+    Audio.play('win');
   } else {
     UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
   }
@@ -107,7 +110,9 @@ async function boot() {
     demo === 'expeditions' ||
     demo === 'pension' ||
     demo === 'arenas' ||
-    demo === 'summon'
+    demo === 'summon' ||
+    demo === 'minigame' ||
+    demo === 'leaderboard'
   ) {
     startNew(4);
     if (demo !== 'tutorial') {
@@ -126,6 +131,8 @@ async function boot() {
     if (demo === 'pension') setTimeout(() => setTab('pension'), 50);
     if (demo === 'arenas') setTimeout(() => setTab('arenas'), 50);
     if (demo === 'summon') setTimeout(() => setTab('summon'), 50);
+    if (demo === 'minigame') setTimeout(() => setTab('minigame'), 50);
+    if (demo === 'leaderboard') setTimeout(() => setTab('leaderboard'), 50);
     return;
   }
 
@@ -297,6 +304,12 @@ function renderShell() {
 
         <section id="panel-ascension" class="panel">
           <div id="ascension-view"></div>
+        <section id="panel-minigame" class="panel">
+          <div id="minigame-view"></div>
+        </section>
+
+        <section id="panel-leaderboard" class="panel">
+          <div id="leaderboard-view"></div>
         </section>
 
         <section id="panel-settings" class="panel">
@@ -418,6 +431,8 @@ function setTab(id) {
     arena: 'arenas',
     expeditions: 'expeditions',
     pension: 'pension',
+    minigame: 'minigame',
+    leaderboard: 'leaderboard',
     settings: 'settings',
     heal: 'battle',
   };
@@ -786,6 +801,38 @@ function refreshAll() {
   if (arenasRoot && (tab === 'arenas' || tab === 'arena')) {
     renderArenasPanel(arenasRoot, state, { onChallenge: handleGymChallenge });
   }
+
+  const mgView = UI.$('#minigame-view');
+  if (mgView) {
+    ensureMinigame(state);
+    if (tab === 'minigame') {
+      // Évite de réinitialiser le curseur pendant un combat en arrière-plan
+      if (mgView.dataset.live !== '1') {
+        mgView.innerHTML = renderMinigamePanel(state);
+        bindMinigameHandlers(mgView, state, (res) => {
+          if (res?.ok) {
+            saveGame(state);
+            pushLeaderboard(state);
+            UI.toast(
+              `Score ${res.score} · +${res.money}₽${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
+            );
+            refreshChrome();
+            UI.updateHud(state);
+          }
+        });
+        mgView.dataset.live = '1';
+      }
+    } else {
+      mgView.dataset.live = '';
+    }
+  }
+
+  if (UI.$('#leaderboard-view')) {
+    if (tab === 'leaderboard') {
+      UI.$('#leaderboard-view').innerHTML = renderLeaderboardPanel(state);
+    }
+  }
+
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }

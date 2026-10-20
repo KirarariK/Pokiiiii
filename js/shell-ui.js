@@ -142,6 +142,8 @@ export function renderHub(state) {
             ${tile('dex', 'Pokédex', 'dex')}
             ${tile('bonus', 'Bonus', 'bolt')}
             ${tile('ascension', 'Ascension', 'crown')}
+            ${tile('minigame', 'Mini-jeu', 'dice')}
+            ${tile('leaderboard', 'Classement', 'trophy')}
             ${tile('settings', 'Options', 'settings')}
           </div>
         </div>

@@ -82,6 +82,7 @@ export function createNewGame(starterId) {
     daycare: [],
     badges: {},
     arenaWins: 0,
+    minigame: { playsToday: 0, day: null, best: 0 },
   };
   initDailyBaselines(state);
   ensureSummon(state);
@@ -137,6 +138,7 @@ export function loadGame() {
     ensureExpeditions(state);
     ensureDaycare(state);
     ensureArena(state);
+    if (!state.minigame) state.minigame = { playsToday: 0, day: null, best: 0 };
     initDailyBaselines(state);
     ensureDaily(state);
     ensureSummon(state);

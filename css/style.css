@@ -2445,6 +2445,8 @@ select {
   margin-top: 1rem;
 }
 .ascend-card {
+/* ===== Mini-jeu / Classement ===== */
+.mg-card {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
@@ -2622,6 +2624,60 @@ select {
 .arena-card {
   display: grid;
   grid-template-columns: auto 1fr auto;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+.mg-card .ico { width: 28px; height: 28px; color: #60a5fa; flex-shrink: 0; }
+.mg-card p { margin: 0.25rem 0 0; }
+.mg-stage {
+  background: #0f1a2c;
+  border: 1px solid #2a3a55;
+  border-radius: 14px;
+  padding: 1rem;
+}
+.mg-track {
+  position: relative;
+  height: 36px;
+  margin: 0.5rem 0 1rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1a2740, #243552 50%, #1a2740);
+  border: 1px solid #2f4a72;
+  overflow: hidden;
+}
+.mg-zone {
+  position: absolute;
+  left: 42%;
+  width: 16%;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 999px;
+  background: rgba(245, 197, 24, 0.28);
+  border: 1px solid rgba(245, 197, 24, 0.55);
+}
+.mg-cursor {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: 10px;
+  margin-left: -5px;
+  border-radius: 999px;
+  background: #60a5fa;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.55);
+  left: 0%;
+  transition: none;
+}
+.mg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+#mg-result { margin: 0.35rem 0 0; font-size: 0.85rem; }
+
+.lb-list { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
+.lb-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
   gap: 0.75rem;
   align-items: center;
   background: #152033;
@@ -2711,3 +2767,20 @@ select {
 .arena-progress-bar>div{height:100%;background:linear-gradient(90deg,#f5c518,#60a5fa);border-radius:inherit}
 .arena-progress-row strong{text-align:right;color:var(--text);font-size:.7rem}
 .arena-badge-ico .ico{width:36px;height:36px;color:#60a5fa}
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+}
+.lb-row p { margin: 0.2rem 0 0; font-size: 0.8rem; }
+.lb-rank {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #0f1a2c;
+  border: 1px solid #2f4a72;
+  color: #f5c518;
+  font-family: var(--font-display, Oxanium, sans-serif);
+  font-weight: 700;
+}
+.panel-head .ico { width: 22px; height: 22px; color: #f5c518; }

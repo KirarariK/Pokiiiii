@@ -14,6 +14,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 0,
     pokemon: [16, 19],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a1a 0%,#2d5a27 40%,#1e4020 100%)',
   },
   {
@@ -26,6 +27,7 @@ export const ZONES = [
     maxLevel: 7,
     unlockCost: 200,
     pokemon: [16, 19, 10, 13],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#1a3320 0%,#3a6b30 45%,#244028 100%)',
   },
   {
@@ -39,6 +41,7 @@ export const ZONES = [
     unlockCost: 500,
     pokemon: [10, 11, 13, 14, 25],
     rare: [{ id: 172, chance: 0.03 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0d2818 0%,#1a4d2e 50%,#0f3020 100%)',
   },
   {
@@ -51,6 +54,7 @@ export const ZONES = [
     maxLevel: 12,
     unlockCost: 1200,
     pokemon: [16, 21, 19, 23, 27, 29, 32],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#3a2a1a 0%,#6b4a28 45%,#2a2018 100%)',
   },
   {
@@ -64,6 +68,7 @@ export const ZONES = [
     unlockCost: 2500,
     pokemon: [41, 74, 35, 46, 95],
     rare: [{ id: 36, chance: 0.05 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1a2e 0%,#2a2a4a 50%,#12122a 100%)',
   },
   {
@@ -76,6 +81,7 @@ export const ZONES = [
     maxLevel: 16,
     unlockCost: 4000,
     pokemon: [10, 11, 13, 14, 16, 43, 48, 69],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a2a 0%,#2d6b4a 45%,#183828 100%)',
   },
   {
@@ -88,6 +94,7 @@ export const ZONES = [
     maxLevel: 20,
     unlockCost: 7000,
     pokemon: [41, 66, 74, 95, 104],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1510 0%,#3a3028 50%,#12100c 100%)',
   },
   {
@@ -100,6 +107,7 @@ export const ZONES = [
     maxLevel: 24,
     unlockCost: 10000,
     pokemon: [16, 17, 43, 44, 69, 70, 83, 48],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a3a1a 0%,#4a6b30 45%,#203018 100%)',
   },
   {
@@ -113,6 +121,7 @@ export const ZONES = [
     unlockCost: 15000,
     pokemon: [102, 111, 113, 115, 123, 127, 128, 84, 48, 46],
     rare: [{ id: 114, chance: 0.06 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#2a4a1a 0%,#5a8a30 45%,#284820 100%)',
   },
   {
@@ -126,6 +135,7 @@ export const ZONES = [
     unlockCost: 22000,
     pokemon: [81, 82, 100, 101, 25, 26, 125],
     rare: [{ id: 145, chance: 0.02 }],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#2a4a6a 50%,#102030 100%)',
   },
   {
@@ -139,6 +149,7 @@ export const ZONES = [
     unlockCost: 35000,
     pokemon: [86, 87, 54, 55, 90, 91, 124],
     rare: [{ id: 144, chance: 0.02 }],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#3a5a7a 50%,#152535 100%)',
   },
   {
@@ -152,6 +163,7 @@ export const ZONES = [
     unlockCost: 45000,
     pokemon: [58, 77, 88, 89, 109, 110, 126],
     rare: [{ id: 146, chance: 0.02 }],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#2a1a1a 0%,#5a3030 50%,#1a1010 100%)',
   },
   {
@@ -164,6 +176,7 @@ export const ZONES = [
     maxLevel: 48,
     unlockCost: 70000,
     pokemon: [66, 67, 74, 75, 95, 105, 112, 42],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2a2a 0%,#4a4a5a 50%,#1a1a22 100%)',
   },
   {
@@ -182,6 +195,7 @@ export const ZONES = [
       { id: 145, chance: 0.02 },
       { id: 146, chance: 0.02 },
     ],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1040 0%,#3a2080 50%,#12082a 100%)',
   },
   {
@@ -201,6 +215,7 @@ export const ZONES = [
       { id: 150, chance: 0.05 },
       { id: 151, chance: 0.015 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#201040 0%,#6030a0 45%,#180828 100%)',
   },
 
@@ -217,6 +232,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 280000,
     pokemon: [16, 19, 161, 163],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#1e3820 100%)',
   },
   {
@@ -229,6 +245,7 @@ export const ZONES = [
     maxLevel: 8,
     unlockCost: 320000,
     pokemon: [10, 13, 16, 165, 167, 161],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#1a3a22 0%,#3a6a38 45%,#183020 100%)',
   },
   {
@@ -241,6 +258,7 @@ export const ZONES = [
     maxLevel: 10,
     unlockCost: 380000,
     pokemon: [19, 92, 93],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a2a18 0%,#6a4a28 50%,#2a1e10 100%)',
   },
   {
@@ -253,6 +271,7 @@ export const ZONES = [
     maxLevel: 12,
     unlockCost: 450000,
     pokemon: [23, 69, 179, 194, 23, 41],
+    bgClass: 'bg-zone-ruin',
     bg: 'linear-gradient(160deg,#3a3a1a 0%,#6a6a30 45%,#282818 100%)',
   },
   {
@@ -266,6 +285,7 @@ export const ZONES = [
     unlockCost: 520000,
     pokemon: [201, 74, 41, 27],
     rare: [{ id: 201, chance: 0.15 }],
+    bgClass: 'bg-zone-ruin',
     bg: 'linear-gradient(160deg,#2a2a2a 0%,#4a4a48 50%,#1a1a1a 100%)',
   },
   {
@@ -278,6 +298,7 @@ export const ZONES = [
     maxLevel: 16,
     unlockCost: 600000,
     pokemon: [41, 74, 194, 195, 129, 118],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a2030 0%,#2a3a4a 50%,#101820 100%)',
   },
   {
@@ -291,6 +312,7 @@ export const ZONES = [
     unlockCost: 700000,
     pokemon: [10, 11, 13, 14, 46, 163, 164, 204],
     rare: [{ id: 251, chance: 0.01 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2418 0%,#1a4830 50%,#0e281c 100%)',
   },
   {
@@ -303,6 +325,7 @@ export const ZONES = [
     maxLevel: 18,
     unlockCost: 820000,
     pokemon: [10, 13, 48, 123, 165, 167, 214, 204],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#2a4a20 0%,#5a8a38 45%,#284820 100%)',
   },
   {
@@ -316,6 +339,7 @@ export const ZONES = [
     unlockCost: 950000,
     pokemon: [19, 20, 41, 58, 92, 109],
     rare: [{ id: 244, chance: 0.03 }],
+    bgClass: 'bg-zone-volcano',
     bg: 'linear-gradient(160deg,#2a1810 0%,#5a3020 50%,#1a1008 100%)',
   },
   {
@@ -328,6 +352,7 @@ export const ZONES = [
     maxLevel: 24,
     unlockCost: 1100000,
     pokemon: [21, 23, 183, 179, 203, 216],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#3a2a1a 0%,#6b4a28 45%,#2a2018 100%)',
   },
   {
@@ -340,6 +365,7 @@ export const ZONES = [
     maxLevel: 28,
     unlockCost: 1300000,
     pokemon: [66, 67, 74, 75, 183, 206, 236],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#1a2228 0%,#3a4850 50%,#12181c 100%)',
   },
   {
@@ -353,6 +379,7 @@ export const ZONES = [
     unlockCost: 1500000,
     pokemon: [60, 61, 118, 129, 130, 223],
     rare: [{ id: 130, chance: 0.08 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a2838 0%,#2a4868 50%,#102028 100%)',
   },
   {
@@ -366,6 +393,7 @@ export const ZONES = [
     unlockCost: 1800000,
     pokemon: [41, 42, 124, 220, 221, 225],
     rare: [{ id: 238, chance: 0.05 }],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#4a6a8a 50%,#152535 100%)',
   },
   {
@@ -379,6 +407,7 @@ export const ZONES = [
     unlockCost: 2000000,
     pokemon: [41, 74, 206, 202, 246],
     rare: [{ id: 246, chance: 0.06 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#0a0a12 0%,#1a1a28 50%,#08080e 100%)',
   },
   {
@@ -391,6 +420,7 @@ export const ZONES = [
     maxLevel: 48,
     unlockCost: 2400000,
     pokemon: [42, 67, 75, 95, 208, 247, 112],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2a32 0%,#4a4a58 50%,#1a1a22 100%)',
   },
   {
@@ -411,6 +441,7 @@ export const ZONES = [
       { id: 250, chance: 0.02 },
       { id: 251, chance: 0.01 },
     ],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2838 0%,#5a5878 45%,#181820 100%)',
   },
 
@@ -427,6 +458,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 3600000,
     pokemon: [261, 263, 265],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a4a2a 0%,#3a7a48 45%,#1e4028 100%)',
   },
   {
@@ -439,6 +471,7 @@ export const ZONES = [
     maxLevel: 7,
     unlockCost: 4000000,
     pokemon: [261, 263, 265, 270, 273, 280],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#203820 100%)',
   },
   {
@@ -452,6 +485,7 @@ export const ZONES = [
     unlockCost: 4600000,
     pokemon: [261, 263, 265, 266, 268, 285, 290],
     rare: [{ id: 287, chance: 0.05 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2818 0%,#1a4a30 50%,#0e2a1c 100%)',
   },
   {
@@ -464,6 +498,7 @@ export const ZONES = [
     maxLevel: 18,
     unlockCost: 5400000,
     pokemon: [43, 69, 278, 309, 311, 312, 316],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a3a4a 0%,#4a6a88 45%,#1e2838 100%)',
   },
   {
@@ -477,6 +512,7 @@ export const ZONES = [
     unlockCost: 6200000,
     pokemon: [41, 74, 293, 296, 302, 304],
     rare: [{ id: 304, chance: 0.08 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1a20 0%,#3a3a48 50%,#121218 100%)',
   },
   {
@@ -489,6 +525,7 @@ export const ZONES = [
     maxLevel: 14,
     unlockCost: 7000000,
     pokemon: [261, 263, 293, 276, 290, 322],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a2a1a 0%,#6a4a28 45%,#2a2018 100%)',
   },
   {
@@ -501,6 +538,7 @@ export const ZONES = [
     maxLevel: 16,
     unlockCost: 7800000,
     pokemon: [293, 294, 74, 304],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1814 0%,#3a3428 50%,#100e0c 100%)',
   },
   {
@@ -514,6 +552,7 @@ export const ZONES = [
     unlockCost: 9000000,
     pokemon: [43, 44, 263, 264, 315, 335, 357],
     rare: [{ id: 349, chance: 0.04 }],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a2a 0%,#2d6b4a 45%,#183828 100%)',
   },
   {
@@ -526,6 +565,7 @@ export const ZONES = [
     maxLevel: 32,
     unlockCost: 10500000,
     pokemon: [43, 44, 333, 335, 336, 352, 359],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a4a20 0%,#4a7a38 45%,#203820 100%)',
   },
   {
@@ -539,6 +579,7 @@ export const ZONES = [
     unlockCost: 12000000,
     pokemon: [92, 93, 353, 355, 361, 363],
     rare: [{ id: 358, chance: 0.05 }],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#1a1020 0%,#3a2040 50%,#120818 100%)',
   },
   {
@@ -552,6 +593,7 @@ export const ZONES = [
     unlockCost: 14000000,
     pokemon: [43, 44, 54, 84, 177, 203, 231, 314, 352],
     rare: [{ id: 357, chance: 0.06 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#2a5a28 0%,#4a8a40 45%,#284828 100%)',
   },
   {
@@ -564,6 +606,7 @@ export const ZONES = [
     maxLevel: 36,
     unlockCost: 16000000,
     pokemon: [41, 42, 363, 364, 361, 86],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a2838 0%,#3a5a70 50%,#142028 100%)',
   },
   {
@@ -576,6 +619,7 @@ export const ZONES = [
     maxLevel: 48,
     unlockCost: 19000000,
     pokemon: [42, 67, 75, 305, 308, 332, 344, 376],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2a32 0%,#4a4a58 50%,#1a1a22 100%)',
   },
   {
@@ -589,6 +633,7 @@ export const ZONES = [
     unlockCost: 24000000,
     pokemon: [42, 168, 333, 334, 344],
     rare: [{ id: 384, chance: 0.03 }],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#1a2a48 0%,#3a4a78 45%,#101830 100%)',
   },
   {
@@ -610,6 +655,7 @@ export const ZONES = [
       { id: 385, chance: 0.015 },
       { id: 386, chance: 0.02 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#102040 0%,#204080 45%,#081828 100%)',
   },
 
@@ -626,6 +672,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 36000000,
     pokemon: [396, 399, 403],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#2a4a30 0%,#4a7a48 45%,#203828 100%)',
   },
   {
@@ -638,6 +685,7 @@ export const ZONES = [
     maxLevel: 7,
     unlockCost: 40000000,
     pokemon: [396, 399, 401, 403],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a28 0%,#3a6a40 45%,#183020 100%)',
   },
   {
@@ -650,6 +698,7 @@ export const ZONES = [
     maxLevel: 12,
     unlockCost: 46000000,
     pokemon: [74, 41, 95, 66],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1510 0%,#3a3020 50%,#100c08 100%)',
   },
   {
@@ -662,6 +711,7 @@ export const ZONES = [
     maxLevel: 16,
     unlockCost: 54000000,
     pokemon: [399, 406, 417, 418, 422],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a3a4a 0%,#4a5a70 45%,#1e2830 100%)',
   },
   {
@@ -675,6 +725,7 @@ export const ZONES = [
     unlockCost: 62000000,
     pokemon: [10, 13, 265, 399, 406, 415, 425],
     rare: [{ id: 198, chance: 0.04 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2418 0%,#1a4030 50%,#0e281c 100%)',
   },
   {
@@ -687,6 +738,7 @@ export const ZONES = [
     maxLevel: 26,
     unlockCost: 72000000,
     pokemon: [66, 67, 74, 185, 397, 400, 426, 431],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a3a2a 0%,#5a5a40 45%,#282820 100%)',
   },
   {
@@ -700,6 +752,7 @@ export const ZONES = [
     unlockCost: 85000000,
     pokemon: [55, 195, 315, 397, 399, 451, 453, 455],
     rare: [{ id: 455, chance: 0.08 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#203820 100%)',
   },
   {
@@ -713,6 +766,7 @@ export const ZONES = [
     unlockCost: 100000000,
     pokemon: [42, 67, 75, 95, 208, 433, 436, 437],
     rare: [{ id: 480, chance: 0.02 }],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2838 0%,#4a4868 50%,#181820 100%)',
   },
   {
@@ -726,6 +780,7 @@ export const ZONES = [
     unlockCost: 115000000,
     pokemon: [215, 220, 221, 361, 459, 460],
     rare: [{ id: 461, chance: 0.05 }],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#4a6a8a 50%,#152535 100%)',
   },
   {
@@ -739,6 +794,7 @@ export const ZONES = [
     unlockCost: 130000000,
     pokemon: [54, 55, 399, 400],
     rare: [{ id: 480, chance: 0.05 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a3040 0%,#2a5080 50%,#102030 100%)',
   },
   {
@@ -752,6 +808,7 @@ export const ZONES = [
     unlockCost: 150000000,
     pokemon: [54, 55, 400],
     rare: [{ id: 482, chance: 0.05 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a2040 0%,#2a3880 50%,#101828 100%)',
   },
   {
@@ -765,6 +822,7 @@ export const ZONES = [
     unlockCost: 170000000,
     pokemon: [54, 215, 361],
     rare: [{ id: 481, chance: 0.05 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a2a38 0%,#3a5a78 50%,#142028 100%)',
   },
   {
@@ -777,6 +835,7 @@ export const ZONES = [
     maxLevel: 50,
     unlockCost: 200000000,
     pokemon: [42, 67, 75, 95, 419, 424, 435, 464],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2a32 0%,#4a4a58 50%,#1a1a22 100%)',
   },
   {
@@ -800,6 +859,7 @@ export const ZONES = [
       { id: 492, chance: 0.01 },
       { id: 493, chance: 0.008 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#1a0a28 0%,#3a1860 45%,#100418 100%)',
   },
 
@@ -816,6 +876,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 300000000,
     pokemon: [504, 506, 509],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#203820 100%)',
   },
   {
@@ -828,6 +889,7 @@ export const ZONES = [
     maxLevel: 8,
     unlockCost: 340000000,
     pokemon: [504, 506, 509, 519, 522],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a28 0%,#3a6a40 45%,#183020 100%)',
   },
   {
@@ -841,6 +903,7 @@ export const ZONES = [
     unlockCost: 400000000,
     pokemon: [504, 509, 517, 527],
     rare: [{ id: 517, chance: 0.1 }],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#2a1a3a 0%,#4a2a5a 50%,#1a1028 100%)',
   },
   {
@@ -853,6 +916,7 @@ export const ZONES = [
     maxLevel: 18,
     unlockCost: 460000000,
     pokemon: [511, 513, 515, 540, 543, 546, 548],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2818 0%,#1a4a30 50%,#0e2a1c 100%)',
   },
   {
@@ -866,6 +930,7 @@ export const ZONES = [
     unlockCost: 540000000,
     pokemon: [551, 554, 557, 559, 561],
     rare: [{ id: 555, chance: 0.04 }],
+    bgClass: 'bg-zone-desert',
     bg: 'linear-gradient(160deg,#4a3a1a 0%,#8a6a30 45%,#3a2a14 100%)',
   },
   {
@@ -879,6 +944,7 @@ export const ZONES = [
     unlockCost: 620000000,
     pokemon: [551, 552, 562, 563],
     rare: [{ id: 643, chance: 0.015 }, { id: 644, chance: 0.015 }],
+    bgClass: 'bg-zone-ruin',
     bg: 'linear-gradient(160deg,#3a2a18 0%,#6a4a28 50%,#2a1e10 100%)',
   },
   {
@@ -891,6 +957,7 @@ export const ZONES = [
     maxLevel: 28,
     unlockCost: 700000000,
     pokemon: [582, 583, 613, 614],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#3a5a7a 50%,#142028 100%)',
   },
   {
@@ -904,6 +971,7 @@ export const ZONES = [
     unlockCost: 800000000,
     pokemon: [525, 529, 595, 597, 599],
     rare: [{ id: 601, chance: 0.05 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#2a4a6a 50%,#102030 100%)',
   },
   {
@@ -917,6 +985,7 @@ export const ZONES = [
     unlockCost: 920000000,
     pokemon: [525, 527, 529, 532],
     rare: [{ id: 622, chance: 0.04 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1828 0%,#3a3850 50%,#101018 100%)',
   },
   {
@@ -929,6 +998,7 @@ export const ZONES = [
     maxLevel: 38,
     unlockCost: 1050000000,
     pokemon: [541, 544, 547, 550, 560, 587],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#2a4a30 0%,#4a7a48 45%,#203828 100%)',
   },
   {
@@ -942,6 +1012,7 @@ export const ZONES = [
     unlockCost: 1200000000,
     pokemon: [42, 215, 225, 361, 614, 615],
     rare: [{ id: 646, chance: 0.03 }],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2838 0%,#3a5a78 50%,#142028 100%)',
   },
   {
@@ -954,6 +1025,7 @@ export const ZONES = [
     maxLevel: 50,
     unlockCost: 1400000000,
     pokemon: [525, 533, 538, 539, 553, 560, 623],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2a32 0%,#4a4a58 50%,#1a1a22 100%)',
   },
   {
@@ -967,6 +1039,7 @@ export const ZONES = [
     unlockCost: 1700000000,
     pokemon: [550, 564, 565, 592, 593],
     rare: [{ id: 647, chance: 0.02 }],
+    bgClass: 'bg-zone-ruin',
     bg: 'linear-gradient(160deg,#0a1a2a 0%,#1a3a5a 50%,#081420 100%)',
   },
   {
@@ -991,6 +1064,7 @@ export const ZONES = [
       { id: 646, chance: 0.015 },
       { id: 649, chance: 0.01 },
     ],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#1a1028 0%,#3a2060 45%,#100818 100%)',
   },
 
@@ -1007,6 +1081,7 @@ export const ZONES = [
     maxLevel: 6,
     unlockCost: 2400000000,
     pokemon: [10, 13, 16, 263, 659, 661],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#203820 100%)',
   },
   {
@@ -1019,6 +1094,7 @@ export const ZONES = [
     maxLevel: 8,
     unlockCost: 2700000000,
     pokemon: [10, 13, 25, 511, 664, 665],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2818 0%,#1a4a30 50%,#0e2a1c 100%)',
   },
   {
@@ -1031,6 +1107,7 @@ export const ZONES = [
     maxLevel: 14,
     unlockCost: 3100000000,
     pokemon: [63, 311, 312, 669, 672, 676],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a4a2a 0%,#6a7a40 45%,#283820 100%)',
   },
   {
@@ -1043,6 +1120,7 @@ export const ZONES = [
     maxLevel: 20,
     unlockCost: 3600000000,
     pokemon: [278, 559, 667, 674, 686],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a3a4a 0%,#4a5a70 45%,#1e2830 100%)',
   },
   {
@@ -1055,6 +1133,7 @@ export const ZONES = [
     maxLevel: 22,
     unlockCost: 4100000000,
     pokemon: [41, 293, 527, 610],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1820 0%,#3a3848 50%,#101018 100%)',
   },
   {
@@ -1068,6 +1147,7 @@ export const ZONES = [
     unlockCost: 4800000000,
     pokemon: [66, 111, 337, 338, 524, 703],
     rare: [{ id: 703, chance: 0.08 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#2a1a3a 0%,#5a3a6a 50%,#1a1028 100%)',
   },
   {
@@ -1080,6 +1160,7 @@ export const ZONES = [
     maxLevel: 36,
     unlockCost: 5600000000,
     pokemon: [70, 123, 127, 214, 455, 588, 616, 686],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a2a 0%,#2d6b4a 45%,#183828 100%)',
   },
   {
@@ -1093,6 +1174,7 @@ export const ZONES = [
     unlockCost: 6500000000,
     pokemon: [61, 124, 221, 582, 614, 712],
     rare: [{ id: 615, chance: 0.05 }],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#4a6a8a 50%,#152535 100%)',
   },
   {
@@ -1105,6 +1187,7 @@ export const ZONES = [
     maxLevel: 46,
     unlockCost: 7500000000,
     pokemon: [75, 208, 247, 324, 533, 623, 701],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a2a1a 0%,#6b4a28 45%,#2a2018 100%)',
   },
   {
@@ -1118,6 +1201,7 @@ export const ZONES = [
     unlockCost: 8800000000,
     pokemon: [39, 132, 164, 197, 301, 334, 575, 678],
     rare: [{ id: 132, chance: 0.06 }],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#2a4a38 0%,#4a7a58 45%,#203828 100%)',
   },
   {
@@ -1130,6 +1214,7 @@ export const ZONES = [
     maxLevel: 55,
     unlockCost: 10500000000,
     pokemon: [75, 95, 208, 305, 533, 623, 681, 701],
+    bgClass: 'bg-zone-mountain',
     bg: 'linear-gradient(160deg,#2a2a32 0%,#4a4a58 50%,#1a1a22 100%)',
   },
   {
@@ -1143,6 +1228,7 @@ export const ZONES = [
     unlockCost: 12500000000,
     pokemon: [75, 208, 305, 525, 533, 623],
     rare: [{ id: 716, chance: 0.02 }, { id: 717, chance: 0.02 }, { id: 718, chance: 0.02 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1828 0%,#3a3850 50%,#101018 100%)',
   },
   {
@@ -1163,6 +1249,7 @@ export const ZONES = [
       { id: 720, chance: 0.015 },
       { id: 721, chance: 0.015 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#201040 0%,#5030a0 45%,#180828 100%)',
   },
 
@@ -1179,6 +1266,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 18000000000,
     pokemon: [722, 734, 736],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a4a4a 0%,#2a7a6a 45%,#183838 100%)',
   },
   {
@@ -1191,6 +1279,7 @@ export const ZONES = [
     maxLevel: 10,
     unlockCost: 20000000000,
     pokemon: [19, 734, 736, 739, 742],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a4a30 0%,#4a7a48 45%,#203828 100%)',
   },
   {
@@ -1204,6 +1293,7 @@ export const ZONES = [
     unlockCost: 23000000000,
     pokemon: [41, 50, 734, 736],
     rare: [{ id: 735, chance: 0.05 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a2a18 0%,#3a4a30 50%,#121c10 100%)',
   },
   {
@@ -1216,6 +1306,7 @@ export const ZONES = [
     maxLevel: 16,
     unlockCost: 27000000000,
     pokemon: [21, 56, 734, 741, 742, 744],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#2a3a4a 0%,#4a5a70 45%,#1e2830 100%)',
   },
   {
@@ -1229,6 +1320,7 @@ export const ZONES = [
     unlockCost: 32000000000,
     pokemon: [54, 60, 118, 751, 753],
     rare: [{ id: 747, chance: 0.05 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a3a3a 0%,#2a6a5a 45%,#183030 100%)',
   },
   {
@@ -1242,6 +1334,7 @@ export const ZONES = [
     unlockCost: 38000000000,
     pokemon: [58, 126, 240, 757, 758],
     rare: [{ id: 105, chance: 0.06 }],
+    bgClass: 'bg-zone-volcano',
     bg: 'linear-gradient(160deg,#3a1a10 0%,#8a3a20 45%,#2a1008 100%)',
   },
   {
@@ -1255,6 +1348,7 @@ export const ZONES = [
     unlockCost: 45000000000,
     pokemon: [10, 46, 438, 753, 761, 764],
     rare: [{ id: 763, chance: 0.04 }],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2818 0%,#1a5a30 50%,#0e2a1c 100%)',
   },
   {
@@ -1267,6 +1361,7 @@ export const ZONES = [
     maxLevel: 30,
     unlockCost: 52000000000,
     pokemon: [50, 51, 74, 75],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#2a1a10 0%,#5a3a20 50%,#1a1008 100%)',
   },
   {
@@ -1280,6 +1375,7 @@ export const ZONES = [
     unlockCost: 60000000000,
     pokemon: [92, 93, 353, 708, 769],
     rare: [{ id: 770, chance: 0.04 }],
+    bgClass: 'bg-zone-ruin',
     bg: 'linear-gradient(160deg,#1a1020 0%,#3a2040 50%,#120818 100%)',
   },
   {
@@ -1292,6 +1388,7 @@ export const ZONES = [
     maxLevel: 50,
     unlockCost: 72000000000,
     pokemon: [51, 328, 551, 553, 749],
+    bgClass: 'bg-zone-desert',
     bg: 'linear-gradient(160deg,#4a3a1a 0%,#8a6a30 45%,#3a2a14 100%)',
   },
   {
@@ -1305,6 +1402,7 @@ export const ZONES = [
     unlockCost: 88000000000,
     pokemon: [42, 75, 553, 715, 782],
     rare: [{ id: 784, chance: 0.03 }],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1828 0%,#3a3850 50%,#101018 100%)',
   },
   {
@@ -1329,6 +1427,7 @@ export const ZONES = [
       { id: 801, chance: 0.01 },
       { id: 802, chance: 0.01 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#0a1a2a 0%,#1a3a6a 40%,#2a1050 100%)',
   },
 
@@ -1345,6 +1444,7 @@ export const ZONES = [
     maxLevel: 5,
     unlockCost: 120000000000,
     pokemon: [810, 819, 821],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#203820 100%)',
   },
   {
@@ -1357,6 +1457,7 @@ export const ZONES = [
     maxLevel: 10,
     unlockCost: 140000000000,
     pokemon: [10, 13, 819, 821, 827, 831],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a28 0%,#3a6a40 45%,#183020 100%)',
   },
   {
@@ -1370,6 +1471,7 @@ export const ZONES = [
     unlockCost: 165000000000,
     pokemon: [263, 659, 819, 821, 827, 831, 833, 835],
     rare: [{ id: 833, chance: 0.06 }],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a4a2a 0%,#6a7a40 45%,#283820 100%)',
   },
   {
@@ -1382,6 +1484,7 @@ export const ZONES = [
     maxLevel: 22,
     unlockCost: 195000000000,
     pokemon: [90, 278, 422, 692, 846, 847],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#2a4a6a 50%,#102030 100%)',
   },
   {
@@ -1394,6 +1497,7 @@ export const ZONES = [
     maxLevel: 24,
     unlockCost: 230000000000,
     pokemon: [50, 95, 527, 837, 850],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1510 0%,#3a3020 50%,#100c08 100%)',
   },
   {
@@ -1406,6 +1510,7 @@ export const ZONES = [
     maxLevel: 30,
     unlockCost: 270000000000,
     pokemon: [263, 533, 749, 821, 856, 859],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#2a3a28 0%,#4a5a40 45%,#1e2820 100%)',
   },
   {
@@ -1418,6 +1523,7 @@ export const ZONES = [
     maxLevel: 36,
     unlockCost: 320000000000,
     pokemon: [328, 551, 559, 843, 844, 870],
+    bgClass: 'bg-zone-desert',
     bg: 'linear-gradient(160deg,#4a3a1a 0%,#8a6a30 45%,#3a2a14 100%)',
   },
   {
@@ -1431,6 +1537,7 @@ export const ZONES = [
     unlockCost: 380000000000,
     pokemon: [550, 621, 633, 704, 884],
     rare: [{ id: 884, chance: 0.06 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a2838 0%,#2a4868 50%,#102028 100%)',
   },
   {
@@ -1443,6 +1550,7 @@ export const ZONES = [
     maxLevel: 52,
     unlockCost: 450000000000,
     pokemon: [220, 361, 459, 613, 872, 875],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#4a6a8a 50%,#152535 100%)',
   },
   {
@@ -1462,6 +1570,7 @@ export const ZONES = [
       { id: 897, chance: 0.02 },
       { id: 898, chance: 0.015 },
     ],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2838 0%,#4a6a8a 45%,#142030 100%)',
   },
   {
@@ -1475,6 +1584,7 @@ export const ZONES = [
     unlockCost: 650000000000,
     pokemon: [83, 123, 127, 214, 763, 852, 865],
     rare: [{ id: 891, chance: 0.02 }],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a4a3a 0%,#2a7a58 45%,#183830 100%)',
   },
   {
@@ -1494,6 +1604,7 @@ export const ZONES = [
       { id: 898, chance: 0.015 },
       { id: 905, chance: 0.01 },
     ],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#1a2030 0%,#2a3a58 45%,#101820 100%)',
   },
 
@@ -1510,6 +1621,7 @@ export const ZONES = [
     maxLevel: 8,
     unlockCost: 900000000000,
     pokemon: [906, 915, 917, 921],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#2a4a28 0%,#4a7a40 45%,#203820 100%)',
   },
   {
@@ -1522,6 +1634,7 @@ export const ZONES = [
     maxLevel: 16,
     unlockCost: 1050000000000,
     pokemon: [48, 187, 915, 917, 926, 938],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#1a3a28 0%,#3a6a40 45%,#183020 100%)',
   },
   {
@@ -1534,6 +1647,7 @@ export const ZONES = [
     maxLevel: 14,
     unlockCost: 1200000000000,
     pokemon: [41, 74, 92, 949],
+    bgClass: 'bg-zone-cave',
     bg: 'linear-gradient(160deg,#1a1820 0%,#3a3848 50%,#101018 100%)',
   },
   {
@@ -1546,6 +1660,7 @@ export const ZONES = [
     maxLevel: 24,
     unlockCost: 1400000000000,
     pokemon: [278, 418, 960, 965, 971],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a3a4a 0%,#4a5a70 45%,#1e2830 100%)',
   },
   {
@@ -1558,6 +1673,7 @@ export const ZONES = [
     maxLevel: 26,
     unlockCost: 1650000000000,
     pokemon: [179, 396, 417, 921, 928, 940],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#3a4a2a 0%,#6a7a40 45%,#283820 100%)',
   },
   {
@@ -1571,6 +1687,7 @@ export const ZONES = [
     unlockCost: 1950000000000,
     pokemon: [27, 328, 551, 843, 968],
     rare: [{ id: 968, chance: 0.08 }],
+    bgClass: 'bg-zone-desert',
     bg: 'linear-gradient(160deg,#4a3a1a 0%,#8a6a30 45%,#3a2a14 100%)',
   },
   {
@@ -1583,6 +1700,7 @@ export const ZONES = [
     maxLevel: 32,
     unlockCost: 2300000000000,
     pokemon: [198, 215, 302, 944, 946, 953],
+    bgClass: 'bg-zone-forest',
     bg: 'linear-gradient(160deg,#0c2818 0%,#1a4a30 50%,#0e2a1c 100%)',
   },
   {
@@ -1595,6 +1713,7 @@ export const ZONES = [
     maxLevel: 40,
     unlockCost: 2700000000000,
     pokemon: [220, 361, 459, 614, 974],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2a3a 0%,#4a6a8a 50%,#152535 100%)',
   },
   {
@@ -1608,6 +1727,7 @@ export const ZONES = [
     unlockCost: 3200000000000,
     pokemon: [124, 225, 361, 615, 712, 975],
     rare: [{ id: 1002, chance: 0.02 }],
+    bgClass: 'bg-zone-snow',
     bg: 'linear-gradient(160deg,#1a2838 0%,#3a5a78 50%,#142028 100%)',
   },
   {
@@ -1621,6 +1741,7 @@ export const ZONES = [
     unlockCost: 3800000000000,
     pokemon: [55, 130, 550, 977, 978],
     rare: [{ id: 1003, chance: 0.02 }],
+    bgClass: 'bg-zone-water',
     bg: 'linear-gradient(160deg,#1a3040 0%,#2a5080 50%,#102030 100%)',
   },
   {
@@ -1639,6 +1760,7 @@ export const ZONES = [
       { id: 1009, chance: 0.015 },
       { id: 1010, chance: 0.015 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#1a2a1a 0%,#2a4a38 40%,#0a1820 100%)',
   },
   {
@@ -1658,6 +1780,7 @@ export const ZONES = [
       { id: 1024, chance: 0.01 },
       { id: 1025, chance: 0.008 },
     ],
+    bgClass: 'bg-zone-mystic',
     bg: 'linear-gradient(160deg,#0a1a18 0%,#1a3a40 40%,#081028 100%)',
   },
   {
@@ -1677,6 +1800,7 @@ export const ZONES = [
       { id: 1004, chance: 0.025 },
       { id: 1011, chance: 0.02 },
     ],
+    bgClass: 'bg-zone-route',
     bg: 'linear-gradient(160deg,#2a3a28 0%,#4a5a40 45%,#1e2820 100%)',
   },
   {
@@ -1700,6 +1824,7 @@ export const ZONES = [
       { id: 1022, chance: 0.01 },
       { id: 1023, chance: 0.01 },
     ],
+    bgClass: 'bg-zone-city',
     bg: 'linear-gradient(160deg,#1a2a40 0%,#2a4a70 45%,#102030 100%)',
   },
 ];
@@ -1719,3 +1844,10 @@ export const ALL_STARTERS = {
 
 /** Starters nouvelle partie (Gen 1 pour l’instant) */
 export const STARTERS = ALL_STARTERS[1];
+
+
+/** Classe CSS d’ambiance de combat pour une zone */
+export function resolveZoneBgClass(zone) {
+  if (!zone) return 'bg-zone-route';
+  return zone.bgClass || 'bg-zone-route';
+}

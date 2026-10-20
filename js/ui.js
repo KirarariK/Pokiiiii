@@ -11,6 +11,7 @@ import {
   allSpecies,
 } from './pokemon.js';
 import { BALLS, ZONES, BRAND, isPokemonBusy } from './game.js';
+import { resolveZoneBgClass } from './data/zones.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
 import { icon } from './icons.js';
 import { renderEventBanner } from './events.js';
@@ -26,6 +27,10 @@ const REGION_FR = {
   galar: 'Galar',
   paldea: 'Paldea',
 };
+
+function battleZoneTone(zone) {
+  return resolveZoneBgClass(zone);
+}
 
 /** État filtre statut Pokédex (complète opts de main.js) */
 const dexExtra = { status: 'all' };
@@ -91,7 +96,7 @@ export function renderPokeCard(poke, opts = {}) {
         <div class="poke-card-glow" aria-hidden="true"></div>
         <img src="${artUrl(poke.speciesId)}" alt="${name}" loading="lazy"
           onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
-        ${poke.shiny ? '<span class="shiny-badge shiny-sparkle" title="Chromatique">✨</span>' : ''}
+        ${poke.shiny ? `<span class="shiny-badge shiny-sparkle" title="Chromatique">${icon('sparkle')}</span>` : ''}
         ${evo ? '<span class="evo-badge">Évoluer</span>' : ''}
         <span class="card-gen gen-pill">G${sp?.generation || '?'}</span>
       </div>
@@ -111,24 +116,6 @@ export function renderPokeCard(poke, opts = {}) {
         ${opts.actions || ''}
       </div>
     </article>`;
-}
-
-
-/** Classe CSS d’ambiance selon le nom / id de zone */
-function battleZoneTone(zone) {
-  if (!zone) return '';
-  const key = `${zone.id} ${zone.name} ${zone.desc}`.toLowerCase();
-  if (/grotte|cave|tunnel|moon|seleni|dark|obscur|mine|cristal/.test(key)) {
-    return 'bg-zone-cave';
-  }
-  if (/forêt|forest|bois|jungle|safari/.test(key)) return 'bg-zone-forest';
-  if (/mont|mountain|peak|route\s*victoire|summit|neige|ice|glace/.test(key)) {
-    return 'bg-zone-mountain';
-  }
-  if (/eau|lake|mer|ocean|surf|plage|beach|river|lac|archipel/.test(key)) {
-    return 'bg-zone-water';
-  }
-  return '';
 }
 
 function floatHtml(float, side) {
@@ -190,7 +177,7 @@ export function renderBattle(state, battle) {
           <div class="battle-info">
             <div class="battle-role">Votre Pokémon</div>
             <div class="battle-name">
-              ${pokeName(fighter)}${fighter.shiny ? ' <span class="shiny-inline">✨</span>' : ''}
+              ${pokeName(fighter)}${fighter.shiny ? ` <span class="shiny-inline">${icon('sparkle')}</span>` : ''}
               <span>N.${fighter.level}</span>
             </div>
             <div class="types">${typeBadges(fSp?.types)}</div>
