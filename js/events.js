@@ -6,9 +6,9 @@ export const EVENT_DEFS = {
   shinyBoost: {
     id: 'shinyBoost',
     title: 'Chance aura rare',
-    desc: 'Taux de aura rares ×8 aujourd’hui',
-    short: 'Aura rare ×8',
-    shinyMult: 8,
+    desc: 'Taux d’auras rares ×5 aujourd’hui',
+    short: 'Aura rare ×5',
+    shinyMult: 5,
     xpMult: 1,
     moneyMult: 1,
   },

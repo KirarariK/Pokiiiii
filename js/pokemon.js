@@ -173,27 +173,60 @@ export function effectivenessLabel(mult) {
   return '';
 }
 
-/** Dégâts 1v1 — physique avec STAB + types */
-export function calcDamage(attacker, defender, power = 55) {
+/**
+ * Dégâts 1v1 — physique + STAB léger + types.
+ * Soft-cap anti one-shot : max ~33% PV / coup (~38% si super efficace).
+ */
+export function calcDamage(attacker, defender, power = 46) {
   const atkSp = getSpecies(attacker.speciesId);
   const defSp = getSpecies(defender.speciesId);
   if (!atkSp || !defSp) {
     return { damage: 0, typeMult: 0, stab: 1, atkType: null, label: effectivenessLabel(0) };
   }
   const atkType = atkSp.types[0];
-  const stab = atkSp.types.includes(atkType) ? 1.5 : 1;
-  const typeMult = typeEffectiveness(atkType, defSp.types);
+  const stab = atkSp.types.includes(atkType) ? 1.25 : 1;
+  let typeMult = typeEffectiveness(atkType, defSp.types);
+  // Évite les cascades 4× trop brutales
+  typeMult = Math.min(2, Math.max(0, typeMult));
   if (typeMult === 0) {
     return { damage: 0, typeMult, stab, atkType, label: effectivenessLabel(0) };
   }
   const random = 0.85 + Math.random() * 0.15;
+  // Blend atk/spa pour ne pas rendre les builds spa inutiles
+  const offense = attacker.atk * 0.7 + (attacker.spa || attacker.atk) * 0.3;
+  const defense = Math.max(1, defender.def * 0.7 + (defender.spd || defender.def) * 0.3);
   const base =
-    (((2 * attacker.level) / 5 + 2) * power * (attacker.atk / Math.max(1, defender.def))) /
-      50 +
-    2;
-  const dmg = Math.max(1, Math.floor(base * stab * typeMult * random));
+    (((2 * attacker.level) / 5 + 2) * power * (offense / defense)) / 50 + 2;
+  let dmg = Math.max(1, Math.floor(base * stab * typeMult * random));
+
+  const maxHp = Math.max(1, defender.maxHp || 1);
+  const softCap = Math.floor(maxHp * (typeMult >= 2 ? 0.38 : 0.32));
+  if (dmg > softCap) dmg = softCap;
+  // Écart de niveau : un ninja nettement plus faible ne one-shot pas
+  const lvlGap = (attacker.level || 1) - (defender.level || 1);
+  if (lvlGap < -8) dmg = Math.max(1, Math.floor(dmg * 0.6));
+  if (lvlGap > 10) dmg = Math.min(dmg, Math.floor(maxHp * 0.45));
+  // Écart de puissance (BST) : un dieu n’écrase pas un genin en 2 coups
+  const atkBst =
+    (atkSp.hp || 0) +
+    (atkSp.atk || 0) +
+    (atkSp.def || 0) +
+    (atkSp.spa || 0) +
+    (atkSp.spd || 0) +
+    (atkSp.spe || 0);
+  const defBst =
+    (defSp.hp || 0) +
+    (defSp.atk || 0) +
+    (defSp.def || 0) +
+    (defSp.spa || 0) +
+    (defSp.spd || 0) +
+    (defSp.spe || 0);
+  if (atkBst - defBst > 180) {
+    dmg = Math.min(dmg, Math.floor(maxHp * 0.28));
+  }
+
   return {
-    damage: dmg,
+    damage: Math.max(1, dmg),
     typeMult,
     stab,
     atkType,
@@ -201,14 +234,40 @@ export function calcDamage(attacker, defender, power = 55) {
   };
 }
 
+/**
+ * Chance de sceau — courbe exigeante mais juste.
+ * - PV hauts : très faible (faut affaiblir)
+ * - PV bas : récompense, plafonnée (pas de free catch)
+ * ballBonus : 1 / 1.45 / 1.9 / 4.5
+ */
 export function catchChance(wild, ballBonus = 1) {
   const sp = getSpecies(wild.speciesId);
-  const rate = sp.captureRate || 45;
-  const a =
-    ((3 * wild.maxHp - 2 * wild.hp) * rate * ballBonus) / (3 * wild.maxHp);
-  const raw = Math.min(0.95, Math.max(0.04, a / 255));
-  const hpPct = wild.hp / wild.maxHp;
-  return Math.min(0.98, raw * (1.2 - hpPct * 0.45));
+  const rate = Number(sp?.captureRate) || 45;
+  const hpPct = Math.max(0.01, Math.min(1, wild.hp / Math.max(1, wild.maxHp)));
+  // Formule style « affaiblir d’abord »
+  const a = ((3 - 2 * hpPct) * rate * ballBonus) / 3;
+  let chance = a / 255;
+  // Bonus léger si vraiment affaibli (gameplay gratifiant, pas broken)
+  if (hpPct <= 0.15) chance *= 1.22;
+  else if (hpPct <= 0.25) chance *= 1.1;
+  // Malus formes avancées (BST élevé)
+  const bst =
+    (sp?.hp || 0) +
+    (sp?.atk || 0) +
+    (sp?.def || 0) +
+    (sp?.spa || 0) +
+    (sp?.spd || 0) +
+    (sp?.spe || 0);
+  if (bst >= 650) chance *= 0.62;
+  else if (bst >= 580) chance *= 0.75;
+  else if (bst >= 500) chance *= 0.88;
+  // Niveau adversaire
+  const lvl = wild.level || 1;
+  if (lvl >= 35) chance *= 0.9;
+  if (lvl >= 50) chance *= 0.82;
+
+  chance = Math.max(0.018, Math.min(0.68, chance));
+  return chance;
 }
 
 export function tryCatch(wild, ballBonus = 1) {
@@ -227,8 +286,9 @@ export function moneyFromWild(wild) {
 export function xpFromWild(wild, winnerLevel) {
   const sp = getSpecies(wild.speciesId);
   const baseExp = sp?.baseExp || 50;
-  const base = Math.floor((baseExp * wild.level) / 7);
-  const diff = Math.max(0, winnerLevel - wild.level);
-  const scale = Math.max(0.2, 1 - diff * 0.05);
+  const base = Math.floor((baseExp * wild.level) / 7.5);
+  const diff = Math.max(0, (winnerLevel || 1) - (wild.level || 1));
+  // Farming sur plus faibles : XP fortement réduite
+  const scale = Math.max(0.12, 1 - diff * 0.07);
   return Math.max(1, Math.floor(base * scale));
 }

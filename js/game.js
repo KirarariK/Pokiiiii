@@ -41,10 +41,11 @@ function rewardMults(state) {
 }
 
 export const BALLS = {
-  pokeball: { id: 'pokeball', name: 'Parchemin', bonus: 1, price: 200, icon: 'scroll' },
-  greatball: { id: 'greatball', name: 'Sceau de liaison', bonus: 1.5, price: 600, icon: 'seal' },
-  ultraball: { id: 'ultraball', name: 'Fûinjutsu', bonus: 2, price: 1200, icon: 'fuin' },
-  masterball: { id: 'masterball', name: 'Sceau des Cinq Kage', bonus: 100, price: 75000, icon: 'kage' },
+  pokeball: { id: 'pokeball', name: 'Parchemin', bonus: 1, price: 280, icon: 'scroll' },
+  greatball: { id: 'greatball', name: 'Sceau de liaison', bonus: 1.45, price: 750, icon: 'seal' },
+  ultraball: { id: 'ultraball', name: 'Fûinjutsu', bonus: 1.9, price: 1600, icon: 'fuin' },
+  // Plus de 100% : très fort mais pas cassé
+  masterball: { id: 'masterball', name: 'Sceau des Cinq Kage', bonus: 4.5, price: 90000, icon: 'kage' },
 };
 
 export const BRAND = {
@@ -127,8 +128,8 @@ export function createNewGame(starterId) {
     version: 3,
     playerName: 'Ninja',
     starterId: safeId,
-    money: 800,
-    balls: { pokeball: 15, greatball: 2, ultraball: 0, masterball: 0 },
+    money: 600,
+    balls: { pokeball: 10, greatball: 1, ultraball: 0, masterball: 0 },
     team: [starter],
     box: [],
     seen: { [safeId]: true },
@@ -213,6 +214,7 @@ export function loadGame() {
     ensureArena(state);
     ensureUnlockedGens(state);
     if (!state.minigame) state.minigame = { playsToday: 0, day: null, best: 0 };
+    if (state.autoCatchBall === 'masterball') state.autoCatchBall = 'pokeball';
     initDailyBaselines(state);
     ensureDaily(state);
     ensureSummon(state);
@@ -255,6 +257,36 @@ function randomFrom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function speciesPower(sp) {
+  if (!sp) return 400;
+  return (sp.hp || 0) + (sp.atk || 0) + (sp.def || 0) + (sp.spa || 0) + (sp.spd || 0) + (sp.spe || 0);
+}
+
+/** Tirage pondéré : formes trop fortes apparaissent rarement hors featured/rare. */
+function pickWeightedWild(ids, zoneMaxLevel) {
+  const entries = ids
+    .map((id) => {
+      const sp = getSpecies(id);
+      if (!sp) return null;
+      const power = speciesPower(sp);
+      // Plus la forme est forte, moins elle spawn (sauf zones haut niveau)
+      let w = 1000 / Math.max(220, power);
+      if (power > 580 && zoneMaxLevel < 40) w *= 0.15;
+      if (power > 640 && zoneMaxLevel < 50) w *= 0.2;
+      if (power > 680) w *= 0.35;
+      return { id, w };
+    })
+    .filter(Boolean);
+  if (!entries.length) return 14;
+  const total = entries.reduce((a, e) => a + e.w, 0);
+  let roll = Math.random() * total;
+  for (const e of entries) {
+    roll -= e.w;
+    if (roll <= 0) return e.id;
+  }
+  return entries[entries.length - 1].id;
+}
+
 export function spawnWild(state) {
   const zone = getZone(state.currentZone) || ZONES[0];
   const zoneGen = Number(zone.gen) || 1;
@@ -262,16 +294,17 @@ export function spawnWild(state) {
     const sp = getSpecies(id);
     return sp && (Number(sp.generation) || 1) === zoneGen;
   });
-  // Pool élargi : tous les shinobi de la saga + featured boostés
+  // Pool : featured ×3 + shinobi « raisonnables » de la saga
   const genPool = allSpecies()
     .filter((s) => (Number(s.generation) || 1) === zoneGen)
+    .filter((s) => speciesPower(s) <= 620 || zone.maxLevel >= 45)
     .map((s) => s.id);
   const pool = featured.length
-    ? [...featured, ...featured, ...genPool]
+    ? [...featured, ...featured, ...featured, ...genPool]
     : genPool.length
       ? genPool
       : zone.pokemon;
-  let speciesId = randomFrom(pool.length ? pool : [14]);
+  let speciesId = pickWeightedWild(pool.length ? pool : [14], zone.maxLevel || 20);
   if (zone.rare?.length) {
     for (const r of zone.rare) {
       const sp = getSpecies(r.id);
@@ -285,7 +318,7 @@ export function spawnWild(state) {
   if (!getSpecies(speciesId)) speciesId = featured.find((id) => getSpecies(id)) || genPool[0] || 14;
   const level =
     zone.minLevel + Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1));
-  const shinyRate = (1 / 4096) * rewardMults(state).shiny;
+  const shinyRate = (1 / 8192) * rewardMults(state).shiny;
   const wild = createPokemon(speciesId, level, { shinyRate });
   state.seen[speciesId] = true;
   if (zone.rare?.some((r) => r.id === speciesId)) {
@@ -538,9 +571,12 @@ export function attemptCatch(state, battle, ballId = 'pokeball') {
 
   state.balls[ballId]--;
   const ball = BALLS[ballId];
-  const bonus = ballId === 'masterball' ? 999 : ball.bonus;
-  const success = ballId === 'masterball' ? true : tryCatch(battle.wild, bonus);
-  const chance = ballId === 'masterball' ? 1 : catchChance(battle.wild, bonus);
+  const bonus = ball?.bonus ?? 1;
+  // Sceau des Cinq Kage : très fort (plafond 92%), plus de 100% auto
+  let chance = catchChance(battle.wild, bonus);
+  // Sceau Kage : très fiable mais pas garanti (78–88 %)
+  if (ballId === 'masterball') chance = Math.min(0.88, Math.max(chance, 0.78));
+  const success = Math.random() < chance;
 
   if (success) {
     const caught = createPokemon(battle.wild.speciesId, battle.wild.level, {
@@ -603,7 +639,7 @@ export function applyOfflineProgress(state) {
     const fake = createPokemon(sid, lvl, { shiny: false });
     xpGain += Math.floor(xpFromWild(fake, fighter.level) * mults.xp);
     moneyGain += Math.floor(moneyFromWild(fake) * mults.money);
-    if (state.autoCatch && (state.balls.pokeball || 0) > 0 && Math.random() < 0.1) {
+    if (state.autoCatch && (state.balls.pokeball || 0) > 0 && Math.random() < 0.06) {
       state.balls.pokeball--;
       const c = createPokemon(sid, lvl);
       state.caught[sid] = true;

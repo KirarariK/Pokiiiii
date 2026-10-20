@@ -51,6 +51,7 @@ import {
   buyTickets,
   claimDailyFreeTickets,
   takePendingDailyTicketGrant,
+  resetPoolsCache,
 } from './summon.js';
 import * as Audio from './audio.js';
 import {
@@ -123,6 +124,7 @@ const TICK_BASE_MS = 750;
 async function boot() {
   UI.$('#app').innerHTML = `<div class="loading"><div class="loading-orb"></div><span>Chargement ${BRAND.name}…</span></div>`;
   await loadSpecies();
+  resetPoolsCache();
 
   const params = new URLSearchParams(location.search);
   const demo = params.get('demo');
@@ -265,18 +267,19 @@ function renderShell() {
           <div class="battle-controls">
             <div id="catch-btns" class="catch-row"></div>
             <div class="control-dock">
-              <label class="pi-toggle" title="Sceau auto sous 40% PV">
+              <label class="pi-toggle" title="Sceau auto sous 25% PV">
                 <input type="checkbox" id="auto-catch" />
                 <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
                 <span class="pi-toggle-copy">
                   <strong>Auto-sceau</strong>
-                  <small>sous 40% PV</small>
+                  <small>sous 25% PV</small>
                 </span>
               </label>
               <label class="pi-field">
                 <span class="pi-field-label">${icon('scroll')} Sceau</span>
                 <select id="auto-ball" class="pi-select">
                   ${Object.values(BALLS)
+                    .filter((b) => b.id !== 'masterball')
                     .map((b) => `<option value="${b.id}">${b.name}</option>`)
                     .join('')}
                 </select>
@@ -403,12 +406,12 @@ function renderShell() {
                   <small>${state.settings?.mute ? 'Coupé' : 'Activé'}</small>
                 </span>
               </label>
-              <label class="pi-toggle" title="Sceau auto sous 40% PV">
+              <label class="pi-toggle" title="Sceau auto sous 25% PV">
                 <input type="checkbox" id="opt-auto-catch" ${state.autoCatch ? 'checked' : ''} />
                 <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
                 <span class="pi-toggle-copy">
                   <strong>Auto-sceau</strong>
-                  <small>sous 40% PV adversaire</small>
+                  <small>sous 25% PV adversaire</small>
                 </span>
               </label>
               <div class="settings-grid-2">
@@ -416,6 +419,7 @@ function renderShell() {
                   <span class="pi-field-label">${icon('ball')} Sceau auto</span>
                   <select id="opt-auto-ball" class="pi-select">
                     ${Object.values(BALLS)
+                      .filter((b) => b.id !== 'masterball')
                       .map(
                         (b) =>
                           `<option value="${b.id}" ${state.autoCatchBall === b.id ? 'selected' : ''}>${b.name}</option>`,
@@ -485,6 +489,8 @@ function setAutoCatch(on) {
 }
 
 function setAutoCatchBall(id) {
+  // Sceau Kage interdit en auto (trop fort / trop cher)
+  if (id === 'masterball') id = 'pokeball';
   state.autoCatchBall = id || 'pokeball';
   syncBattleControlsFromState();
   saveGame(state);
@@ -1178,8 +1184,11 @@ function gameTick() {
 
   if (state.autoCatch && battle.wild.hp > 0) {
     const hpPct = battle.wild.hp / battle.wild.maxHp;
-    if (hpPct <= 0.4) {
-      const ballId = state.autoCatchBall || 'pokeball';
+    // Auto-sceau seulement très bas PV — moins de farming gratuit
+    if (hpPct <= 0.25) {
+      let ballId = state.autoCatchBall || 'pokeball';
+      // Sceau Kage : jamais en auto (combat continue normalement)
+      if (ballId === 'masterball') ballId = 'pokeball';
       if ((state.balls[ballId] || 0) > 0) {
         const res = attemptCatch(state, battle, ballId);
         if (res.ok && res.success) {
