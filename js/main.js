@@ -74,9 +74,9 @@ function handleGymChallenge(gymId) {
   if (!res.ok) {
     const msg =
       res.reason === 'already'
-        ? 'Badge déjà obtenu'
+        ? 'Insigne déjà obtenu'
         : res.reason === 'no-gen-fighter'
-          ? res.message || `Il faut un shinobi Gen ${res.needGen}`
+          ? res.message || `Il faut un shinobi Saga ${res.needGen}`
           : res.reason === 'locked'
             ? res.needLeader
               ? `Battre ${res.needLeader} ou N.${res.need}`
@@ -84,16 +84,16 @@ function handleGymChallenge(gymId) {
             : 'Défi impossible';
     UI.toast(msg);
   } else if (res.win) {
-    const label = res.badgeName || res.badgeId || res.badge || 'Badge';
+    const label = res.badgeName || res.badgeId || res.badge || 'Insigne';
     UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} 両`);
     Audio.play('win');
-    // Champion de région → débloque la génération suivante
+    // Kage de village → débloque la saga suivante
     if (res.gym?.champion) {
       const next = (Number(res.gym.gen) || 1) + 1;
       const unlocked = unlockGen(state, next);
       if (unlocked.ok) {
         UI.toast(
-          `Gen ${unlocked.meta?.roman || next} (${unlocked.meta?.name || ''}) débloquée · ${unlocked.pokemon ? 'starter offert' : ''}`,
+          `Saga ${unlocked.meta?.roman || next} (${unlocked.meta?.name || ''}) débloquée · ${unlocked.pokemon ? 'recrue offerte' : ''}`,
         );
       }
     }
@@ -226,7 +226,7 @@ function startExisting(s) {
   if (expClaim.count || dayClaim.count) {
     const bits = [];
     if (expClaim.count) bits.push(`${expClaim.count} expédition${expClaim.count > 1 ? 's' : ''}`);
-    if (dayClaim.count) bits.push(`${dayClaim.count} pension`);
+    if (dayClaim.count) bits.push(`${dayClaim.count} dojo`);
     UI.toast(`Récompenses prêtes : ${bits.join(' · ')}`);
   }
 }
@@ -265,16 +265,16 @@ function renderShell() {
           <div class="battle-controls">
             <div id="catch-btns" class="catch-row"></div>
             <div class="control-dock">
-              <label class="pi-toggle" title="Capture auto sous 40% PV">
+              <label class="pi-toggle" title="Sceau auto sous 40% PV">
                 <input type="checkbox" id="auto-catch" />
                 <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
                 <span class="pi-toggle-copy">
-                  <strong>Auto-capture</strong>
+                  <strong>Auto-sceau</strong>
                   <small>sous 40% PV</small>
                 </span>
               </label>
               <label class="pi-field">
-                <span class="pi-field-label">${icon('ball')} Ball</span>
+                <span class="pi-field-label">${icon('scroll')} Sceau</span>
                 <select id="auto-ball" class="pi-select">
                   ${Object.values(BALLS)
                     .map((b) => `<option value="${b.id}">${b.name}</option>`)
@@ -292,7 +292,7 @@ function renderShell() {
                   <option value="5">5×</option>
                 </select>
               </label>
-              <button id="btn-heal" class="btn-heal" type="button">${icon('heal')} Centre</button>
+              <button id="btn-heal" class="btn-heal" type="button">${icon('heal')} Infirmerie</button>
             </div>
           </div>
           <div class="log-panel">
@@ -307,11 +307,11 @@ function renderShell() {
         <section id="panel-pokemon" class="panel">
           <div class="panel-head">
             <h2>Shinobi</h2>
-            <button id="btn-evolve-all" class="btn-secondary" type="button">Tout évoluer</button>
+            <button id="btn-evolve-all" class="btn-secondary" type="button">Tout progresser</button>
           </div>
-          <h3 class="subhead">Équipe <small class="muted">(lead = combat 1v1)</small></h3>
+          <h3 class="subhead">Escouade <small class="muted">(avant-garde = duel 1v1)</small></h3>
           <div id="team-grid" class="card-grid"></div>
-          <h3 class="subhead">Boîte PC</h3>
+          <h3 class="subhead">Réserve</h3>
           <div id="box-grid" class="card-grid"></div>
         </section>
 
@@ -334,7 +334,7 @@ function renderShell() {
         </section>
 
         <section id="panel-dex" class="panel">
-          <div class="panel-head"><h2>Bingo Book National</h2></div>
+          <div class="panel-head"><h2>Bingo Book</h2></div>
           <div id="dex-view"></div>
         </section>
 
@@ -394,7 +394,7 @@ function renderShell() {
             </div>
 
             <div class="settings-card">
-              <h3 class="settings-card-title">Audio & capture</h3>
+              <h3 class="settings-card-title">Audio & sceaux</h3>
               <label class="pi-toggle settings-mute" title="Couper le son">
                 <input type="checkbox" id="opt-mute" ${state.settings?.mute ? 'checked' : ''} />
                 <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
@@ -403,17 +403,17 @@ function renderShell() {
                   <small>${state.settings?.mute ? 'Coupé' : 'Activé'}</small>
                 </span>
               </label>
-              <label class="pi-toggle" title="Capture auto sous 40% PV">
+              <label class="pi-toggle" title="Sceau auto sous 40% PV">
                 <input type="checkbox" id="opt-auto-catch" ${state.autoCatch ? 'checked' : ''} />
                 <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
                 <span class="pi-toggle-copy">
-                  <strong>Auto-capture</strong>
-                  <small>sous 40% PV sauvage</small>
+                  <strong>Auto-sceau</strong>
+                  <small>sous 40% PV adversaire</small>
                 </span>
               </label>
               <div class="settings-grid-2">
                 <label class="pi-field">
-                  <span class="pi-field-label">${icon('ball')} Ball auto</span>
+                  <span class="pi-field-label">${icon('ball')} Sceau auto</span>
                   <select id="opt-auto-ball" class="pi-select">
                     ${Object.values(BALLS)
                       .map(
@@ -516,7 +516,7 @@ function bindShell() {
   UI.$('#btn-evolve-all')?.addEventListener('click', () => {
     Audio.play('ui');
     const n = autoEvolveAll(state);
-    UI.toast(n ? `${n} évolution(s)` : 'Aucune évolution disponible');
+    UI.toast(n ? `${n} progression(s)` : 'Aucune progression disponible');
     refreshAll();
   });
 
@@ -855,7 +855,7 @@ function onClick(e) {
       count: 'Choisis 1 à 3 shinobi',
       duration: 'Durée invalide',
       zone: 'Zone verrouillée',
-      'last-team': 'Garde au moins 1 lead disponible',
+      'last-team': 'Garde au moins 1 avant-garde disponible',
       busy: 'Shinobi déjà occupé',
       missing: 'Shinobi introuvable',
     };
@@ -886,11 +886,11 @@ function onClick(e) {
     const msgs = {
       count: 'Choisis exactement 2 shinobi',
       duration: 'Durée invalide',
-      'last-team': 'Garde au moins 1 lead disponible',
+      'last-team': 'Garde au moins 1 avant-garde disponible',
       busy: 'Shinobi déjà occupé',
       missing: 'Shinobi introuvable',
     };
-    UI.toast(res.ok ? 'Déposés à la pension' : msgs[res.reason] || 'Impossible');
+    UI.toast(res.ok ? 'Envoyés au dojo' : msgs[res.reason] || 'Impossible');
     if (res.ok) { saveGame(state); refreshAll(); }
     return;
   }
@@ -924,10 +924,10 @@ function onClick(e) {
   const catchBtn = e.target.closest('[data-catch]');
   if (catchBtn) {
     const res = attemptCatch(state, battle, catchBtn.dataset.catch);
-    if (!res.ok) UI.toast(res.reason === 'no-ball' ? 'Plus de Balls' : 'Capture impossible');
+    if (!res.ok) UI.toast(res.reason === 'no-ball' ? 'Plus de sceaux' : 'Sceau impossible');
     else if (res.success) {
       Audio.play('catch');
-      UI.toast(`Capturé ${pokeName(res.pokemon)}`);
+      UI.toast(`Scellé ${pokeName(res.pokemon)}`);
       showCatchModal(res.pokemon);
       battle = createBattle(state);
     } else {
@@ -947,12 +947,12 @@ function onClick(e) {
     const res = n >= 10 ? pullMulti(state, n) : pullOnce(state);
     if (!res.ok) {
       stage?.classList.remove('is-summoning');
-      UI.toast(res.reason === 'no-ticket' ? 'Pas assez de tickets' : 'Invocation impossible');
+      UI.toast(res.reason === 'no-ticket' ? 'Pas assez de tickets' : 'Kuchiyose impossible');
       refreshAll();
       return;
     }
     const results = res.results || [res];
-    UI.toast(n >= 10 ? `${results.length} invocations` : `Invocation : ${pokeName(res.pokemon)}`);
+    UI.toast(n >= 10 ? `${results.length} invocations` : `Kuchiyose : ${pokeName(res.pokemon)}`);
     Audio.play('catch');
     // Laisse le burst du portail, puis reveal
     setTimeout(() => {
@@ -987,14 +987,14 @@ function onClick(e) {
         UI.toast('Saga verrouillée');
       } else {
         battle = createBattle(state);
-        UI.toast(`Zone Gen ${currentPlayGen(state)}`);
+        UI.toast(`Zone Saga ${currentPlayGen(state)}`);
       }
     } else {
       const res = unlockZone(state, id);
       if (!res?.ok) {
         UI.toast(
           res?.reason === 'gen-locked'
-            ? `Gen ${res.gen} verrouillée — battez le Champion précédent`
+            ? `Saga ${res.gen} verrouillée — battez le Kage précédent`
             : res?.reason === 'no-money'
               ? 'Fonds insuffisants'
               : 'Zone indisponible',
@@ -1014,7 +1014,7 @@ function onClick(e) {
     const { act: a, uid, i } = act.dataset;
     if (a === 'evolve') {
       const neu = tryEvolvePokemon(state, uid);
-      if (neu) UI.toast(`Évolution en ${neu.nameFr}`);
+      if (neu) UI.toast(`Progression : ${neu.nameFr}`);
     } else if (a === 'box') moveToBox(state, uid);
     else if (a === 'team') {
       if (!moveToTeam(state, uid)) UI.toast('Équipe pleine (6 max)');
@@ -1044,9 +1044,9 @@ function showCatchModal(poke) {
   const sp = getSpecies(poke.speciesId);
   UI.showModal(`
     <div class="catch-modal">
-      <h2>${displayName(sp)} capturé</h2>
+      <h2>${displayName(sp)} scellé</h2>
       <img src="${artUrl(poke.speciesId)}" alt="" />
-      <p><strong>N.${poke.level}</strong> · Gen ${sp.generation}${poke.shiny ? ' · Chromatique' : ''}</p>
+      <p><strong>N.${poke.level}</strong> · Saga ${sp.generation}${poke.shiny ? ' · Aura rare' : ''}</p>
       <button class="btn-primary" id="close-modal" type="button">Continuer</button>
     </div>
   `);
@@ -1059,7 +1059,7 @@ function refreshBattleLive({ syncQuests = false } = {}) {
   if (syncQuests) syncQuestProgress(state);
   UI.updateHud(state);
 
-  // Patch DOM in-place : pas de innerHTML sur l’arène (évite le flicker sprites)
+  // Patch DOM in-place : pas de innerHTML sur l’défi (évite le flicker sprites)
   const patched = typeof UI.patchBattle === 'function' && UI.patchBattle(state, battle);
   if (!patched && UI.$('#battle-view')) {
     UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
@@ -1104,8 +1104,8 @@ function refreshActivePanel() {
   if (t === 'expeditions' && UI.$('#expeditions-view') && Shell.renderExpeditionsPanel) {
     UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
   }
-  if (t === 'pension' && UI.$('#pension-view') && Shell.renderPensionPanel) {
-    UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
+  if (t === 'pension' && UI.$('#pension-view') && Shell.renderDojoPanel) {
+    UI.$('#pension-view').innerHTML = Shell.renderDojoPanel(state);
   }
   if (t === 'ascension' && UI.$('#ascension-view')) {
     UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
@@ -1132,7 +1132,7 @@ function refreshActivePanel() {
             saveGame(state);
             pushLeaderboard(state);
             UI.toast(
-              `Score ${res.score} · +${res.money}両${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
+              `Score ${res.score} · +${res.money}両${res.balls ? ` · +${res.balls} sceau` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
             );
             UI.updateHud(state);
           }
@@ -1184,7 +1184,7 @@ function gameTick() {
         const res = attemptCatch(state, battle, ballId);
         if (res.ok && res.success) {
           Audio.play('catch');
-          UI.toast(`Auto-capture : ${pokeName(res.pokemon)}`);
+          UI.toast(`Auto-sceau : ${pokeName(res.pokemon)}`);
           victoryHoldUntil = Date.now() + 480;
           refreshBattleLive({ syncQuests: true });
           return;

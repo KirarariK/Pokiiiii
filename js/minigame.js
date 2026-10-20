@@ -20,7 +20,7 @@ export function canPlayMinigame(state) {
 }
 
 /**
- * Récompense selon le score (0–100) : argent, Balls (« tickets »), XP lead + pass.
+ * Récompense selon le score (0–100) : argent, sceaux (« tickets »), XP lead + pass.
  */
 export function resolveMinigame(state, score) {
   ensureMinigame(state);
@@ -66,16 +66,16 @@ export function renderMinigamePanel(state) {
   return `
     <div class="panel-head"><h2>Mini-jeu</h2><span class="muted">${left}/${DAILY_LIMIT}</span></div>
     <div class="mg-card">${icon('dice')}<div>
-      <strong>Réaction Capture</strong>
+      <strong>Réaction Sceau</strong>
       <p class="muted">Lance, puis capture quand le curseur est au centre. Record : ${state.minigame.best || 0}</p>
     </div></div>
     <div class="mg-stage" id="mg-stage">
       <div class="mg-track"><div class="mg-zone"></div><div class="mg-cursor" id="mg-cursor"></div></div>
       <div class="mg-actions">
         <button type="button" class="btn-primary" id="mg-start" ${left <= 0 ? 'disabled' : ''}>Jouer</button>
-        <button type="button" class="btn-secondary" id="mg-click" disabled>Capturer</button>
+        <button type="button" class="btn-secondary" id="mg-click" disabled>Sceller</button>
       </div>
-      <p id="mg-result" class="muted">5 parties / jour · argent, Balls et XP selon la précision</p>
+      <p id="mg-result" class="muted">5 parties / jour · argent, sceaux et XP selon la précision</p>
     </div>`;
 }
 
@@ -117,7 +117,7 @@ export function bindMinigameHandlers(root, state, onDone) {
     start.disabled = !canPlayMinigame(state);
     if (result) {
       result.textContent = res.ok
-        ? `Score ${score} · +${res.money}両${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`
+        ? `Score ${score} · +${res.money}両${res.balls ? ` · +${res.balls} sceau` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`
         : 'Limite quotidienne atteinte';
     }
     onDone?.(res);

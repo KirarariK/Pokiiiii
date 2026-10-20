@@ -13,7 +13,7 @@ const STEPS = [
     id: 'catch',
     title: 'Sceller',
     body: 'Quand l’adversaire est affaibli, utilise un parchemin de sceau. L’auto-sceau peut le faire pour toi.',
-    tip: 'Boutons sceau sous l’arène',
+    tip: 'Boutons sceau sous l’défi',
   },
   {
     id: 'hub',

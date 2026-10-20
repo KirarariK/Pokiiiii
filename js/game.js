@@ -108,7 +108,7 @@ export function unlockGen(state, gen) {
   if (state.team.length < 6) state.team.push(gift);
   else state.box.push(gift);
 
-  const meta = GEN_META[g] || { name: `Gen ${g}`, roman: String(g) };
+  const meta = GEN_META[g] || { name: `Saga ${g}`, roman: String(g) };
   addLog(
     state,
     `Saga ${meta.roman} (${meta.name}) débloquée ! ${pokeName(gift)} rejoint l'escouade.`,
@@ -371,7 +371,7 @@ export function tryEvolvePokemon(state, uid) {
   if (!neu) return null;
   state.caught[neu.id] = true;
   state.seen[neu.id] = true;
-  addLog(state, `${oldName} évolue en ${displayName(neu)} !`, 'evolve');
+  addLog(state, `${oldName} progresse en ${displayName(neu)} !`, 'evolve');
   return neu;
 }
 
@@ -568,7 +568,7 @@ export function attemptCatch(state, battle, ballId = 'pokeball') {
     battle.result = 'catch';
     addLog(
       state,
-      `Capturé ${pokeName(caught)}${caught.shiny ? ' (chromatique)' : ''} avec ${ball.name} !`,
+      `Scellé ${pokeName(caught)}${caught.shiny ? ' (aura rare)' : ''} avec ${ball.name} !`,
       'catch'
     );
     return { ok: true, success: true, pokemon: caught, chance, ball };

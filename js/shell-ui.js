@@ -50,7 +50,7 @@ export function renderTopbar(state) {
         <span class="pi-logo">${icon('logo')}</span>
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
-          <small>${state.playerName || 'Ninja'} · N.${lvl} · Gen ${zone?.gen || 1} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
+          <small>${state.playerName || 'Ninja'} · N.${lvl} · Saga ${zone?.gen || 1} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
         </div>
       </div>
       <div class="pi-hud">
@@ -94,7 +94,7 @@ export function renderSideNav(active, state) {
         { id: 'battle', label: 'Combat', ico: 'swords' },
         { id: 'quests', label: 'Quêtes', ico: 'quest', badge: q },
         { id: 'pass', label: 'Pass', ico: 'pass', badge: pendingPassCount(state) },
-        { id: 'summon', label: 'Invocation', ico: 'summon', badge: state.summon?.tickets || 0 },
+        { id: 'summon', label: 'Kuchiyose', ico: 'summon', badge: state.summon?.tickets || 0 },
         { id: 'profile', label: 'Profil', ico: 'profile' },
       ],
     },
@@ -102,10 +102,10 @@ export function renderSideNav(active, state) {
       title: 'Aventure',
       items: [
         { id: 'zones', label: 'Zones', ico: 'map' },
-        { id: 'arenas', label: 'Arènes', ico: 'arena', badge: arenaN },
-        { id: 'pokemon', label: 'Escouade / Parchemins', ico: 'cube' },
+        { id: 'arenas', label: 'Défis Kage', ico: 'arena', badge: arenaN },
+        { id: 'pokemon', label: 'Escouade / Réserve', ico: 'cube' },
         { id: 'expeditions', label: 'Expéditions', ico: 'compass', badge: exN },
-        { id: 'pension', label: 'Pension', ico: 'egg', badge: dayN },
+        { id: 'pension', label: 'Dojo', ico: 'users', badge: dayN },
       ],
     },
     {
@@ -167,7 +167,7 @@ export function renderSideNav(active, state) {
       ${
         expanded
           ? ''
-          : `<p class="side-nav-hint">Pass, Boutique, Dex… via le <strong>Hub</strong></p>`
+          : `<p class="side-nav-hint">Pass, Boutique, Bingo… via le <strong>Hub</strong></p>`
       }
       </div>
       <div class="side-nav-foot">
@@ -223,7 +223,7 @@ export function renderHub(state) {
           <div class="hub-grid">
             ${tile('quests', 'Quêtes', 'quest', q)}
             ${tile('pass', 'Pass', 'pass', pendingPassCount(state))}
-            ${tile('summon', 'Invocation', 'summon', state.summon?.tickets || 0)}
+            ${tile('summon', 'Kuchiyose', 'summon', state.summon?.tickets || 0)}
             ${tile('profile', 'Profil', 'profile')}
           </div>
         </div>
@@ -232,11 +232,11 @@ export function renderHub(state) {
           <h3>Aventure</h3>
           <div class="hub-grid">
             ${tile('zones', 'Zones', 'map')}
-            ${tile('arenas', 'Arènes', 'arena', arenaN)}
+            ${tile('arenas', 'Défis Kage', 'arena', arenaN)}
             ${tile('battle', 'Combat', 'swords')}
-            ${tile('pokemon', 'Équipe / PC', 'cube')}
+            ${tile('pokemon', 'Escouade / Réserve', 'cube')}
             ${tile('expeditions', 'Expéditions', 'compass', exN)}
-            ${tile('pension', 'Pension', 'egg', dayN)}
+            ${tile('pension', 'Dojo', 'users', dayN)}
           </div>
         </div>
 
@@ -256,8 +256,8 @@ export function renderHub(state) {
         <div class="hub-section">
           <h3>Raccourcis</h3>
           <div class="hub-shortcuts">
-            <button type="button" class="hub-chip" data-hub="heal">${icon('heal')} Centre</button>
-            <button type="button" class="hub-chip" data-hub="dex">${icon('dex')} Dex</button>
+            <button type="button" class="hub-chip" data-hub="heal">${icon('heal')} Infirmerie</button>
+            <button type="button" class="hub-chip" data-hub="dex">${icon('dex')} Bingo</button>
             <button type="button" class="hub-chip" data-hub="settings">${icon('settings')} Options</button>
           </div>
         </div>
@@ -291,7 +291,7 @@ export function renderExpeditionsPanel(state) {
       </label>`
         )
         .join('')
-    : `<p class="muted">Aucun shinobi disponible (garde au moins 1 lead).</p>`;
+    : `<p class="muted">Aucun shinobi disponible (garde au moins 1 avant-garde).</p>`;
 
   const active = state.expeditions.filter((e) => !e.claimed);
   const list = active.length
@@ -328,7 +328,7 @@ export function renderExpeditionsPanel(state) {
       <span class="muted">${icon('compass')} temps réel</span>
     </div>
     <div class="ex-form">
-      <p class="muted">Envoie 1 à 3 shinobi explorer une zone. Ils sont indisponibles au combat jusqu’au retour. Récompenses : argent, Balls, XP partagée, chance de capture.</p>
+      <p class="muted">Envoie 1 à 3 shinobi explorer une zone. Ils sont indisponibles au combat jusqu’au retour. Récompenses : argent, sceaux, XP partagée, chance de sceau.</p>
       <div class="ex-picks">${picks}</div>
       <div class="ex-fields">
         <label class="field">Zone
@@ -344,7 +344,12 @@ export function renderExpeditionsPanel(state) {
     <div class="ex-list">${list}</div>`;
 }
 
+/** @deprecated alias — même panneau Dojo */
 export function renderPensionPanel(state) {
+  return renderDojoPanel(state);
+}
+
+export function renderDojoPanel(state) {
   ensureDaycare(state);
   const busy = busyPokemonUids(state);
   const avail = [...state.team, ...state.box].filter((p) => !busy.has(p.uid));
@@ -364,7 +369,7 @@ export function renderPensionPanel(state) {
       </label>`
         )
         .join('')
-    : `<p class="muted">Pas assez de shinobi libres (il faut en garder 1 en lead).</p>`;
+    : `<p class="muted">Pas assez de shinobi libres (il faut en garder 1 en avant-garde).</p>`;
 
   const jobs = state.daycare.filter((j) => !j.claimed);
   const list = jobs.length
@@ -382,7 +387,7 @@ export function renderPensionPanel(state) {
             .join(' + ');
           return `
         <article class="ex-card ${ready ? 'ready' : ''}">
-          <div class="ex-ico">${icon(ready ? 'egg' : 'clock')}</div>
+          <div class="ex-ico">${icon(ready ? 'users' : 'clock')}</div>
           <div class="ex-body">
             <strong>${ready ? 'Œuf prêt !' : 'Incubation…'}</strong>
             <p class="muted">${names}</p>
@@ -394,24 +399,24 @@ export function renderPensionPanel(state) {
         </article>`;
         })
         .join('')
-    : `<p class="muted">Aucun couple en pension.</p>`;
+    : `<p class="muted">Aucun duo au dojo.</p>`;
 
   return `
     <div class="panel-head">
-      <h2>Pension</h2>
-      <span class="muted">${icon('egg')} œufs</span>
+      <h2>Dojo</h2>
+      <span class="muted">${icon('users')} héritiers</span>
     </div>
     <div class="ex-form">
-      <p class="muted">Dépose 2 shinobi (pas le dernier lead). Après le délai, un œuf éclot en une forme de base de la lignée du 1er parent, ou une espèce commune de la même génération.</p>
+      <p class="muted">Dépose 2 shinobi (pas la dernière avant-garde). Après le délai, un héritier apparaît en une forme de base de la lignée du 1er parent, ou un shinobi commun de la même saga.</p>
       <div class="ex-picks">${picks}</div>
       <div class="ex-fields">
         <label class="field">Durée
           <select id="day-dur">${durOpts}</select>
         </label>
       </div>
-      <button type="button" class="btn-primary" data-start-day>Déposer à la pension</button>
+      <button type="button" class="btn-primary" data-start-day>Envoyer au dojo</button>
     </div>
-    <h3 class="subhead">En pension</h3>
+    <h3 class="subhead">En entraînement</h3>
     <div class="ex-list">${list}</div>`;
 }
 
@@ -514,10 +519,10 @@ export function renderProfile(state) {
       const t = byGen.totals[g] || 0;
       const c = byGen.caught[g] || 0;
       const p = t ? Math.round((c / t) * 100) : 0;
-      const meta = GEN_META[g] || { name: `Gen ${g}` };
+      const meta = GEN_META[g] || { name: `Saga ${g}` };
       return `
         <div class="dex-region-row" title="${meta.name} : ${c}/${t}">
-          <span class="dex-region-label"><em>G${g}</em> ${meta.name}</span>
+          <span class="dex-region-label"><em>S${g}</em> ${meta.name}</span>
           <div class="dex-region-bar"><div style="width:${p}%"></div></div>
           <span class="dex-region-pct">${c}/${t}</span>
         </div>`;
@@ -543,12 +548,12 @@ export function renderProfile(state) {
     </div>
     <div class="stat-grid">
       <div class="stat-box"><span>Combats</span><strong>${state.stats.battles}</strong></div>
-      <div class="stat-box"><span>Captures</span><strong>${state.stats.catches}</strong></div>
+      <div class="stat-box"><span>Sceaux</span><strong>${state.stats.catches}</strong></div>
       <div class="stat-box"><span>Argent gagné</span><strong>${state.stats.moneyEarned.toLocaleString('fr-FR')} 両</strong></div>
       <div class="stat-box"><span>Bingo Book</span><strong>${caughtN}/${total}</strong></div>
       <div class="stat-box"><span>Zone</span><strong>${zone?.name || '—'}</strong></div>
       <div class="stat-box"><span>Temps</span><strong>${Math.floor(state.stats.playTime / 60)} min</strong></div>
-      <div class="stat-box"><span>Badges</span><strong>${ownedBadgeCount(state)}</strong></div>
+      <div class="stat-box"><span>Insignes</span><strong>${ownedBadgeCount(state)}</strong></div>
     </div>`;
 }
 
@@ -601,8 +606,8 @@ export function renderSummonPanel(state) {
   return `
     <div class="summon-panel panel-enter">
       <div class="panel-head">
-        <h2>${icon('summon')} Invocation</h2>
-        <span class="muted">${sm.totalPulls} tirages · Gen ${playGen}</span>
+        <h2>${icon('summon')} Kuchiyose</h2>
+        <span class="muted">${sm.totalPulls} tirages · Saga ${playGen}</span>
       </div>
 
       <div class="summon-stage" id="summon-stage">
@@ -620,12 +625,12 @@ export function renderSummonPanel(state) {
           <span class="portal-spark s4"></span>
         </div>
         <div class="summon-stage-copy">
-          <strong>Portail Gen ${playGen}</strong>
-          <p>Invoque un shinobi de la génération de ta zone. Ticket gratuit chaque jour.</p>
+          <strong>Portail Saga ${playGen}</strong>
+          <p>Invoque un allié (kuchiyose) de la saga de ta zone. Ticket gratuit chaque jour.</p>
         </div>
         <div class="summon-actions">
           <button type="button" class="btn-primary summon-pull summon-btn-main" data-summon-pull="1" ${canPull ? '' : 'disabled'}>
-            ${icon('summon')} Invoquer ×1
+            ${icon('summon')} Kuchiyose ×1
           </button>
           <button type="button" class="btn-secondary summon-pull" data-summon-pull="10" ${canMulti ? '' : 'disabled'}>
             ${icon('dice')} ×${SUMMON.MULTI_COUNT}
@@ -657,7 +662,7 @@ export function renderSummonPanel(state) {
       </div>
 
       <div class="summon-pools">
-        <h3 class="subhead">Pools Gen ${playGen}</h3>
+        <h3 class="subhead">Pools Saga ${playGen}</h3>
         <div class="stat-grid summon-pool-grid">
           ${Object.entries(RARITY_LABELS)
             .map(
@@ -683,7 +688,7 @@ export function renderSummonRevealCard(result, delayMs = 0) {
           <img referrerpolicy="no-referrer" src="${artUrl(poke.speciesId)}" alt="" loading="lazy"
             onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
           <strong>${displayName(sp)}</strong>
-          <small>N.${poke.level}${poke.shiny ? ' · Chromatique' : ''} · Gen ${sp?.generation ?? '?'}</small>
+          <small>N.${poke.level}${poke.shiny ? ' · Aura rare' : ''} · Saga ${sp?.generation ?? '?'}</small>
         </div>
       </div>
     </article>`;

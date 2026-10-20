@@ -126,13 +126,13 @@ export function depositDaycare(state, { parentUids, durationMs }, extraBusy = ne
   state.daycare.push(job);
   addLog(
     state,
-    `Pension : ${pokeName(parents[0])} & ${pokeName(parents[1])} déposés`,
+    `Dojo : ${pokeName(parents[0])} & ${pokeName(parents[1])} déposés`,
     'heal'
   );
   return { ok: true, job };
 }
 
-/** Réclame tous les jobs de pension prêts (éclosions). */
+/** Réclame tous les jobs du dojo prêts (éclosions). */
 export function claimAllReadyDaycare(state, now = Date.now()) {
   ensureDaycare(state);
   const claimed = [];
@@ -169,6 +169,6 @@ export function claimDaycare(state, jobId) {
 
   job.claimed = true;
   const name = displayName(getSpecies(speciesId));
-  addLog(state, `L’œuf a éclos : ${name} (N.${hatchLevel}) !`, 'catch');
+  addLog(state, `L’héritier apparaît : ${name} (N.${hatchLevel}) !`, 'catch');
   return { ok: true, pokemon: baby };
 }

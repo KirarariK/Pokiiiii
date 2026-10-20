@@ -15,9 +15,9 @@ export const QUEST_DEFS = [
   },
   {
     id: 'catch_3',
-    title: 'Captureur',
+    title: 'Sceauleur',
     desc: 'Sceller 3 shinobi',
-    icon: 'ball',
+    icon: 'scroll',
     target: 3,
     track: 'catches',
     reward: { money: 2000, balls: { greatball: 2 } },

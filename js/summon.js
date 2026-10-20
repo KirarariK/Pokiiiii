@@ -3,7 +3,7 @@ import { addLog } from './game-log.js';
 import { todayKey } from './quests.js';
 import { currentPlayGen } from './game.js';
 
-/** Invocation / gacha Shinobiiii */
+/** Kuchiyose / gacha Shinobiiii */
 export const SUMMON = {
   FREE_DAILY: 1,
   TICKET_PRICE: 2500,
@@ -71,7 +71,7 @@ export function claimDailyFreeTickets(state) {
   pendingDailyTicketGrant = SUMMON.FREE_DAILY;
   addLog(
     state,
-    `Invocation : +${SUMMON.FREE_DAILY} ticket${SUMMON.FREE_DAILY > 1 ? 's' : ''} quotidien${SUMMON.FREE_DAILY > 1 ? 's' : ''}.`,
+    `Kuchiyose : +${SUMMON.FREE_DAILY} ticket${SUMMON.FREE_DAILY > 1 ? 's' : ''} quotidien${SUMMON.FREE_DAILY > 1 ? 's' : ''}.`,
     'unlock'
   );
   return { ok: true, tickets: state.summon.tickets, granted: SUMMON.FREE_DAILY };
@@ -232,7 +232,7 @@ export function pullOnce(state) {
   const label = RARITY_LABELS[rarity] || rarity;
   addLog(
     state,
-    `Invocation ${label} : ${pokeName(poke)}${poke.shiny ? ' (chromatique)' : ''} !`,
+    `Kuchiyose ${label} : ${pokeName(poke)}${poke.shiny ? ' (aura rare)' : ''} !`,
     rarity === 'legendary' || rarity === 'rare' ? 'unlock' : 'catch'
   );
 

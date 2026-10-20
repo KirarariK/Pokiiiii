@@ -44,7 +44,7 @@ export function ascendPreview(state) {
     xpMult: 1 + next * XP_PER_LEVEL,
     moneyMult: 1 + next * MONEY_PER_LEVEL,
     keepDex: Object.keys(state.caught || {}).length,
-    keepBadges: badgeList(state).length,
+    keepInsignes: badgeList(state).length,
   };
 }
 
@@ -61,7 +61,7 @@ export function performAscension(state) {
     STARTERS[0];
   const keptSeen = { ...(state.seen || {}) };
   const keptCaught = { ...(state.caught || {}) };
-  const keptBadges =
+  const keptInsignes =
     state.badges && typeof state.badges === 'object' && !Array.isArray(state.badges)
       ? { ...state.badges }
       : Object.fromEntries(badgeList(state).map((r) => [`region:${r}`, { region: r, at: Date.now() }]));
@@ -82,7 +82,7 @@ export function performAscension(state) {
   state.box = [];
   state.seen = keptSeen;
   state.caught = keptCaught;
-  state.badges = keptBadges;
+  state.badges = keptInsignes;
   state.unlockedZones = [ZONES[0].id];
   state.currentZone = ZONES[0].id;
   state.unlockedGens = [1];
@@ -145,8 +145,8 @@ export function renderAscensionPanel(state) {
       </div>
     </div>
     <div class="ascend-keep">
-      <p><strong>Conservé</strong> : Bingo Book (${preview.keepDex}), badges (${preview.keepBadges}), bonus d’ascension.</p>
-      <p><strong>Réinitialisé</strong> : argent, zones, équipe, boîte PC, expéditions, pension.</p>
+      <p><strong>Conservé</strong> : Bingo Book (${preview.keepDex}), badges (${preview.keepInsignes}), bonus d’ascension.</p>
+      <p><strong>Réinitialisé</strong> : argent, zones, équipe, réserve, expéditions, dojo.</p>
     </div>
     <div class="badge-row">${chips || '<span class="muted">Aucun insigne village pour l’instant</span>'}</div>
     <p class="muted">Condition : 5 zones débloquées, 15 captures, ou 2 badges.</p>

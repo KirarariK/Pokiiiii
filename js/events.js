@@ -5,9 +5,9 @@ import { todayKey } from './quests.js';
 export const EVENT_DEFS = {
   shinyBoost: {
     id: 'shinyBoost',
-    title: 'Chance chromatique',
-    desc: 'Taux de chromatiques ×8 aujourd’hui',
-    short: 'Chromatique ×8',
+    title: 'Chance aura rare',
+    desc: 'Taux de aura rares ×8 aujourd’hui',
+    short: 'Aura rare ×8',
     shinyMult: 8,
     xpMult: 1,
     moneyMult: 1,

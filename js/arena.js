@@ -1,5 +1,5 @@
 /**
- * Arènes / Champions — défis 1v1 auto vs équipe de gym
+ * Défis Kage / Champions — défis 1v1 auto vs équipe de gym
  */
 import {
   GYMS, getGym, previousGym, gymsByRegion, REGION_ORDER, REGION_LABELS,
@@ -123,7 +123,7 @@ export function challengeGym(state, gymId) {
       ok: false,
       reason: 'no-gen-fighter',
       needGen: gymGen,
-      message: `Il faut un shinobi Gen ${gymGen} vivant dans l’équipe pour ce défi.`,
+      message: `Il faut un shinobi saga ${gymGen} vivant dans l’escouade pour ce défi.`,
     };
   }
 
@@ -172,7 +172,7 @@ export function challengeGym(state, gymId) {
     champion: !!gym.champion,
   };
   state.arenaWins = (state.arenaWins || 0) + 1;
-  const kind = gym.champion ? 'Titre de Champion' : (gym.badgeName || 'Badge');
+  const kind = gym.champion ? 'Titre de Kage' : (gym.badgeName || 'Insigne');
   addLog(state, `${kind} remporté : ${gym.leaderName} (${REGION_LABELS[gym.region] || gym.region}) — +${gym.rewardMoney}両`, 'unlock');
   healTeamSilent(state);
   return { ok: true, win: true, gym, duels: duelLogs, playerFaints, money: gym.rewardMoney, reward: gym.rewardMoney, badgeId: gym.badgeId, badge: gym.badgeId, badgeName: gym.badgeName };
@@ -187,7 +187,7 @@ export function badgeCount(state) {
   return ownedBadgeIds(state).length;
 }
 
-/** Arènes actuellement défiables (compteur Hub) */
+/** Défis Kage actuellement défiables (compteur Hub) */
 export function readyGymCount(state) {
   ensureArena(state);
   return GYMS.filter((g) => canChallengeGym(state, g).ok).length;
@@ -223,7 +223,7 @@ function buildArenasHtml(state) {
   const lvl = teamMaxLevel(state);
   const showcase = GYMS.map((g) => {
     const owned = hasBadge(state, g.badgeId);
-    const label = owned ? (g.champion ? 'Champ.' : 'Badge') : '—';
+    const label = owned ? (g.champion ? 'Titre' : 'Insigne') : '—';
     return `<div class="badge-slot ${owned ? 'owned' : 'empty'}" title="${g.badgeName || g.leaderName} — ${TYPE_FR[g.type] || g.type}">
       ${badgeIconSvg(g.type, owned)}
       <span>${label}</span>
@@ -250,7 +250,7 @@ function buildArenasHtml(state) {
       }).join(', ');
       let status, btn;
       if (owned) {
-        status = `<span class="arena-status won">${g.badgeName || 'Badge'} obtenu</span>`;
+        status = `<span class="arena-status won">${g.badgeName || 'Insigne'} obtenu</span>`;
         btn = '<button type="button" class="btn-secondary" disabled>Obtenu</button>';
       } else if (gate.ok) {
         status = `<span class="arena-status ready">Disponible · N.${g.minTeamLevel}+</span>`;
@@ -267,7 +267,7 @@ function buildArenasHtml(state) {
           <div class="arena-badge-ico">${ico}</div>
           <div class="arena-body">
             <strong>${g.name}</strong>
-            <p>${g.champion ? 'Champion' : 'Champion d’arène'} <em>${g.leaderName}</em> · ${TYPE_FR[g.type] || g.type} · Gen ${g.gen}</p>
+            <p>${g.champion ? 'Kage' : 'Examinateur'} <em>${g.leaderName}</em> · ${TYPE_FR[g.type] || g.type} · Saga ${g.gen}</p>
             <p class="muted arena-team">${teamPreview}</p>
             <p class="muted">${g.badgeName} · ${g.rewardMoney.toLocaleString('fr-FR')} 両</p>
             ${status}
@@ -284,7 +284,7 @@ function buildArenasHtml(state) {
 
   return `
     <div class="panel-head">
-      <h2>${icon('arena')} Arènes</h2>
+      <h2>${icon('arena')} Défis Kage</h2>
       <span class="muted">${summary.owned}/${summary.total} badges · ${summary.wins} victoire(s) · Équipe N.${lvl}</span>
     </div>
     <div class="badge-showcase">
@@ -302,7 +302,7 @@ function buildArenasHtml(state) {
 }
 
 /**
- * Monte le panneau Arènes dans `root` et branche les défis via handlers.onChallenge(gymId).
+ * Monte le panneau Défis Kage dans `root` et branche les défis via handlers.onChallenge(gymId).
  */
 export function renderArenasPanel(root, state, handlers = {}) {
   if (!root) return;

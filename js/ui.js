@@ -106,9 +106,9 @@ export function renderPokeCard(poke, opts = {}) {
         <div class="poke-card-glow" aria-hidden="true"></div>
         <img referrerpolicy="no-referrer" src="${artUrl(poke.speciesId)}" alt="${name}" loading="lazy"
           onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
-        ${poke.shiny ? `<span class="shiny-badge shiny-sparkle" title="Chromatique">${icon('sparkle')}</span>` : ''}
-        ${evo ? '<span class="evo-badge">Évoluer</span>' : ''}
-        <span class="card-gen gen-pill">G${sp?.generation || '?'}</span>
+        ${poke.shiny ? `<span class="shiny-badge shiny-sparkle" title="Aura rare">${icon('sparkle')}</span>` : ''}
+        ${evo ? '<span class="evo-badge">Mode suivant</span>' : ''}
+        <span class="card-gen gen-pill">S${sp?.generation || '?'}</span>
       </div>
       <div class="poke-card-body">
         <div class="poke-card-title">
@@ -171,7 +171,7 @@ export function renderBattle(state, battle) {
     ? battle.result === 'win'
       ? 'Victoire'
       : battle.result === 'catch'
-        ? 'Capturé'
+        ? 'Scellé'
         : 'Défaite'
     : actingAlly
       ? `${pokeName(fighter)} attaque`
@@ -180,7 +180,7 @@ export function renderBattle(state, battle) {
   return `
     <div class="battle-arena duel bg-region bg-region-${regionKey} ${zoneTone}" style="--zone-bg:${zone?.bg || '#1a1a2e'}">
       <div class="battle-bg-overlay" aria-hidden="true"></div>
-      <div class="battle-zone-label">${zone?.name || ''}${regionLabel ? ` · ${regionLabel}` : ''} · Gen ${zone?.gen || '?'} · 1v1</div>
+      <div class="battle-zone-label">${zone?.name || ''}${regionLabel ? ` · ${regionLabel}` : ''} · Saga ${zone?.gen || '?'} · 1v1</div>
       ${renderEventBanner()}
       <div class="battle-layout duel-grid">
         <div class="battle-side ally ${actingAlly ? 'acting' : ''}" data-side="ally">
@@ -221,7 +221,7 @@ export function renderBattle(state, battle) {
             <div class="battle-platform enemy-platform" aria-hidden="true"></div>
           </div>
           <div class="battle-info">
-            <div class="battle-role">Sauvage</div>
+            <div class="battle-role">Shinobi adverse</div>
             <div class="battle-name">
               ${pokeName(wild)}${wild.shiny ? ` <span class="shiny-inline">${icon('sparkle')}</span>` : ''}
               <span>N.${wild.level}</span>
@@ -255,7 +255,7 @@ export function playCaptureShake() {
   setTimeout(() => el.classList.remove('capture-shake'), 900);
 }
 
-/** Shake automatique au clic Ball (sans toucher main.js) */
+/** Shake automatique au clic sceau (sans toucher main.js) */
 let captureShakeBound = false;
 function ensureCaptureShake() {
   if (captureShakeBound || typeof document === 'undefined') return;
@@ -341,7 +341,7 @@ function patchSideIdentity(sideRoot, img, poke, role) {
     if (role === 'enemy') {
       const meta = sideRoot.querySelector('.muted.tiny');
       if (meta) {
-        meta.textContent = `#${String(poke.speciesId).padStart(4, '0')} · G${sp?.generation || '?'}`;
+        meta.textContent = `#${String(poke.speciesId).padStart(4, '0')} · S${sp?.generation || '?'}`;
       }
       const wrap = sideRoot.querySelector('.enemy-wrap');
       if (wrap) {
@@ -367,7 +367,7 @@ function patchSideIdentity(sideRoot, img, poke, role) {
 
 /**
  * Met à jour le duel sans détruire le DOM (pas de flicker).
- * @returns {boolean} false seulement si l’arène n’existe pas encore
+ * @returns {boolean} false seulement si l’défi n’existe pas encore
  */
 export function patchBattle(state, battle) {
   const root = $('#battle-view');
@@ -395,7 +395,7 @@ export function patchBattle(state, battle) {
     ? battle.result === 'win'
       ? 'Victoire'
       : battle.result === 'catch'
-        ? 'Capturé'
+        ? 'Scellé'
         : 'Défaite'
     : next === 'player'
       ? `${pokeName(fighter)} attaque`
@@ -426,7 +426,7 @@ export function patchBattle(state, battle) {
   return true;
 }
 
-/** Met à jour les stocks Ball sans recréer les boutons si possible. */
+/** Met à jour les stocks sceau sans recréer les boutons si possible. */
 export function patchCatchButtons(state, battle) {
   const host = $('#catch-btns');
   if (!host) return false;
@@ -508,11 +508,11 @@ export function renderTeam(state) {
       const actions = `
         <div class="card-actions">
           ${busy ? '<em class="busy-tag">Indisponible</em>' : ''}
-          ${!ofGen ? `<em class="busy-tag">Hors Gen ${playGen}</em>` : ''}
-          ${isFighter ? '<em class="lead-tag">Combattant 1v1</em>' : ''}
-          ${!busy && canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Évoluer</button>` : ''}
-          ${!busy && state.team.length > 1 ? `<button data-act="box" data-uid="${p.uid}">→ PC</button>` : ''}
-          ${!busy && ofGen && i > 0 ? `<button data-act="up" data-i="${i}">↑ Lead</button>` : ''}
+          ${!ofGen ? `<em class="busy-tag">Hors Saga ${playGen}</em>` : ''}
+          ${isFighter ? '<em class="lead-tag">Avant-garde</em>' : ''}
+          ${!busy && canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Mode suivant</button>` : ''}
+          ${!busy && state.team.length > 1 ? `<button data-act="box" data-uid="${p.uid}">→ Réserve</button>` : ''}
+          ${!busy && ofGen && i > 0 ? `<button data-act="up" data-i="${i}">↑ Avant-garde</button>` : ''}
         </div>`;
       return renderPokeCard(p, {
         actions,
@@ -525,14 +525,14 @@ export function renderTeam(state) {
 
 export function renderBox(state) {
   if (!state.box.length) {
-    return `<p class="empty-hint">Le PC est vide. Scellez des shinobi !</p>`;
+    return `<p class="empty-hint">La réserve est vide. Scellez des shinobi !</p>`;
   }
   return state.box
     .map((p) => {
       const actions = `
         <div class="card-actions">
-          ${canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Évoluer</button>` : ''}
-          <button data-act="team" data-uid="${p.uid}" ${state.team.length >= 6 ? 'disabled' : ''}>→ Équipe</button>
+          ${canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Mode suivant</button>` : ''}
+          <button data-act="team" data-uid="${p.uid}" ${state.team.length >= 6 ? 'disabled' : ''}>→ Escouade</button>
         </div>`;
       return renderPokeCard(p, { actions });
     })
@@ -593,7 +593,7 @@ export function renderBingoBook(state, opts = {}) {
 
   const statusTabs = [
     ['all', 'Tous'],
-    ['caught', 'Capturés'],
+    ['caught', 'Scellés'],
     ['seen', 'Vus'],
     ['unknown', 'Inconnus'],
   ]
@@ -613,8 +613,8 @@ export function renderBingoBook(state, opts = {}) {
         <div class="dex-num">#${String(id).padStart(4, '0')}</div>
         <img src="${spriteUrl(id)}" alt="" class="${seen ? '' : 'silhouette'}" loading="lazy" />
         <div class="dex-name">${seen ? displayName(sp) : '???'}</div>
-        <div class="dex-gen">G${sp.generation}</div>
-        ${caught ? `<span class="dex-ball" title="Capturé">${icon('ball')}</span>` : ''}
+        <div class="dex-gen">S${sp.generation}</div>
+        ${caught ? `<span class="dex-ball" title="Scellé">${icon('scroll')}</span>` : ''}
         ${seen && !caught ? '<span class="dex-seen-dot" title="Vu"></span>' : ''}
       </div>`;
     })
@@ -623,7 +623,7 @@ export function renderBingoBook(state, opts = {}) {
   return `
     <div class="dex-toolbar">
       <div class="dex-summary">
-        <strong>${caughtCount}</strong>/${total} capturés · ${seenCount} vus
+        <strong>${caughtCount}</strong>/${total} scellés · ${seenCount} vus
         ${list.length !== total ? ` · affichage ${list.length}` : ''}
       </div>
       <div class="dex-search-wrap">
@@ -685,7 +685,7 @@ export function renderZones(state) {
     </div>`;
 
   let html = `<div class="zones-map">
-    <p class="muted zones-gen-hint">Combat & invocations : <strong>Gen ${playGen}</strong> uniquement (zone actuelle). Les gens suivantes se débloquent en battant le Champion.</p>
+    <p class="muted zones-gen-hint">Combat & kuchiyose : <strong>Saga ${playGen}</strong> uniquement (zone actuelle). Les sagas suivantes se débloquent en battant le Kage.</p>
     ${preview}`;
   for (const [key, list] of byRegion) {
     const [gen, region] = key.split('|');
@@ -694,7 +694,7 @@ export function renderZones(state) {
     html += `
       <section class="zone-region ${genOpen ? '' : 'gen-locked'}" data-region="${region}">
         <header class="zone-region-head region-title">
-          <h3>Gen ${gen} — ${regionName}${genOpen ? '' : ' · Verrouillé'}</h3>
+          <h3>Saga ${gen} — ${regionName}${genOpen ? '' : ' · Verrouillé'}</h3>
           <span class="muted">${genOpen ? `${list.length} zone${list.length > 1 ? 's' : ''}` : 'Champion précédent requis'}</span>
         </header>
         <div class="zones-list zone-region-grid">`;
@@ -717,7 +717,7 @@ export function renderZones(state) {
                 : '<em class="tag go">Explorer</em>'
               : genOpen
                 ? `<em class="tag cost">${z.unlockCost.toLocaleString('fr-FR')} 両</em>`
-                : '<em class="tag">Gen verrouillée</em>'
+                : '<em class="tag">Saga verrouillée</em>'
           }
         </div>
       </button>`;
@@ -734,7 +734,7 @@ export function renderShop(state) {
     .map(
       (b) => `
     <div class="shop-item">
-      <div class="shop-icon ico-wrap">${icon(b.icon || 'ball')}</div>
+      <div class="shop-icon ico-wrap">${icon(b.icon || 'scroll')}</div>
       <div>
         <strong>${b.name}</strong>
         <div class="muted">Bonus ×${b.bonus} · Stock: ${state.balls[b.id] || 0}</div>
@@ -751,7 +751,7 @@ export function renderShop(state) {
 /** Filtres journal — groupes logiques pour l’UI combat */
 export const LOG_FILTERS = [
   { id: 'all', label: 'Tout' },
-  { id: 'catch', label: 'Captures', types: ['catch'] },
+  { id: 'catch', label: 'Sceaux', types: ['catch'] },
   { id: 'battle', label: 'Combat', types: ['battle', 'faint', 'miss', 'level', 'evolve'] },
   { id: 'unlock', label: 'Débloc.', types: ['unlock'] },
   { id: 'shop', label: 'Boutique', types: ['shop', 'heal'] },
@@ -797,7 +797,7 @@ export function renderCatchButtons(state, battle) {
     .map((b) => {
       const n = state.balls[b.id] || 0;
       return `<button class="ball-btn" data-catch="${b.id}" ${!wildAlive || n <= 0 ? 'disabled' : ''}>
-        <span class="ball-ico">${icon(b.icon || 'ball')}</span>
+        <span class="ball-ico">${icon(b.icon || 'scroll')}</span>
         <span class="ball-label">${b.name}</span>
         <span class="ball-stock">${n}</span>
       </button>`;
@@ -855,8 +855,8 @@ export function renderStarterSelect(selectedGen = 1) {
     .map((g) => {
       const meta = GEN_META[g];
       const open = unlocked.includes(g);
-      return `<button type="button" class="chip starter-gen-chip ${playableGen === g ? 'active' : ''} ${open ? '' : 'locked'}" data-starter-gen="${g}" ${open ? '' : 'disabled'} title="${open ? meta.name : 'Battez le Champion de la gen précédente'}">
-        <span class="chip-gen">Gen ${meta.roman}</span>
+      return `<button type="button" class="chip starter-gen-chip ${playableGen === g ? 'active' : ''} ${open ? '' : 'locked'}" data-starter-gen="${g}" ${open ? '' : 'disabled'} title="${open ? meta.name : 'Battez le Kage de la saga précédente'}">
+        <span class="chip-gen">Saga ${meta.roman}</span>
         <small>${open ? meta.name : 'Verrouillé'}</small>
       </button>`;
     })
@@ -898,7 +898,7 @@ export function renderStarterSelect(selectedGen = 1) {
     <div class="starter-screen">
       <div class="starter-hero">
         <p class="brand-mark">${icon('logo')} ${BRAND.name}</p>
-        <h1>Choisis ton shinobi</h1>
+        <h1>Choisis ta première recrue</h1>
         <p class="subtitle">${BRAND.tagline} · Début obligatoirement en Saga I (Konoha)</p>
       </div>
       <div class="chip-row starter-gens">${tabs}</div>
