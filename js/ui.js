@@ -906,11 +906,12 @@ export function renderStarterSelect(selectedGen = 1) {
     localStorage.getItem('pokeidle_fan_save_v1');
 
   return `
-    <div class="starter-screen">
-      <div class="starter-hero">
-        <p class="brand-mark">${icon('logo')} ${BRAND.name}</p>
+    <div class="starter-screen" style="--starter-art:url('${BRAND.starterBg}')">
+      <div class="starter-hero" style="background-image:linear-gradient(180deg,rgba(10,7,5,.55),rgba(10,7,5,.82)),url('${BRAND.hero}');background-size:cover;background-position:center;">
+        <img class="brand-logo" src="${BRAND.logo}" alt="" width="64" height="64" />
+        <p class="brand-mark">${BRAND.name}</p>
         <h1>Choisis ta première recrue</h1>
-        <p class="subtitle">${BRAND.tagline} · Début obligatoirement en Saga I (Konoha)</p>
+        <p class="subtitle">${BRAND.tagline} · Début en Saga I (Konoha)</p>
       </div>
       <div class="chip-row starter-gens">${tabs}</div>
       <p class="starter-region">Région · ${meta.name} · Sagas II–IV via chaque finale de village</p>

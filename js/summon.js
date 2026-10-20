@@ -3,7 +3,7 @@ import { addLog } from './game-log.js';
 import { todayKey } from './quests.js';
 import { currentPlayGen } from './game.js';
 
-/** Kuchiyose / gacha Shinobiiii — rates anti-broken */
+/** Kuchiyose / gacha Nindō — rates anti-broken */
 export const SUMMON = {
   FREE_DAILY: 1,
   TICKET_PRICE: 4500,

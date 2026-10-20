@@ -122,7 +122,7 @@ let victoryHoldUntil = 0;
 const TICK_BASE_MS = 750;
 
 async function boot() {
-  UI.$('#app').innerHTML = `<div class="loading"><div class="loading-orb"></div><span>Chargement ${BRAND.name}…</span></div>`;
+  UI.$('#app').innerHTML = `<div class="loading"><img class="loading-brand" src="${BRAND.loading}" alt="" width="88" height="88" /><span>Chargement ${BRAND.name}…</span></div>`;
   await loadSpecies();
   resetPoolsCache();
 
@@ -295,7 +295,6 @@ function renderShell() {
                   <option value="5">5×</option>
                 </select>
               </label>
-              <button id="btn-heal" class="btn-heal" type="button">${icon('heal')} Infirmerie</button>
             </div>
           </div>
           <div class="log-panel">
@@ -512,13 +511,6 @@ function bindShell() {
   UI.$('#battle-speed')?.addEventListener('change', (e) => setBattleSpeed(e.target.value));
   UI.$('#opt-battle-speed')?.addEventListener('change', (e) => setBattleSpeed(e.target.value));
 
-  UI.$('#btn-heal')?.addEventListener('click', () => {
-    Audio.play('ui');
-    healTeam(state);
-    refreshAll();
-    UI.toast('Équipe soignée');
-  });
-
   UI.$('#btn-evolve-all')?.addEventListener('click', () => {
     Audio.play('ui');
     const n = autoEvolveAll(state);
@@ -656,7 +648,6 @@ function setTab(id) {
     minigame: 'minigame',
     leaderboard: 'leaderboard',
     settings: 'settings',
-    heal: 'battle',
   };
   const panelId = map[id] || 'battle';
   tab = panelId === 'battle' ? 'battle' : id === 'hub' ? tab : panelId;
@@ -831,13 +822,6 @@ function onClick(e) {
   if (hubTile) {
     Audio.play('ui');
     const id = hubTile.dataset.hub;
-    if (id === 'heal') {
-      healTeam(state);
-      closeHub();
-      setTab('battle');
-      UI.toast('Équipe soignée');
-      return;
-    }
     closeHub();
     setTab(id);
     return;

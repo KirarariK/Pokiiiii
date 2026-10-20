@@ -1,9 +1,9 @@
 {
-  "name": "shinobiiii",
-  "version": "2.0.0",
+  "name": "nindo",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Shinobiiii — idle Naruto fan (tous les ninja & modes)",
+  "description": "Nindō — forge ton chemin ninja (duels, collection, kuchiyose)",
   "scripts": {
     "start": "python3 -m http.server 4173 --bind 0.0.0.0",
     "serve": "python3 -m http.server 4173 --bind 0.0.0.0",

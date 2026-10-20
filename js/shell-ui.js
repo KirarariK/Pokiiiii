@@ -47,7 +47,7 @@ export function renderTopbar(state) {
   return `
     <header class="pi-topbar">
       <div class="pi-brand">
-        <span class="pi-logo">${icon('logo')}</span>
+        <img class="pi-logo-img" src="${BRAND.logo}" alt="" width="40" height="40" />
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
           <small>${state.playerName || 'Ninja'} · N.${lvl} · Saga ${zone?.gen || 1} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
@@ -151,7 +151,7 @@ export function renderSideNav(active, state) {
   return `
     <nav class="pi-side-nav ${expanded ? 'is-expanded' : 'is-compact'}" aria-label="Catégories">
       <div class="side-nav-brand" title="${BRAND.name}">
-        <span class="side-nav-logo">${icon('logo')}</span>
+        <img class="side-nav-logo-img" src="${BRAND.logo}" alt="" width="32" height="32" />
         <span class="side-nav-brand-text">${BRAND.name}</span>
       </div>
       <div class="side-nav-scroll">
@@ -179,10 +179,6 @@ export function renderSideNav(active, state) {
           <span class="nav-ico">${icon('hub')}${hubN > 0 ? `<span class="nav-badge">${hubN}</span>` : ''}</span>
           <span class="nav-label">Hub</span>
         </button>
-        <button type="button" class="side-nav-item" data-hub="heal" title="Infirmerie">
-          <span class="nav-ico">${icon('heal')}</span>
-          <span class="nav-label">Infirmerie</span>
-        </button>
       </div>
     </nav>`;
 }
@@ -209,10 +205,10 @@ export function renderHub(state) {
   return `
     <div class="hub-overlay" id="hub-overlay" hidden>
       <div class="hub-sheet">
-        <div class="hub-accent"></div>
+        <div class="hub-accent" style="background-image:url('${BRAND.hubBanner}')"></div>
         <div class="hub-head">
           <div>
-            <h2>HUB</h2>
+            <h2>${BRAND.name}</h2>
             <p>${state.playerName} · N.${lvl} · ${zone?.region || 'Konoha'}</p>
           </div>
           <button type="button" class="hub-close" data-hub-close aria-label="Fermer">${icon('close')}</button>
@@ -256,7 +252,7 @@ export function renderHub(state) {
         <div class="hub-section">
           <h3>Raccourcis</h3>
           <div class="hub-shortcuts">
-            <button type="button" class="hub-chip" data-hub="heal">${icon('heal')} Infirmerie</button>
+            <button type="button" class="hub-chip" data-hub="battle">${icon('swords')} Combat</button>
             <button type="button" class="hub-chip" data-hub="dex">${icon('dex')} Bingo</button>
             <button type="button" class="hub-chip" data-hub="settings">${icon('settings')} Options</button>
           </div>

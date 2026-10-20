@@ -1,12 +1,12 @@
-# Shinobiiii
+# Nindō
 
-Idle shinobi fan-game (thème Naruto) — vanilla JS, offline-friendly.
+Forge ton chemin ninja — duels 1v1, collection, kuchiyose. Fan-game vanilla JS, offline-friendly.
 
 ## Contenu
 
-- **650+ formes** de personnages (AniList HQ) : enfant / ado / adulte, modes ermite, bijû, Sharingan, Karma…
-- Combat 1v1, zones par saga (Partie I → Shippuden → Guerre → Boruto)
-- Examens & défis Kage, invocations, quêtes, pass, expéditions, pension
+- **650+ formes** de personnages : enfant / ado / adulte, modes ermite, bijû, Sharingan, Karma…
+- Combat 1v1, **28 zones** illustrées par saga (Partie I → Shippuden → Guerre → Boruto)
+- Examens & défis Kage, invocations, quêtes, pass, expéditions, dojo
 - Escouade / parchemins de sceau, Bingo Book, ascension
 
 ## Lancer
@@ -27,4 +27,4 @@ node scripts/smoke.mjs
 
 ## Notes
 
-Fan-game non officiel. Illustrations via AniList CDN. Naruto © Masashi Kishimoto / Shueisha / Pierrot.
+Fan-game non officiel. Illustrations via Narutopedia / AniList. Naruto © Masashi Kishimoto / Shueisha / Pierrot.

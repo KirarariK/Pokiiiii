@@ -49,8 +49,13 @@ export const BALLS = {
 };
 
 export const BRAND = {
-  name: 'Shinobiiii',
-  tagline: 'Idle shinobi · 1v1 · Tous les ninja & modes',
+  name: 'Nindō',
+  tagline: 'Forge ton chemin ninja · Duels · Collection',
+  logo: './assets/brand/nindo-logo.jpg',
+  hero: './assets/brand/nindo-hero.jpg',
+  hubBanner: './assets/brand/nindo-hub-banner.jpg',
+  loading: './assets/brand/nindo-loading.jpg',
+  starterBg: './assets/brand/nindo-starter-bg.jpg',
 };
 
 /** Génération de la zone actuelle (combat / invocations). */
@@ -335,12 +340,13 @@ export function activeFighter(state) {
   );
 }
 
+/** Soin automatique uniquement (wipe / plus de combattant) — plus d’infirmerie manuelle. */
 export function healTeam(state) {
   for (const p of state.team) {
     refreshStats(p);
     p.hp = p.maxHp;
   }
-  addLog(state, "Votre escouade a été soignée à l'Infirmerie.", 'heal');
+  addLog(state, 'L’escouade se relève…', 'heal');
 }
 
 export function unlockZone(state, zoneId) {

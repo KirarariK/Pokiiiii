@@ -209,10 +209,34 @@ button .ico {
   box-shadow: 0 0 8px rgba(251, 191, 36, 0.7);
 }
 
+.loading-brand {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.45), 0 0 28px rgba(249, 115, 22, 0.35);
+  animation: orb-spin 2.4s linear infinite;
+}
+
 @keyframes orb-spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+.pi-logo-img,
+.side-nav-logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.35);
+  flex-shrink: 0;
+}
+.side-nav-logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
 }
 
 /* ─── Starter screen ─── */
@@ -225,14 +249,27 @@ button .ico {
 
 .starter-hero {
   margin-bottom: 1.75rem;
+  padding: 1.75rem 1.25rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.45), 0 12px 28px rgba(0, 0, 0, 0.4);
+  margin-bottom: 0.65rem;
 }
 
 .brand-mark {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(2.8rem, 8vw, 4.2rem);
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.04em;
   background: linear-gradient(105deg, #f97316 10%, #fff 40%, #fb923c 75%, #ea580c 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -1129,7 +1166,7 @@ select {
   padding: 0.35rem 0.5rem;
 }
 
-/* —— Toggles / fields Shinobiiii —— */
+/* —— Toggles / fields Nindō —— */
 .pi-toggle {
   display: flex;
   align-items: center;
@@ -2356,7 +2393,7 @@ select {
   font-size: 0.8rem;
 }
 
-/* ===== Shinobiiii shell: menu catégories FIXÉ à gauche ===== */
+/* ===== Nindō shell: menu catégories FIXÉ à gauche ===== */
 .pi-shell,
 .game-shell.pi-shell {
   --side-w: 200px;
@@ -2774,9 +2811,15 @@ body.hub-open #side-nav-host {
 }
 
 .hub-accent {
-  height: 4px;
-  margin: 0 -1rem 0.85rem;
-  background: linear-gradient(90deg, #2563eb, #f8fafc, #e11d48);
+  height: 72px;
+  margin: -0.15rem -1rem 0.85rem;
+  border-radius: 14px 14px 0 0;
+  background:
+    linear-gradient(180deg, rgba(10, 7, 5, 0.15), rgba(10, 7, 5, 0.78)),
+    linear-gradient(90deg, #9a3412, #f97316, #1c1917);
+  background-size: cover, cover;
+  background-position: center, center;
+  border-bottom: 1px solid rgba(251, 146, 60, 0.35);
 }
 
 .hub-head {

@@ -1,4 +1,4 @@
-/** Icônes SVG Shinobiiii — thème Naruto — aucun emoji */
+/** Icônes SVG Nindō — thème Naruto — aucun emoji */
 const S = (body, view = '0 0 24 24') =>
   `<svg class="ico" width="24" height="24" viewBox="${view}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 

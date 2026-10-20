@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Shinobiiii — Idle Naruto · Tous les ninja</title>
+    <title>Nindō — Forge ton chemin ninja</title>
     <meta
       name="description"
-      content="Shinobiiii : idle Naruto fan — tous les personnages & modes, combat 1v1, quêtes, invocations, sagas Konoha → Boruto."
+      content="Nindō : duels 1v1, collection de shinobi, kuchiyose, quêtes et sagas Konoha → Boruto. Un chemin unique — pas un clone poke-idle."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,23 +16,20 @@
     />
     <link rel="preconnect" href="https://s4.anilist.co" />
     <link rel="preconnect" href="https://static.wikia.nocookie.net" crossorigin />
-    <link rel="stylesheet" href="./css/style.css?v=zones1" />
-    <link rel="stylesheet" href="./css/battle-bgs.css?v=zones1" />
+    <link rel="stylesheet" href="./css/style.css?v=nindo1" />
+    <link rel="stylesheet" href="./css/battle-bgs.css?v=nindo1" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="theme-color" content="#0a0705" />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a0c06'/%3E%3Cpath d='M32 8c8 12 16 16 16 28S40 56 32 56 16 48 16 36 24 20 32 8z' fill='none' stroke='%23f97316' stroke-width='4'/%3E%3Ccircle cx='32' cy='34' r='6' fill='%23fbbf24'/%3E%3C/svg%3E"
-    />
+    <link rel="icon" href="./assets/brand/nindo-icon-128.jpg" type="image/jpeg" />
   </head>
   <body>
     <div id="app">
       <div class="loading" id="boot-loading">
-        <div class="loading-orb" aria-hidden="true"></div>
-        <span>Chargement Shinobiiii…</span>
+        <img class="loading-brand" src="./assets/brand/nindo-loading.jpg" alt="" width="88" height="88" />
+        <span>Chargement Nindō…</span>
       </div>
     </div>
-    <script type="module" src="./js/main.js?v=zones1"></script>
+    <script type="module" src="./js/main.js?v=nindo1"></script>
     <script>
       (function () {
         const BOOT_MS = 10000;
@@ -85,15 +82,16 @@
                   keys
                     .filter(
                       (k) =>
-                        (k.startsWith('shinobiiii-shell-') || k.startsWith('pokiiiii-shell-')) &&
-                        k !== 'shinobiiii-shell-v5',
+                        k.startsWith('shinobiiii-shell-') ||
+                        k.startsWith('pokiiiii-shell-') ||
+                        (k.startsWith('nindo-shell-') && k !== 'nindo-shell-v1'),
                     )
                     .map((k) => caches.delete(k)),
                 ),
               )
               .catch(() => {})
               .finally(() => {
-                navigator.serviceWorker.register('./sw.js?v=5').then((reg) => reg.update()).catch(() => {});
+                navigator.serviceWorker.register('./sw.js?v=nindo1').then((reg) => reg.update()).catch(() => {});
               });
           });
         }
