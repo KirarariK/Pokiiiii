@@ -90,8 +90,12 @@ function simulateDuel(playerMon, gymMon) {
     turns++;
     const atk = next === 'player' ? playerMon : gymMon;
     const def = next === 'player' ? gymMon : playerMon;
-    const hit = calcDamage(atk, def, next === 'gym' ? 35 : 65);
-    def.hp = Math.max(0, def.hp - hit.damage);
+    const hit = calcDamage(atk, def, next === 'gym' ? 28 : 80);
+    let dmg = hit.damage;
+    if (next === 'gym' && hit.typeMult > 1) {
+      dmg = Math.max(1, Math.floor(hit.damage / hit.typeMult));
+    }
+    def.hp = Math.max(0, def.hp - dmg);
     log.push({ who: next, attacker: pokeName(atk), defender: pokeName(def), damage: hit.damage, label: hit.label });
     if (def.hp <= 0) break;
     next = next === 'player' ? 'gym' : 'player';
