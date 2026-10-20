@@ -29,6 +29,7 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import { challengeGym, renderArenasPanel, ensureArena } from './arena.js';
 import {
   startExpedition,
   claimExpedition,
@@ -227,6 +228,10 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-arenas" class="panel">
+          <div id="arenas-view"></div>
+        </section>
+
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
@@ -320,6 +325,8 @@ function setTab(id) {
     bonus: 'bonus',
     expeditions: 'expeditions',
     pension: 'pension',
+    arenas: 'arenas',
+    arena: 'arenas',
     settings: 'settings',
     heal: 'battle',
   };
@@ -371,6 +378,20 @@ function onInput(e) {
 }
 
 function onClick(e) {
+  const challenge = e.target.closest('[data-challenge-gym]');
+  if (challenge) {
+    ensureArena(state);
+    const res = challengeGym(state, challenge.dataset.challengeGym);
+    if (!res.ok) {
+      UI.toast(res.reason === 'already' ? 'Badge déjà obtenu' : res.reason === 'locked' ? (res.needLeader ? `Battre ${res.needLeader} ou N.${res.need}` : `Niveau N.${res.need} requis`) : 'Défi impossible');
+    } else if (res.win) {
+      UI.toast(`Victoire ! Badge ${res.badgeId || res.badge} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
+    } else {
+      UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
+    }
+    refreshAll();
+    return;
+  }
   const nav = e.target.closest('[data-nav]');
   if (nav) {
     const id = nav.dataset.nav;
@@ -556,6 +577,7 @@ function showCatchModal(poke) {
 
 function refreshAll() {
   if (!state) return;
+  if (UI.$('#arenas-view')) UI.$('#arenas-view').innerHTML = renderArenasPanel(state);
   syncQuestProgress(state);
   refreshChrome();
   UI.updateHud(state);

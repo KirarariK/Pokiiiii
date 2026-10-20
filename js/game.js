@@ -19,6 +19,7 @@ import {
 } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { ensureDaily, initDailyBaselines } from './quests.js';
+import { ensureArena } from './arena.js';
 import { ensureExpeditions, expeditionBusyUids } from './expedition.js';
 import { ensureDaycare, daycareBusyUids } from './daycare.js';
 
@@ -59,10 +60,13 @@ export function createNewGame(starterId) {
     log: [],
     daily: null,
     dailyBaselines: null,
+    badges: {},
+    arenaWins: 0,
     expeditions: [],
     daycare: [],
   };
   initDailyBaselines(state);
+  ensureArena(state);
   return state;
 }
 
@@ -104,6 +108,7 @@ export function loadGame() {
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
+    ensureArena(state);
     ensureExpeditions(state);
     ensureDaycare(state);
     initDailyBaselines(state);
