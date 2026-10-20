@@ -62,30 +62,90 @@ export function renderTopbar(state) {
     </header>`;
 }
 
-export function renderBottomNav(active, state) {
+/** Menu catégories à gauche (remplace l’ancienne barre bas). */
+export function renderSideNav(active, state) {
+  const q = pendingQuestCount(state);
+  const arenaN = readyGymCount(state);
+  const exN = pendingExpeditionCount(state);
+  const dayN = pendingDaycareCount(state);
   const hubN = hubBadgeCount(state);
-  const items = [
-    { id: 'battle', label: 'Combat', ico: 'swords' },
-    { id: 'pokemon', label: 'Pokémon', ico: 'cube' },
-    { id: 'zones', label: 'Zones', ico: 'map' },
-    { id: 'shop', label: 'Boutique', ico: 'shop' },
-    { id: 'pass', label: 'Pass', ico: 'pass', badge: pendingPassCount(state) },
-    { id: 'hub', label: 'Hub', ico: 'hub', badge: hubN, isHub: true },
+  const sections = [
+    {
+      title: 'Essentiels',
+      items: [
+        { id: 'battle', label: 'Combat', ico: 'swords' },
+        { id: 'quests', label: 'Quêtes', ico: 'quest', badge: q },
+        { id: 'pass', label: 'Pass', ico: 'pass', badge: pendingPassCount(state) },
+        { id: 'summon', label: 'Invocation', ico: 'summon', badge: state.summon?.tickets || 0 },
+        { id: 'profile', label: 'Profil', ico: 'profile' },
+      ],
+    },
+    {
+      title: 'Aventure',
+      items: [
+        { id: 'zones', label: 'Zones', ico: 'map' },
+        { id: 'arenas', label: 'Arènes', ico: 'arena', badge: arenaN },
+        { id: 'pokemon', label: 'Équipe / PC', ico: 'cube' },
+        { id: 'expeditions', label: 'Expéditions', ico: 'compass', badge: exN },
+        { id: 'pension', label: 'Pension', ico: 'egg', badge: dayN },
+      ],
+    },
+    {
+      title: 'Gestion',
+      items: [
+        { id: 'shop', label: 'Boutique', ico: 'shop' },
+        { id: 'dex', label: 'Pokédex', ico: 'dex' },
+        { id: 'bonus', label: 'Bonus', ico: 'bolt' },
+        { id: 'ascension', label: 'Ascension', ico: 'crown' },
+        { id: 'minigame', label: 'Mini-jeu', ico: 'dice' },
+        { id: 'leaderboard', label: 'Classement', ico: 'trophy' },
+        { id: 'settings', label: 'Options', ico: 'settings' },
+      ],
+    },
   ];
+
+  const itemBtn = (it) => {
+    const on = active === it.id || (it.id === 'pokemon' && (active === 'team' || active === 'box'));
+    const badge = it.badge > 0 ? `<span class="nav-badge">${it.badge}</span>` : '';
+    return `<button type="button" class="side-nav-item ${on ? 'active' : ''}" data-nav="${it.id}" title="${it.label}">
+      <span class="nav-ico">${icon(it.ico)}${badge}</span>
+      <span class="nav-label">${it.label}</span>
+    </button>`;
+  };
+
   return `
-    <nav class="pi-bottom-nav" aria-label="Navigation">
-      ${items
-        .map((it) => {
-          const on = active === it.id || (it.isHub && active === 'hub');
-          const badge =
-            it.badge > 0 ? `<span class="nav-badge">${it.badge}</span>` : '';
-          return `<button type="button" class="nav-item ${on ? 'active' : ''}" data-nav="${it.id}">
-            <span class="nav-ico">${icon(it.ico)}${badge}</span>
-            <span class="nav-label">${it.label}</span>
-          </button>`;
-        })
+    <nav class="pi-side-nav" aria-label="Catégories">
+      <div class="side-nav-brand" title="${BRAND.name}">
+        <span class="side-nav-logo">${icon('logo')}</span>
+        <span class="side-nav-brand-text">${BRAND.name}</span>
+      </div>
+      <div class="side-nav-scroll">
+      ${sections
+        .map(
+          (sec) => `
+        <div class="side-nav-section">
+          <h3 class="side-nav-title">${sec.title}</h3>
+          <div class="side-nav-list">${sec.items.map(itemBtn).join('')}</div>
+        </div>`,
+        )
         .join('')}
+      </div>
+      <div class="side-nav-foot">
+        <button type="button" class="side-nav-item hub-launch ${active === 'hub' ? 'active' : ''}" data-nav="hub" title="Hub">
+          <span class="nav-ico">${icon('hub')}${hubN > 0 ? `<span class="nav-badge">${hubN}</span>` : ''}</span>
+          <span class="nav-label">Hub</span>
+        </button>
+        <button type="button" class="side-nav-item" data-hub="heal" title="Centre Pokémon">
+          <span class="nav-ico">${icon('heal')}</span>
+          <span class="nav-label">Centre</span>
+        </button>
+      </div>
     </nav>`;
+}
+
+/** @deprecated alias — navigations utilisent renderSideNav */
+export function renderBottomNav(active, state) {
+  return renderSideNav(active, state);
 }
 
 export function renderHub(state) {

@@ -239,6 +239,8 @@ function enterGame() {
 function renderShell() {
   UI.$('#app').innerHTML = `
     <div class="game-shell pi-shell">
+      <div id="side-nav-host">${Shell.renderSideNav(tab, state)}</div>
+      <div class="pi-main">
       ${Shell.renderTopbar(state)}
       <main class="content pi-content">
         <section id="panel-battle" class="panel">
@@ -355,7 +357,7 @@ function renderShell() {
               <input id="opt-mute" type="checkbox" ${state.settings?.mute ? 'checked' : ''} />
               ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
             </label>
-            <p class="muted tiny settings-keys">Raccourcis : <kbd>1</kbd>–<kbd>6</kbd> nav · <kbd>H</kbd> Hub · <kbd>M</kbd> mute</p>
+            <p class="muted tiny settings-keys">Raccourcis : <kbd>1</kbd>–<kbd>6</kbd> catégories · <kbd>H</kbd> Hub · <kbd>M</kbd> mute</p>
             <label class="chk">
               <input id="opt-auto-catch" type="checkbox" ${state.autoCatch ? 'checked' : ''} />
               Auto-capture
@@ -389,8 +391,8 @@ function renderShell() {
           </div>
         </section>
       </main>
-      <div id="bottom-nav-host">${Shell.renderBottomNav(tab, state)}</div>
       ${Shell.renderHub(state)}
+      </div>
     </div>
     <div id="toasts"></div>
     <div id="modal-overlay" hidden><div class="modal" id="modal-body"></div></div>
@@ -531,11 +533,11 @@ function onKeydown(e) {
   const key = e.key;
   const navMap = {
     '1': 'battle',
-    '2': 'pokemon',
+    '2': 'quests',
     '3': 'zones',
-    '4': 'shop',
-    '5': 'pass',
-    '6': 'hub',
+    '4': 'arenas',
+    '5': 'shop',
+    '6': 'dex',
   };
   if (navMap[key]) {
     e.preventDefault();
@@ -601,6 +603,12 @@ function setTab(id) {
   refreshAll();
 }
 
+function refreshSideNav(active = tab) {
+  const host = UI.$('#side-nav-host');
+  if (!host) return;
+  host.innerHTML = Shell.renderSideNav(hubOpen ? 'hub' : active, state);
+}
+
 function openHub() {
   hubOpen = true;
   const hub = UI.$('#hub-overlay');
@@ -609,14 +617,14 @@ function openHub() {
     hub.outerHTML = Shell.renderHub(state);
     UI.$('#hub-overlay').hidden = false;
   }
-  UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav('hub', state);
+  refreshSideNav('hub');
 }
 
 function closeHub() {
   hubOpen = false;
   const hub = UI.$('#hub-overlay');
   if (hub) hub.hidden = true;
-  UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav(tab, state);
+  refreshSideNav(tab);
 }
 
 function refreshChrome() {
@@ -626,9 +634,7 @@ function refreshChrome() {
     tmp.innerHTML = Shell.renderTopbar(state);
     top.replaceWith(tmp.firstElementChild);
   }
-  if (!hubOpen) {
-    UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav(tab, state);
-  }
+  refreshSideNav(tab);
 }
 
 function onInput(e) {
