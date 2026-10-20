@@ -2512,3 +2512,78 @@ select {
   }
   .battle-zone-label { max-width: none; }
 }
+
+
+/* Expéditions / Pension */
+.ex-form {
+  background: #152033;
+  border: 1px solid #2a3a55;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.ex-picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.45rem;
+  margin: 0.75rem 0;
+  max-height: 220px;
+  overflow: auto;
+}
+.ex-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #0f1a2c;
+  border: 1px solid #2f4a72;
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.ex-pick img { width: 32px; height: 32px; object-fit: contain; }
+.ex-pick input { accent-color: #3b82f6; }
+.ex-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.ex-fields .field { max-width: 200px; }
+.ex-fields select {
+  background: #0f1a2c;
+  border: 1px solid #2a3a55;
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  color: inherit;
+}
+.ex-list { display: grid; gap: 0.65rem; }
+.ex-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  background: #152033;
+  border: 1px solid #2a3a55;
+  border-radius: 14px;
+  padding: 0.85rem;
+}
+.ex-card.ready { border-color: #f5c518; }
+.ex-ico {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: #0f1a2c;
+  border: 1px solid #2f4a72;
+  color: #60a5fa;
+}
+.ex-ico .ico { width: 22px; height: 22px; }
+.ex-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #93c5fd;
+  margin: 0.25rem 0 0;
+}
+.ex-timer .ico { width: 14px; height: 14px; }

@@ -58,6 +58,13 @@ export const ICO = {
   sparkle: S(
     `<path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/>`,
   ),
+  compass: S(
+    `<circle cx="12" cy="12" r="9"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/><path d="M14.5 9.5L10 14l-2.5-.5L12 8.5l2.5 1z" fill="currentColor" fill-opacity=".35"/><path d="M9.5 14.5L14 10l2.5.5L12 15.5l-2.5-1z"/>`,
+  ),
+  egg: S(
+    `<path d="M12 3c4.5 0 8 5.2 8 10.5S15.5 21 12 21 4 18.8 4 13.5 7.5 3 12 3z"/><path d="M9 11c.4-.8 1-.8 1.4 0M13.5 9.5c.35-.7.9-.7 1.25 0M11 15c.3-.55.75-.55 1.05 0"/>`,
+  ),
+  clock: S(`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>`),
 };
 
 export function icon(name, cls = '') {

@@ -1,4 +1,6 @@
 import { addLog } from './game-log.js';
+import { pendingExpeditionCount } from './expedition.js';
+import { pendingDaycareCount } from './daycare.js';
 
 /** Définitions de quêtes journalières */
 export const QUEST_DEFS = [
@@ -150,5 +152,10 @@ export function pendingPassCount(state) {
 }
 
 export function hubBadgeCount(state) {
-  return pendingQuestCount(state) + pendingPassCount(state);
+  return (
+    pendingQuestCount(state) +
+    pendingPassCount(state) +
+    pendingExpeditionCount(state) +
+    pendingDaycareCount(state)
+  );
 }

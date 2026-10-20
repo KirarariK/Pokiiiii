@@ -1,4 +1,4 @@
-import { loadSpecies, pokeName, artUrl, displayName, getSpecies, speciesCount } from './pokemon.js';
+import { loadSpecies, pokeName, artUrl, displayName, getSpecies, speciesCount, createPokemon } from './pokemon.js';
 import {
   createNewGame,
   saveGame,
@@ -29,6 +29,16 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import {
+  startExpedition,
+  claimExpedition,
+  expeditionBusyUids,
+} from './expedition.js';
+import {
+  depositDaycare,
+  claimDaycare,
+  daycareBusyUids,
+} from './daycare.js';
 import * as Audio from './audio.js';
 import {
   shouldShowTutorial,
@@ -499,6 +509,67 @@ function onClick(e) {
     return;
   }
 
+  const startEx = e.target.closest('[data-start-ex]');
+  if (startEx) {
+    const uids = [...document.querySelectorAll('input[name="ex-uid"]:checked')].map((el) => el.value);
+    const durationMs = Number(UI.$('#ex-dur')?.value || 0);
+    const zoneId = UI.$('#ex-zone')?.value;
+    const res = startExpedition(state, { pokemonUids: uids, durationMs, zoneId }, daycareBusyUids(state));
+    const msgs = {
+      count: 'Choisis 1 à 3 Pokémon',
+      duration: 'Durée invalide',
+      zone: 'Zone verrouillée',
+      'last-team': 'Garde au moins 1 lead disponible',
+      busy: 'Pokémon déjà occupé',
+      missing: 'Pokémon introuvable',
+    };
+    UI.toast(res.ok ? 'Expédition lancée' : msgs[res.reason] || 'Impossible');
+    if (res.ok) { saveGame(state); refreshAll(); }
+    return;
+  }
+
+  const claimEx = e.target.closest('[data-claim-ex]');
+  if (claimEx) {
+    const res = claimExpedition(state, claimEx.dataset.claimEx);
+    if (res.ok) {
+      const r = res.reward;
+      let msg = `+${r.money}₽ · +${r.xpEach} XP`;
+      if (r.pokemon) msg += ` · ${pokeName(r.pokemon)}`;
+      UI.toast(msg);
+      saveGame(state);
+    } else UI.toast(res.reason === 'not-ready' ? 'Pas encore prêt' : 'Indisponible');
+    refreshAll();
+    return;
+  }
+
+  const startDay = e.target.closest('[data-start-day]');
+  if (startDay) {
+    const uids = [...document.querySelectorAll('input[name="day-uid"]:checked')].map((el) => el.value);
+    const durationMs = Number(UI.$('#day-dur')?.value || 0);
+    const res = depositDaycare(state, { parentUids: uids, durationMs }, expeditionBusyUids(state));
+    const msgs = {
+      count: 'Choisis exactement 2 Pokémon',
+      duration: 'Durée invalide',
+      'last-team': 'Garde au moins 1 lead disponible',
+      busy: 'Pokémon déjà occupé',
+      missing: 'Pokémon introuvable',
+    };
+    UI.toast(res.ok ? 'Déposés à la pension' : msgs[res.reason] || 'Impossible');
+    if (res.ok) { saveGame(state); refreshAll(); }
+    return;
+  }
+
+  const claimDay = e.target.closest('[data-claim-day]');
+  if (claimDay) {
+    const res = claimDaycare(state, claimDay.dataset.claimDay);
+    if (res.ok) {
+      UI.toast(`Éclosion : ${pokeName(res.pokemon)}`);
+      saveGame(state);
+    } else UI.toast(res.reason === 'not-ready' ? 'Pas encore prêt' : 'Indisponible');
+    refreshAll();
+    return;
+  }
+
   const claimP = e.target.closest('[data-claim-pass]');
   if (claimP) {
     const res = claimPassTier(state, Number(claimP.dataset.claimPass));
@@ -602,6 +673,8 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  if (UI.$('#expeditions-view')) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
+  if (UI.$('#pension-view')) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
   if (UI.$('#ascension-view')) UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
