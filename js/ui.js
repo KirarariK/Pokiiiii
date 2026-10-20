@@ -10,7 +10,7 @@ import {
   speciesCount,
   allSpecies,
 } from './pokemon.js';
-import { BALLS, ZONES, BRAND } from './game.js';
+import { BALLS, ZONES, BRAND, isPokemonBusy } from './game.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
 import { icon } from './icons.js';
 
@@ -259,12 +259,13 @@ export function applyBattleFx(events = []) {
 }
 
 export function renderTeam(state) {
-  const fighter = state.team.find((x) => x.hp > 0);
+  const fighter = state.team.find((x) => x.hp > 0 && !isPokemonBusy(state, x.uid));
   return state.team
     .map((p, i) => {
       const isFighter = fighter === p;
       const actions = `
         <div class="card-actions">
+          ${isPokemonBusy(state, p.uid) ? '<em class="busy-tag">Indisponible</em>' : ''}
           ${isFighter ? '<em class="lead-tag">Combattant 1v1</em>' : ''}
           ${canEvolve(p) ? `<button data-act="evolve" data-uid="${p.uid}">Évoluer</button>` : ''}
           ${state.team.length > 1 ? `<button data-act="box" data-uid="${p.uid}">→ PC</button>` : ''}

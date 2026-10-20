@@ -1,4 +1,4 @@
-import { loadSpecies, pokeName, artUrl, displayName, getSpecies, speciesCount } from './pokemon.js';
+import { loadSpecies, pokeName, artUrl, displayName, getSpecies, speciesCount, createPokemon } from './pokemon.js';
 import {
   createNewGame,
   saveGame,
@@ -29,6 +29,16 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import {
+  startExpedition,
+  claimExpedition,
+  expeditionBusyUids,
+} from './expedition.js';
+import {
+  depositDaycare,
+  claimDaycare,
+  daycareBusyUids,
+} from './daycare.js';
 
 let state = null;
 let battle = null;
@@ -48,11 +58,20 @@ async function boot() {
 
   const params = new URLSearchParams(location.search);
   const demo = params.get('demo');
-  if (demo === '1' || demo === 'hub' || demo === 'pass' || demo === 'quests') {
+  if (
+    demo === '1' ||
+    demo === 'hub' ||
+    demo === 'pass' ||
+    demo === 'quests' ||
+    demo === 'expeditions' ||
+    demo === 'pension'
+  ) {
     startNew(4);
     if (demo === 'hub') setTimeout(() => openHub(), 50);
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
+    if (demo === 'expeditions') setTimeout(() => setTab('expeditions'), 50);
+    if (demo === 'pension') setTimeout(() => setTab('pension'), 50);
     return;
   }
 
@@ -86,8 +105,22 @@ function bindTitle() {
 
 function startNew(starterId) {
   state = createNewGame(starterId);
+  seedDemoRoster(state);
   saveGame(state);
   enterGame();
+}
+
+function seedDemoRoster(state) {
+  if (!new URLSearchParams(location.search).has('demo')) return;
+  for (const sid of [7, 10, 16, 19, 25]) {
+    try {
+      const poke = createPokemon(sid, 5 + Math.floor(Math.random() * 5));
+      state.caught[sid] = true;
+      state.seen[sid] = true;
+      if (state.team.length < 6) state.team.push(poke);
+      else state.box.push(poke);
+    } catch (_) {}
+  }
 }
 
 function startExisting(s) {
@@ -180,6 +213,14 @@ function renderShell() {
 
         <section id="panel-profile" class="panel">
           <div id="profile-view"></div>
+        </section>
+
+        <section id="panel-expeditions" class="panel">
+          <div id="expeditions-view"></div>
+        </section>
+
+        <section id="panel-pension" class="panel">
+          <div id="pension-view"></div>
         </section>
 
         <section id="panel-bonus" class="panel">
@@ -277,6 +318,8 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    expeditions: 'expeditions',
+    pension: 'pension',
     settings: 'settings',
     heal: 'battle',
   };
@@ -364,6 +407,67 @@ function onClick(e) {
   if (claimQ) {
     const res = claimQuest(state, claimQ.dataset.claimQuest);
     UI.toast(res.ok ? 'Récompense de quête récupérée' : 'Quête non disponible');
+    refreshAll();
+    return;
+  }
+
+  const startEx = e.target.closest('[data-start-ex]');
+  if (startEx) {
+    const uids = [...document.querySelectorAll('input[name="ex-uid"]:checked')].map((el) => el.value);
+    const durationMs = Number(UI.$('#ex-dur')?.value || 0);
+    const zoneId = UI.$('#ex-zone')?.value;
+    const res = startExpedition(state, { pokemonUids: uids, durationMs, zoneId }, daycareBusyUids(state));
+    const msgs = {
+      count: 'Choisis 1 à 3 Pokémon',
+      duration: 'Durée invalide',
+      zone: 'Zone verrouillée',
+      'last-team': 'Garde au moins 1 lead disponible',
+      busy: 'Pokémon déjà occupé',
+      missing: 'Pokémon introuvable',
+    };
+    UI.toast(res.ok ? 'Expédition lancée' : msgs[res.reason] || 'Impossible');
+    if (res.ok) { saveGame(state); refreshAll(); }
+    return;
+  }
+
+  const claimEx = e.target.closest('[data-claim-ex]');
+  if (claimEx) {
+    const res = claimExpedition(state, claimEx.dataset.claimEx);
+    if (res.ok) {
+      const r = res.reward;
+      let msg = `+${r.money}₽ · +${r.xpEach} XP`;
+      if (r.pokemon) msg += ` · ${pokeName(r.pokemon)}`;
+      UI.toast(msg);
+      saveGame(state);
+    } else UI.toast(res.reason === 'not-ready' ? 'Pas encore prêt' : 'Indisponible');
+    refreshAll();
+    return;
+  }
+
+  const startDay = e.target.closest('[data-start-day]');
+  if (startDay) {
+    const uids = [...document.querySelectorAll('input[name="day-uid"]:checked')].map((el) => el.value);
+    const durationMs = Number(UI.$('#day-dur')?.value || 0);
+    const res = depositDaycare(state, { parentUids: uids, durationMs }, expeditionBusyUids(state));
+    const msgs = {
+      count: 'Choisis exactement 2 Pokémon',
+      duration: 'Durée invalide',
+      'last-team': 'Garde au moins 1 lead disponible',
+      busy: 'Pokémon déjà occupé',
+      missing: 'Pokémon introuvable',
+    };
+    UI.toast(res.ok ? 'Déposés à la pension' : msgs[res.reason] || 'Impossible');
+    if (res.ok) { saveGame(state); refreshAll(); }
+    return;
+  }
+
+  const claimDay = e.target.closest('[data-claim-day]');
+  if (claimDay) {
+    const res = claimDaycare(state, claimDay.dataset.claimDay);
+    if (res.ok) {
+      UI.toast(`Éclosion : ${pokeName(res.pokemon)}`);
+      saveGame(state);
+    } else UI.toast(res.reason === 'not-ready' ? 'Pas encore prêt' : 'Indisponible');
     refreshAll();
     return;
   }
@@ -467,6 +571,8 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  if (UI.$('#expeditions-view')) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
+  if (UI.$('#pension-view')) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }
