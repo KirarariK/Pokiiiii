@@ -171,7 +171,7 @@ button .ico {
   padding: 0.75rem 1.5rem;
 }
 
-/* Loading */
+/* Loading (legacy fallback) */
 .loading {
   min-height: 100vh;
   display: grid;
@@ -222,6 +222,213 @@ button .ico {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ─── Boot splash Nindō (unique) ─── */
+.boot-splash {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff7ed;
+  font-family: var(--font-display);
+}
+
+.boot-splash-bg {
+  position: absolute;
+  inset: -4%;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 28%, rgba(249, 115, 22, 0.28), transparent 62%),
+    var(--boot-art) center / cover no-repeat,
+    #0a0705;
+  transform: scale(1.06);
+  animation: boot-kenburns 12s ease-in-out infinite alternate;
+  filter: saturate(1.08) contrast(1.05);
+}
+
+.boot-splash-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 42%, transparent 0 18%, rgba(10, 7, 5, 0.35) 42%, rgba(10, 7, 5, 0.88) 78%),
+    linear-gradient(180deg, rgba(10, 7, 5, 0.25), rgba(10, 7, 5, 0.78) 70%, #050302);
+  pointer-events: none;
+}
+
+.boot-splash-core {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 22rem;
+}
+
+.boot-seal-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 168px;
+  height: 168px;
+  margin: -118px 0 0 -84px;
+  border-radius: 50%;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow:
+    0 0 0 10px rgba(249, 115, 22, 0.06),
+    0 0 40px rgba(249, 115, 22, 0.25),
+    inset 0 0 24px rgba(251, 146, 60, 0.15);
+  animation: boot-ring 4.8s linear infinite;
+  pointer-events: none;
+}
+
+.boot-seal-ring::before,
+.boot-seal-ring::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px dashed rgba(253, 186, 116, 0.45);
+  animation: boot-ring-rev 7s linear infinite;
+}
+
+.boot-seal-ring::after {
+  inset: 26px;
+  border-style: solid;
+  border-color: rgba(251, 146, 60, 0.22);
+  animation-duration: 3.2s;
+}
+
+.boot-logo {
+  width: 86px;
+  height: 86px;
+  border-radius: 22px;
+  object-fit: cover;
+  position: relative;
+  z-index: 1;
+  box-shadow:
+    0 0 0 2px rgba(251, 146, 60, 0.55),
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    0 0 48px rgba(249, 115, 22, 0.35);
+  animation: boot-logo-pulse 2.4s ease-in-out infinite;
+}
+
+.boot-title {
+  margin: 0.85rem 0 0;
+  font-size: clamp(2.1rem, 7vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: none;
+  background: linear-gradient(105deg, #fdba74, #fff7ed 42%, #fb923c 78%, #ea580c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 8px 20px rgba(249, 115, 22, 0.35));
+}
+
+.boot-tag {
+  margin: 0;
+  color: #c4a484;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  font-family: var(--font-body, Sora, system-ui, sans-serif);
+  font-weight: 500;
+}
+
+.boot-bar {
+  width: min(220px, 70vw);
+  height: 6px;
+  margin-top: 0.85rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 247, 237, 0.08);
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.boot-bar-fill {
+  display: block;
+  height: 100%;
+  width: 35%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9a3412, #f97316, #fbbf24, #f97316);
+  background-size: 200% 100%;
+  animation: boot-bar 1.6s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.55);
+}
+
+.boot-msg {
+  margin: 0.35rem 0 0;
+  color: #fdba74;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--font-body, Sora, system-ui, sans-serif);
+  opacity: 0.9;
+  animation: boot-msg 2s ease-in-out infinite;
+}
+
+@keyframes boot-kenburns {
+  from { transform: scale(1.05) translate3d(0, 0, 0); }
+  to { transform: scale(1.14) translate3d(0, -1.5%, 0); }
+}
+
+@keyframes boot-ring {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes boot-ring-rev {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes boot-logo-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.08); }
+}
+
+@keyframes boot-bar {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
+@keyframes boot-msg {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-splash-bg,
+  .boot-seal-ring,
+  .boot-seal-ring::before,
+  .boot-seal-ring::after,
+  .boot-logo,
+  .boot-bar-fill,
+  .boot-msg {
+    animation: none !important;
+  }
+}
+
+.boot-error {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: 90vw;
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.85);
+  border: 1px solid #f87171;
+  color: #fecaca;
+  font-size: 0.85rem;
+  text-align: center;
 }
 
 .pi-logo-img,

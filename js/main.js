@@ -23,6 +23,7 @@ import {
   isGenUnlocked,
   BALLS,
   BRAND,
+  renderBootSplash,
 } from './game.js';
 import {
   claimQuest,
@@ -122,7 +123,7 @@ let victoryHoldUntil = 0;
 const TICK_BASE_MS = 750;
 
 async function boot() {
-  UI.$('#app').innerHTML = `<div class="loading"><img class="loading-brand" src="${BRAND.loading}" alt="" width="88" height="88" /><span>Chargement ${BRAND.name}…</span></div>`;
+  UI.$('#app').innerHTML = renderBootSplash('Ouverture du sceau…');
   await loadSpecies();
   resetPoolsCache();
 
@@ -1205,5 +1206,6 @@ function gameTick() {
 
 boot().catch((err) => {
   console.error(err);
-  document.getElementById('app').innerHTML = `<div class="loading">Erreur : ${err.message}</div>`;
+  document.getElementById('app').innerHTML = `${renderBootSplash('Erreur de chargement')}
+    <p class="boot-error">${err.message}</p>`;
 });

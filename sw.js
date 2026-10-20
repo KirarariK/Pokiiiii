@@ -1,5 +1,5 @@
 /** Shell PWA Nindō — network-first, sans modifier les Request (sinon les modules ES bloquent). */
-const CACHE = 'nindo-shell-v1';
+const CACHE = 'nindo-shell-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {

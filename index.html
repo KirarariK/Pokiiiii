@@ -16,20 +16,28 @@
     />
     <link rel="preconnect" href="https://s4.anilist.co" />
     <link rel="preconnect" href="https://static.wikia.nocookie.net" crossorigin />
-    <link rel="stylesheet" href="./css/style.css?v=nindo1" />
-    <link rel="stylesheet" href="./css/battle-bgs.css?v=nindo1" />
+    <link rel="stylesheet" href="./css/style.css?v=nindo2" />
+    <link rel="stylesheet" href="./css/battle-bgs.css?v=nindo2" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="theme-color" content="#0a0705" />
     <link rel="icon" href="./assets/brand/nindo-icon-128.jpg" type="image/jpeg" />
   </head>
   <body>
     <div id="app">
-      <div class="loading" id="boot-loading">
-        <img class="loading-brand" src="./assets/brand/nindo-loading.jpg" alt="" width="88" height="88" />
-        <span>Chargement Nindō…</span>
+      <div class="boot-splash" id="boot-loading" role="status" aria-live="polite" style="--boot-art:url('./assets/brand/nindo-boot-splash.jpg')">
+        <div class="boot-splash-bg" aria-hidden="true"></div>
+        <div class="boot-splash-veil" aria-hidden="true"></div>
+        <div class="boot-splash-core">
+          <div class="boot-seal-ring" aria-hidden="true"></div>
+          <img class="boot-logo" src="./assets/brand/nindo-logo.jpg" alt="" width="86" height="86" />
+          <p class="boot-title">Nindō</p>
+          <p class="boot-tag">Forge ton chemin ninja · Duels · Collection</p>
+          <div class="boot-bar" aria-hidden="true"><span class="boot-bar-fill"></span></div>
+          <p class="boot-msg">Ouverture du sceau…</p>
+        </div>
       </div>
     </div>
-    <script type="module" src="./js/main.js?v=nindo1"></script>
+    <script type="module" src="./js/main.js?v=nindo2"></script>
     <script>
       (function () {
         const BOOT_MS = 10000;

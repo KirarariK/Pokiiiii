@@ -55,8 +55,26 @@ export const BRAND = {
   hero: './assets/brand/nindo-hero.jpg',
   hubBanner: './assets/brand/nindo-hub-banner.jpg',
   loading: './assets/brand/nindo-loading.jpg',
+  bootSplash: './assets/brand/nindo-boot-splash.jpg',
   starterBg: './assets/brand/nindo-starter-bg.jpg',
 };
+
+/** Splash de boot réutilisable (index + main). */
+export function renderBootSplash(message = 'Ouverture du sceau…') {
+  return `
+    <div class="boot-splash" role="status" aria-live="polite" style="--boot-art:url('${BRAND.bootSplash}')">
+      <div class="boot-splash-bg" aria-hidden="true"></div>
+      <div class="boot-splash-veil" aria-hidden="true"></div>
+      <div class="boot-splash-core">
+        <div class="boot-seal-ring" aria-hidden="true"></div>
+        <img class="boot-logo" src="${BRAND.logo}" alt="" width="86" height="86" />
+        <p class="boot-title">${BRAND.name}</p>
+        <p class="boot-tag">${BRAND.tagline}</p>
+        <div class="boot-bar" aria-hidden="true"><span class="boot-bar-fill"></span></div>
+        <p class="boot-msg">${message}</p>
+      </div>
+    </div>`;
+}
 
 /** Génération de la zone actuelle (combat / invocations). */
 export function currentPlayGen(state) {
