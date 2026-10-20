@@ -2343,3 +2343,92 @@ select {
   .quest-card { grid-template-columns: auto 1fr; }
   .quest-card .btn-claim { grid-column: 1 / -1; }
 }
+
+
+/* Expéditions / Pension */
+.ex-form{background:#152033;border:1px solid #2a3a55;border-radius:14px;padding:1rem;margin-bottom:1rem}
+.ex-picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.45rem;margin:.75rem 0;max-height:220px;overflow:auto}
+.ex-pick{display:flex;align-items:center;gap:.4rem;background:#0f1a2c;border:1px solid #2f4a72;border-radius:10px;padding:.35rem .5rem;font-size:.78rem;cursor:pointer}
+.ex-pick img{width:32px;height:32px;object-fit:contain}
+.ex-pick input{accent-color:#3b82f6}
+.ex-fields{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem}
+.ex-fields .field{max-width:200px}
+.ex-fields select{background:#0f1a2c;border:1px solid #2a3a55;border-radius:10px;padding:.5rem .65rem;color:inherit}
+.ex-list{display:grid;gap:.65rem}
+.ex-card{display:grid;grid-template-columns:auto 1fr auto;gap:.75rem;align-items:center;background:#152033;border:1px solid #2a3a55;border-radius:14px;padding:.85rem}
+.ex-card.ready{border-color:#f5c518}
+.ex-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0f1a2c;border:1px solid #2f4a72;color:#60a5fa}
+.ex-ico .ico{width:22px;height:22px}
+.ex-timer{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:#93c5fd;margin:.25rem 0 0}
+.ex-timer .ico{width:14px;height:14px}
+.poke-card.busy{opacity:.55}
+.busy-tag{display:inline-block;font-size:.68rem;color:#fbbf24;font-style:normal}
+
+
+/* ── Arènes / Badges ── */
+.badge-showcase {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+}
+.badge-showcase-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.badge-showcase-ico { color: #f5c518; display: inline-flex; }
+.badge-showcase-ico .ico { width: 28px; height: 28px; }
+.badge-showcase-head p { margin: 0.15rem 0 0; }
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 0.45rem;
+}
+.badge-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+.badge-slot.owned { color: var(--accent); }
+.gym-badge-svg { width: 36px; height: 42px; }
+.arena-region { margin-bottom: 1.25rem; }
+.arena-region h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin: 0 0 0.55rem;
+  letter-spacing: 0.04em;
+}
+.arena-list { display: grid; gap: 0.65rem; }
+.arena-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+}
+.arena-card.ready { border-color: #f5c518; }
+.arena-card.done { opacity: 0.72; }
+.arena-card.champ { border-color: #60a5fa; box-shadow: inset 0 0 0 1px rgba(96,165,250,0.25); }
+.arena-badge-ico { display: flex; }
+.arena-body p { margin: 0.15rem 0; font-size: 0.82rem; color: var(--muted); }
+.arena-body em { color: var(--text); font-style: normal; font-weight: 600; }
+.arena-team { font-size: 0.75rem !important; }
+.arena-status { display: inline-block; margin-top: 0.25rem; font-size: 0.72rem; }
+.arena-status.ready { color: #f5c518; }
+.arena-status.won { color: #4ade80; }
+.arena-status.locked { color: #8b9bb8; }
+.arena-actions { display: flex; }
+@media (max-width: 560px) {
+  .arena-card { grid-template-columns: auto 1fr; }
+  .arena-actions { grid-column: 1 / -1; }
+  .arena-actions button { width: 100%; }
+}

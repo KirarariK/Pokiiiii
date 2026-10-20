@@ -19,6 +19,9 @@ import {
 } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { ensureDaily, initDailyBaselines } from './quests.js';
+import { ensureArena } from './arena.js';
+import { ensureExpeditions, expeditionBusyUids } from './expedition.js';
+import { ensureDaycare, daycareBusyUids } from './daycare.js';
 
 const SAVE_KEY = 'pokiiiii_save_v3';
 const SAVE_KEY_LEGACY = ['pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
@@ -57,9 +60,21 @@ export function createNewGame(starterId) {
     log: [],
     daily: null,
     dailyBaselines: null,
+    expeditions: [],
+    daycare: [],
   };
   initDailyBaselines(state);
   return state;
+}
+
+export function busyPokemonUids(state) {
+  const set = expeditionBusyUids(state);
+  for (const u of daycareBusyUids(state)) set.add(u);
+  return set;
+}
+
+export function isPokemonBusy(state, uid) {
+  return busyPokemonUids(state).has(uid);
 }
 
 export function getZone(id) {
@@ -90,6 +105,8 @@ export function loadGame() {
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
+    ensureExpeditions(state);
+    ensureDaycare(state);
     initDailyBaselines(state);
     ensureDaily(state);
     // Ensure current zone still exists
@@ -154,7 +171,8 @@ export function spawnWild(state) {
 }
 
 export function activeFighter(state) {
-  return state.team.find((p) => p.hp > 0) || null;
+  const busy = busyPokemonUids(state);
+  return state.team.find((p) => p.hp > 0 && !busy.has(p.uid)) || null;
 }
 
 export function healTeam(state) {

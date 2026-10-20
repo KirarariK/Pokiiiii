@@ -18,6 +18,12 @@ export const ICO = {
   bolt: S(`<path d="M13 2L4 14h7l-1 8 10-14h-7l1-6z"/>`),
   dice: S(`<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/>`),
   badge: S(`<circle cx="12" cy="10" r="5"/><path d="M9 14l-2 7 5-3 5 3-2-7"/>`),
+  gymbadge: S(
+    `<circle cx="12" cy="9.5" r="6.2"/><circle cx="12" cy="9.5" r="3.2"/><path d="M8.5 14.5L7 21l5-2.5L17 21l-1.5-6.5"/><path d="M12 6.5v6M9.5 9.5h5"/>`,
+  ),
+  arena: S(
+    `<path d="M4 18h16M6 18V9l6-5 6 5v9"/><path d="M10 18v-5h4v5"/><circle cx="12" cy="11" r="1.6"/>`,
+  ),
   crown: S(`<path d="M3 17h18l-1.5-9-4.5 4L12 5l-3 7-4.5-4L3 17z"/><path d="M5 17h14v2H5z"/>`),
   trophy: S(`<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 6H5a2 2 0 000 4h2M17 6h2a2 2 0 010 4h-2"/>`),
   users: S(`<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19c1-3 3.5-4.5 6-4.5S14 16 15 19M14 14.5c1.5.2 3 1.2 4 3.5"/>`),
@@ -49,6 +55,13 @@ export const ICO = {
     `<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/>`,
   ),
   lang: S(`<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>`),
+  compass: S(
+    `<circle cx="12" cy="12" r="9"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/><path d="M14.5 9.5L10 14l-2.5-.5L12 8.5l2.5 1z" fill="currentColor" fill-opacity=".35"/><path d="M9.5 14.5L14 10l2.5.5L12 15.5l-2.5-1z"/>`,
+  ),
+  egg: S(
+    `<path d="M12 3c4.5 0 8 5.2 8 10.5S15.5 21 12 21 4 18.8 4 13.5 7.5 3 12 3z"/><path d="M9 11c.4-.8 1-.8 1.4 0M13.5 9.5c.35-.7.9-.7 1.25 0M11 15c.3-.55.75-.55 1.05 0"/>`,
+  ),
+  clock: S(`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>`),
 };
 
 export function icon(name, cls = '') {

@@ -29,6 +29,7 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import { challengeGym, renderArenasPanel, ensureArena } from './arena.js';
 
 let state = null;
 let battle = null;
@@ -186,6 +187,10 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-arenas" class="panel">
+          <div id="arenas-view"></div>
+        </section>
+
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
@@ -277,6 +282,8 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    arenas: 'arenas',
+    arena: 'arenas',
     settings: 'settings',
     heal: 'battle',
   };
@@ -357,6 +364,29 @@ function onClick(e) {
     }
     closeHub();
     setTab(id);
+    return;
+  }
+
+  const challenge = e.target.closest('[data-challenge-gym]');
+  if (challenge) {
+    ensureArena(state);
+    const res = challengeGym(state, challenge.dataset.challengeGym);
+    if (!res.ok) {
+      const msg =
+        res.reason === 'already'
+          ? 'Badge déjà obtenu'
+          : res.reason === 'locked'
+            ? res.needLeader
+              ? `Battre ${res.needLeader} ou N.${res.need}`
+              : `Niveau N.${res.need} requis`
+            : 'Défi impossible';
+      UI.toast(msg);
+    } else if (res.win) {
+      UI.toast(`Victoire ! Badge ${res.badgeId || res.badge} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
+    } else {
+      UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
+    }
+    refreshAll();
     return;
   }
 
