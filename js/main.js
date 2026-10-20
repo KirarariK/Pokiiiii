@@ -391,8 +391,8 @@ function renderShell() {
           </div>
         </section>
       </main>
-      ${Shell.renderHub(state)}
       </div>
+      ${Shell.renderHub(state)}
     </div>
     <div id="toasts"></div>
     <div id="modal-overlay" hidden><div class="modal" id="modal-body"></div></div>
@@ -607,6 +607,9 @@ function refreshSideNav(active = tab) {
   const host = UI.$('#side-nav-host');
   if (!host) return;
   host.innerHTML = Shell.renderSideNav(hubOpen ? 'hub' : active, state);
+  host.hidden = !!hubOpen;
+  host.setAttribute('aria-hidden', hubOpen ? 'true' : 'false');
+  document.body.classList.toggle('hub-open', !!hubOpen);
 }
 
 function openHub() {
