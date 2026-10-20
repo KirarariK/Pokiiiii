@@ -130,6 +130,8 @@ export function loadGame() {
     if (typeof state.tutorialDone !== 'boolean') state.tutorialDone = true;
     if (!Array.isArray(state.badges)) state.badges = [];
     if (typeof state.ascensionLevel !== 'number') state.ascensionLevel = 0;
+    ensureExpeditions(state);
+    ensureDaycare(state);
     initDailyBaselines(state);
     ensureDaily(state);
     ensureSummon(state);
