@@ -1524,7 +1524,12 @@ select {
   position: absolute;
   top: 0.3rem;
   right: 0.35rem;
-  font-size: 0.7rem;
+  display: inline-flex;
+  color: #f87171;
+}
+.dex-ball .ico {
+  width: 12px;
+  height: 12px;
 }
 
 .dex-seen-dot {

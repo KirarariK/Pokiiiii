@@ -427,7 +427,7 @@ export function renderBonus(state) {
       <div class="bonus-ico">${icon('bolt')}</div>
       <div>
         <strong>Boost idle</strong>
-        <p class="muted">Vitesse de combat actuelle : ×${state.battleSpeed}. Change-la dans Combat.</p>
+        <p class="muted">Vitesse de combat actuelle : ×${state.battleSpeed}. Réglable dans Combat ou Options.</p>
       </div>
     </div>
     <div class="bonus-card">

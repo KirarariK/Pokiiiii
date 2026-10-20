@@ -33,14 +33,22 @@ import { challengeGym, renderArenasPanel, ensureArena } from './arena.js';
 import {
   startExpedition,
   claimExpedition,
+  claimAllReadyExpeditions,
   expeditionBusyUids,
 } from './expedition.js';
 import {
   depositDaycare,
   claimDaycare,
+  claimAllReadyDaycare,
   daycareBusyUids,
 } from './daycare.js';
-import { pullOnce, pullMulti, buyTickets } from './summon.js';
+import {
+  pullOnce,
+  pullMulti,
+  buyTickets,
+  claimDailyFreeTickets,
+  takePendingDailyTicketGrant,
+} from './summon.js';
 import * as Audio from './audio.js';
 import {
   shouldShowTutorial,
@@ -190,13 +198,28 @@ function startExisting(s) {
   Audio.syncMuteFromState(state);
   initDailyBaselines(state);
   const offline = applyOfflineProgress(state);
+  const expClaim = claimAllReadyExpeditions(state);
+  const dayClaim = claimAllReadyDaycare(state);
+  if (expClaim.count || dayClaim.count) saveGame(state);
   enterGame();
   if (offline) {
     UI.toast(`Hors-ligne : ${offline.battles} combats · +${offline.xpGain} XP · +${offline.moneyGain}₽`);
   }
+  if (expClaim.count || dayClaim.count) {
+    const bits = [];
+    if (expClaim.count) bits.push(`${expClaim.count} expédition${expClaim.count > 1 ? 's' : ''}`);
+    if (dayClaim.count) bits.push(`${dayClaim.count} pension`);
+    UI.toast(`Récompenses prêtes : ${bits.join(' · ')}`);
+  }
 }
 
 function enterGame() {
+  // Ticket quotidien (idempotent) — toast si crédit pendant ce boot
+  let ticketGrant = takePendingDailyTicketGrant();
+  if (!ticketGrant) {
+    const daily = claimDailyFreeTickets(state);
+    if (daily.ok) ticketGrant = daily.granted;
+  }
   renderShell();
   battle = createBattle(state);
   bindShell();
@@ -206,6 +229,9 @@ function enterGame() {
   if (shouldShowTutorial(state)) {
     tutorialStep = 0;
     showTutorialOverlay();
+  }
+  if (ticketGrant) {
+    UI.toast(`+${ticketGrant} ticket d’invocation quotidien`);
   }
 }
 
@@ -304,6 +330,8 @@ function renderShell() {
 
         <section id="panel-ascension" class="panel">
           <div id="ascension-view"></div>
+        </section>
+
         <section id="panel-minigame" class="panel">
           <div id="minigame-view"></div>
         </section>
@@ -320,10 +348,37 @@ function renderShell() {
               <input id="player-name" type="text" maxlength="16" value="${state.playerName || 'Dresseur'}" />
             </label>
             <label class="chk settings-mute">
-              <input type="checkbox" id="opt-mute" ${state.settings?.mute ? 'checked' : ''} />
+              <input id="opt-mute" type="checkbox" ${state.settings?.mute ? 'checked' : ''} />
               ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
             </label>
-            <button id="btn-save" class="btn-primary" type="button">Sauvegarder</button>
+            <label class="chk">
+              <input id="opt-auto-catch" type="checkbox" ${state.autoCatch ? 'checked' : ''} />
+              Auto-capture
+            </label>
+            <label class="field">Ball auto-capture
+              <select id="opt-auto-ball">
+                ${Object.values(BALLS)
+                  .map(
+                    (b) =>
+                      `<option value="${b.id}" ${state.autoCatchBall === b.id ? 'selected' : ''}>${b.name}</option>`,
+                  )
+                  .join('')}
+              </select>
+            </label>
+            <label class="field">Vitesse de combat
+              <select id="opt-battle-speed">
+                ${[0.75, 1, 1.5, 2, 3, 5]
+                  .map(
+                    (v) =>
+                      `<option value="${v}" ${Number(state.battleSpeed || 1) === v ? 'selected' : ''}>${v}×</option>`,
+                  )
+                  .join('')}
+              </select>
+            </label>
+            <div class="settings-row">
+              <button id="btn-save" class="btn-primary" type="button">Sauvegarder</button>
+              <button id="btn-replay-tutorial" class="btn-secondary" type="button">${icon('help')} Revoir le tutoriel</button>
+            </div>
             <button id="btn-reset" class="btn-danger" type="button">Réinitialiser la partie</button>
             <p class="muted disclaimer">Fan-game non officiel. Sprites © Pokémon / Nintendo / Creatures / Game Freak — via PokéAPI.</p>
           </div>
@@ -338,20 +393,48 @@ function renderShell() {
   `;
 }
 
+function syncBattleControlsFromState() {
+  const autoCatch = UI.$('#auto-catch');
+  const autoBall = UI.$('#auto-ball');
+  const battleSpeed = UI.$('#battle-speed');
+  const optAutoCatch = UI.$('#opt-auto-catch');
+  const optAutoBall = UI.$('#opt-auto-ball');
+  const optSpeed = UI.$('#opt-battle-speed');
+  if (autoCatch) autoCatch.checked = !!state.autoCatch;
+  if (optAutoCatch) optAutoCatch.checked = !!state.autoCatch;
+  if (autoBall) autoBall.value = state.autoCatchBall || 'pokeball';
+  if (optAutoBall) optAutoBall.value = state.autoCatchBall || 'pokeball';
+  if (battleSpeed) battleSpeed.value = String(state.battleSpeed || 1);
+  if (optSpeed) optSpeed.value = String(state.battleSpeed || 1);
+}
+
+function setAutoCatch(on) {
+  state.autoCatch = !!on;
+  syncBattleControlsFromState();
+  saveGame(state);
+}
+
+function setAutoCatchBall(id) {
+  state.autoCatchBall = id || 'pokeball';
+  syncBattleControlsFromState();
+  saveGame(state);
+}
+
+function setBattleSpeed(v) {
+  state.battleSpeed = Number(v) || 1;
+  syncBattleControlsFromState();
+  startLoop();
+  saveGame(state);
+}
+
 function bindShell() {
-  UI.$('#auto-catch').checked = !!state.autoCatch;
-  UI.$('#auto-catch').addEventListener('change', (e) => {
-    state.autoCatch = e.target.checked;
-  });
-  UI.$('#auto-ball').value = state.autoCatchBall || 'pokeball';
-  UI.$('#auto-ball').addEventListener('change', (e) => {
-    state.autoCatchBall = e.target.value;
-  });
-  UI.$('#battle-speed').value = String(state.battleSpeed || 1);
-  UI.$('#battle-speed').addEventListener('change', (e) => {
-    state.battleSpeed = Number(e.target.value);
-    startLoop();
-  });
+  syncBattleControlsFromState();
+  UI.$('#auto-catch')?.addEventListener('change', (e) => setAutoCatch(e.target.checked));
+  UI.$('#opt-auto-catch')?.addEventListener('change', (e) => setAutoCatch(e.target.checked));
+  UI.$('#auto-ball')?.addEventListener('change', (e) => setAutoCatchBall(e.target.value));
+  UI.$('#opt-auto-ball')?.addEventListener('change', (e) => setAutoCatchBall(e.target.value));
+  UI.$('#battle-speed')?.addEventListener('change', (e) => setBattleSpeed(e.target.value));
+  UI.$('#opt-battle-speed')?.addEventListener('change', (e) => setBattleSpeed(e.target.value));
 
   UI.$('#btn-heal')?.addEventListener('click', () => {
     Audio.play('ui');
@@ -388,6 +471,14 @@ function bindShell() {
     saveGame(state);
     UI.toast('Partie sauvegardée');
     refreshChrome();
+  });
+
+  UI.$('#btn-replay-tutorial')?.addEventListener('click', () => {
+    Audio.play('ui');
+    state.tutorialDone = false;
+    tutorialStep = 0;
+    saveGame(state);
+    showTutorialOverlay();
   });
 
   UI.$('#btn-reset')?.addEventListener('click', () => {

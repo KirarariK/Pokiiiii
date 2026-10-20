@@ -42,6 +42,9 @@ export function defaultSummonState() {
   };
 }
 
+/** Dernier crédit quotidien (pour toast au boot). */
+let pendingDailyTicketGrant = 0;
+
 /** Initialise / migre `state.summon` et crédite le ticket quotidien. */
 export function ensureSummon(state) {
   if (!state.summon || typeof state.summon !== 'object') {
@@ -64,12 +67,20 @@ export function claimDailyFreeTickets(state) {
   }
   state.summon.lastFreeDay = day;
   state.summon.tickets += SUMMON.FREE_DAILY;
+  pendingDailyTicketGrant = SUMMON.FREE_DAILY;
   addLog(
     state,
     `Invocation : +${SUMMON.FREE_DAILY} ticket${SUMMON.FREE_DAILY > 1 ? 's' : ''} quotidien${SUMMON.FREE_DAILY > 1 ? 's' : ''}.`,
     'unlock'
   );
   return { ok: true, tickets: state.summon.tickets, granted: SUMMON.FREE_DAILY };
+}
+
+/** Lit et consomme le crédit quotidien en attente (0 si rien). */
+export function takePendingDailyTicketGrant() {
+  const n = pendingDailyTicketGrant;
+  pendingDailyTicketGrant = 0;
+  return n;
 }
 
 function ensureSummonShape(state) {
@@ -211,7 +222,7 @@ export function pullOnce(state) {
   const label = RARITY_LABELS[rarity] || rarity;
   addLog(
     state,
-    `Invocation ${label} : ${pokeName(poke)}${poke.shiny ? ' ★' : ''} !`,
+    `Invocation ${label} : ${pokeName(poke)}${poke.shiny ? ' (chromatique)' : ''} !`,
     rarity === 'legendary' || rarity === 'rare' ? 'unlock' : 'catch'
   );
 

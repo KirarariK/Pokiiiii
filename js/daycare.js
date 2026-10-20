@@ -132,6 +132,18 @@ export function depositDaycare(state, { parentUids, durationMs }, extraBusy = ne
   return { ok: true, job };
 }
 
+/** Réclame tous les jobs de pension prêts (éclosions). */
+export function claimAllReadyDaycare(state, now = Date.now()) {
+  ensureDaycare(state);
+  const claimed = [];
+  for (const job of [...state.daycare]) {
+    if (!isDaycareReady(job, now)) continue;
+    const res = claimDaycare(state, job.id);
+    if (res.ok) claimed.push(res);
+  }
+  return { count: claimed.length, results: claimed };
+}
+
 export function claimDaycare(state, jobId) {
   ensureDaycare(state);
   const job = state.daycare.find((j) => j.id === jobId);

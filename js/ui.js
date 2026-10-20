@@ -377,7 +377,7 @@ export function renderPokedex(state, opts = {}) {
         <img src="${spriteUrl(id)}" alt="" class="${seen ? '' : 'silhouette'}" loading="lazy" />
         <div class="dex-name">${seen ? displayName(sp) : '???'}</div>
         <div class="dex-gen">G${sp.generation}</div>
-        ${caught ? '<span class="dex-ball" title="Capturé">🔴</span>' : ''}
+        ${caught ? `<span class="dex-ball" title="Capturé">${icon('ball')}</span>` : ''}
         ${seen && !caught ? '<span class="dex-seen-dot" title="Vu"></span>' : ''}
       </div>`;
     })

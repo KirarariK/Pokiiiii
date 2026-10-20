@@ -152,6 +152,18 @@ function pickBallReward(scale) {
   return { pokeball: 2 + Math.floor(Math.random() * 4 * scale) };
 }
 
+/** Réclame toutes les expéditions prêtes. */
+export function claimAllReadyExpeditions(state, now = Date.now()) {
+  ensureExpeditions(state);
+  const claimed = [];
+  for (const exp of [...state.expeditions]) {
+    if (!isExpeditionReady(exp, now)) continue;
+    const res = claimExpedition(state, exp.id);
+    if (res.ok) claimed.push(res);
+  }
+  return { count: claimed.length, results: claimed };
+}
+
 export function claimExpedition(state, expeditionId) {
   ensureExpeditions(state);
   const exp = state.expeditions.find((e) => e.id === expeditionId);
