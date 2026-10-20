@@ -617,7 +617,7 @@ export function renderSummonPanel(state) {
           <span class="portal-ring portal-ring-c"></span>
           <span class="portal-glow"></span>
           <span class="portal-core">
-            <span class="portal-ball"></span>
+            <span class="portal-seal" aria-hidden="true"></span>
           </span>
           <span class="portal-spark s1"></span>
           <span class="portal-spark s2"></span>
