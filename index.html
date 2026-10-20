@@ -16,15 +16,15 @@
     />
     <link rel="preconnect" href="https://s4.anilist.co" />
     <link rel="preconnect" href="https://static.wikia.nocookie.net" crossorigin />
-    <link rel="stylesheet" href="./css/style.css?v=nindo2" />
-    <link rel="stylesheet" href="./css/battle-bgs.css?v=nindo2" />
+    <link rel="stylesheet" href="./css/style.css?v=nindo4" />
+    <link rel="stylesheet" href="./css/battle-bgs.css?v=nindo4" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="theme-color" content="#0a0705" />
     <link rel="icon" href="./assets/brand/nindo-icon-128.jpg" type="image/jpeg" />
   </head>
   <body>
     <div id="app">
-      <div class="boot-splash" id="boot-loading" role="status" aria-live="polite" style="--boot-art:url('./assets/brand/nindo-boot-splash.jpg')">
+      <div class="boot-splash" id="boot-loading" role="status" aria-live="polite">
         <div class="boot-splash-bg" aria-hidden="true"></div>
         <div class="boot-splash-veil" aria-hidden="true"></div>
         <div class="boot-splash-core">
@@ -36,8 +36,13 @@
           <p class="boot-msg">Ouverture du sceau…</p>
         </div>
       </div>
+      <script>
+        document
+          .getElementById('boot-loading')
+          .style.setProperty('--boot-art', `url('${new URL('./assets/brand/nindo-boot-splash.jpg', document.baseURI).href}')`);
+      </script>
     </div>
-    <script type="module" src="./js/main.js?v=nindo3"></script>
+    <script type="module" src="./js/main.js?v=nindo4"></script>
     <script>
       (function () {
         const BOOT_MS = 10000;

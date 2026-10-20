@@ -4212,3 +4212,101 @@ body.hub-open #side-nav-host {
   .dex-region-row { grid-template-columns: 5.2rem 1fr 2.8rem; }
   .zone-unlock-list li { grid-template-columns: 1fr; gap: 0.15rem; }
 }
+
+/* —— Décors peints par page —— */
+.pi-page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-size: cover;
+  background-position: center;
+  transition: background-image 0.4s ease;
+}
+.pi-page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(5, 8, 16, 0.45), rgba(5, 8, 16, 0.82) 75%),
+    linear-gradient(180deg, rgba(5, 8, 16, 0.25), rgba(5, 8, 16, 0.9));
+}
+.pi-page-bg[data-page='battle']::after {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(5, 8, 16, 0.7), rgba(5, 8, 16, 0.94) 70%);
+}
+
+.panel:not(#panel-battle) {
+  position: relative;
+}
+.panel:not(#panel-battle)::before {
+  content: '';
+  display: block;
+  height: 96px;
+  margin: 0 0 -46px;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 146, 60, 0.28);
+  background:
+    linear-gradient(180deg, rgba(5, 8, 16, 0) 25%, rgba(5, 8, 16, 0.92) 100%),
+    var(--page-art, none) center 42% / cover no-repeat;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+.panel:not(#panel-battle) .panel-head:first-of-type,
+.panel:not(#panel-battle) > div > .panel-head:first-child,
+.panel:not(#panel-battle) > div > div > .panel-head:first-child {
+  position: relative;
+  padding: 0 0.9rem;
+  min-height: 46px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+}
+
+.hub-tile.has-art {
+  justify-content: flex-end;
+  padding: 0.5rem 0.35rem 0.55rem;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(8, 12, 22, 0.05) 20%, rgba(8, 12, 22, 0.88) 92%),
+    var(--tile-art) center / cover no-repeat;
+}
+.hub-tile.has-art .hub-tile-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(10, 16, 28, 0.72);
+  backdrop-filter: blur(3px);
+}
+.hub-tile.has-art .hub-tile-ico .ico { width: 18px; height: 18px; }
+.hub-tile.has-art .hub-tile-label {
+  font-weight: 700;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.seal-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.shop-icon.has-art {
+  width: 3.4rem;
+  height: 3.4rem;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(251, 146, 60, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.ball-btn .ball-ico.has-art {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(251, 146, 60, 0.4);
+}
+
+#panel-summon .summon-stage {
+  background:
+    linear-gradient(180deg, rgba(8, 12, 22, 0.55), rgba(8, 12, 22, 0.9)),
+    var(--page-art, none) center 78% / cover no-repeat;
+}

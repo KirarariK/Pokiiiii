@@ -47,12 +47,44 @@ function rewardMults(state) {
 }
 
 export const BALLS = {
-  pokeball: { id: 'pokeball', name: 'Parchemin', bonus: 1, price: 280, icon: 'scroll' },
-  greatball: { id: 'greatball', name: 'Sceau de liaison', bonus: 1.45, price: 750, icon: 'seal' },
-  ultraball: { id: 'ultraball', name: 'Fûinjutsu', bonus: 1.9, price: 1600, icon: 'fuin' },
+  pokeball: { id: 'pokeball', name: 'Parchemin', bonus: 1, price: 280, icon: 'scroll', image: './assets/items/seal-scroll.jpg' },
+  greatball: { id: 'greatball', name: 'Sceau de liaison', bonus: 1.45, price: 750, icon: 'seal', image: './assets/items/seal-binding.jpg' },
+  ultraball: { id: 'ultraball', name: 'Fûinjutsu', bonus: 1.9, price: 1600, icon: 'fuin', image: './assets/items/seal-fuin.jpg' },
   // Plus de 100% : très fort mais pas cassé
-  masterball: { id: 'masterball', name: 'Sceau des Cinq Kage', bonus: 4.5, price: 90000, icon: 'kage' },
+  masterball: { id: 'masterball', name: 'Sceau des Cinq Kage', bonus: 4.5, price: 90000, icon: 'kage', image: './assets/items/seal-kage.jpg' },
 };
+
+/** `url()` dans une variable CSS se résout depuis la feuille de style : on passe une URL absolue. */
+export function cssUrl(path) {
+  if (!path) return 'none';
+  const abs = typeof document !== 'undefined' ? new URL(path, document.baseURI).href : path;
+  return `url('${abs}')`;
+}
+
+const PAGE_DIR = './assets/pages';
+export const PAGE_ART = {
+  pokemon: `${PAGE_DIR}/page-squad.jpg`,
+  zones: `${PAGE_DIR}/page-zones.jpg`,
+  shop: `${PAGE_DIR}/page-shop.jpg`,
+  pass: `${PAGE_DIR}/page-pass.jpg`,
+  quests: `${PAGE_DIR}/page-quests.jpg`,
+  dex: `${PAGE_DIR}/page-dex.jpg`,
+  profile: `${PAGE_DIR}/page-profile.jpg`,
+  expeditions: `${PAGE_DIR}/page-expeditions.jpg`,
+  pension: `${PAGE_DIR}/page-dojo.jpg`,
+  arenas: `${PAGE_DIR}/page-arenas.jpg`,
+  bonus: `${PAGE_DIR}/page-bonus.jpg`,
+  summon: `${PAGE_DIR}/page-summon.jpg`,
+  ascension: `${PAGE_DIR}/page-ascension.jpg`,
+  minigame: `${PAGE_DIR}/page-minigame.jpg`,
+  leaderboard: `${PAGE_DIR}/page-leaderboard.jpg`,
+  settings: `${PAGE_DIR}/page-settings.jpg`,
+};
+
+export function sealArt(ball, cls = '') {
+  if (!ball?.image) return '';
+  return `<img class="seal-art ${cls}" src="${ball.image}" alt="" width="40" height="40" loading="lazy" />`;
+}
 
 export const BRAND = {
   name: 'Nindō',
@@ -68,7 +100,7 @@ export const BRAND = {
 /** Splash de boot réutilisable (index + main). */
 export function renderBootSplash(message = 'Ouverture du sceau…') {
   return `
-    <div class="boot-splash" role="status" aria-live="polite" style="--boot-art:url('${BRAND.bootSplash}')">
+    <div class="boot-splash" role="status" aria-live="polite" style="--boot-art:${cssUrl(BRAND.bootSplash)}">
       <div class="boot-splash-bg" aria-hidden="true"></div>
       <div class="boot-splash-veil" aria-hidden="true"></div>
       <div class="boot-splash-core">

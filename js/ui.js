@@ -21,6 +21,8 @@ import {
   isGenUnlocked,
   ensureUnlockedGens,
   activeFighter,
+  sealArt,
+  cssUrl,
 } from './game.js';
 import { resolveZoneBgClass } from './data/zones.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
@@ -188,7 +190,7 @@ export function renderBattle(state, battle) {
       : `${pokeName(wild)} attaque`;
 
   return `
-    <div class="battle-arena duel bg-region bg-region-${regionKey} ${zoneTone}${zoneImg ? ' has-zone-art' : ''}" style="--zone-bg:${zone?.bg || '#1a1a2e'};${zoneImg ? `--zone-art:url('${zoneImg}')` : ''}">
+    <div class="battle-arena duel bg-region bg-region-${regionKey} ${zoneTone}${zoneImg ? ' has-zone-art' : ''}" style="--zone-bg:${zone?.bg || '#1a1a2e'};${zoneImg ? `--zone-art:${cssUrl(zoneImg)}` : ''}">
       <div class="battle-bg-overlay" aria-hidden="true"></div>
       <div class="battle-zone-label">${zone?.name || ''}${regionLabel ? ` · ${regionLabel}` : ''} · Saga ${zone?.gen || '?'} · 1v1</div>
       ${renderEventBanner()}
@@ -746,7 +748,7 @@ export function renderShop(state) {
     .map(
       (b) => `
     <div class="shop-item">
-      <div class="shop-icon ico-wrap">${icon(b.icon || 'scroll')}</div>
+      <div class="shop-icon has-art">${sealArt(b) || icon(b.icon || 'scroll')}</div>
       <div>
         <strong>${b.name}</strong>
         <div class="muted">Bonus ×${b.bonus} · Stock: ${state.balls[b.id] || 0}</div>
@@ -809,7 +811,7 @@ export function renderCatchButtons(state, battle) {
     .map((b) => {
       const n = state.balls[b.id] || 0;
       return `<button class="ball-btn" data-catch="${b.id}" ${!wildAlive || n <= 0 ? 'disabled' : ''}>
-        <span class="ball-ico">${icon(b.icon || 'scroll')}</span>
+        <span class="ball-ico has-art">${sealArt(b) || icon(b.icon || 'scroll')}</span>
         <span class="ball-label">${b.name}</span>
         <span class="ball-stock">${n}</span>
       </button>`;
@@ -903,7 +905,7 @@ export function renderStarterSelect(selectedGen = 1) {
   const saved = hasSave();
 
   return `
-    <div class="starter-screen" style="--starter-art:url('${BRAND.starterBg}')">
+    <div class="starter-screen" style="--starter-art:${cssUrl(BRAND.starterBg)}">
       <div class="starter-hero" style="background-image:linear-gradient(180deg,rgba(10,7,5,.55),rgba(10,7,5,.82)),url('${BRAND.hero}');background-size:cover;background-position:center;">
         <img class="brand-logo" src="${BRAND.logo}" alt="" width="64" height="64" />
         <p class="brand-mark">${BRAND.name}</p>

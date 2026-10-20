@@ -1,6 +1,6 @@
 import { icon } from './icons.js';
 import { speciesCount, allSpecies, artUrl, displayName, getSpecies, pokeName, spriteUrl } from './pokemon.js';
-import { ZONES, BRAND, BALLS, busyPokemonUids, currentPlayGen } from './game.js';
+import { ZONES, BRAND, BALLS, PAGE_ART, cssUrl, busyPokemonUids, currentPlayGen } from './game.js';
 import { GEN_META } from './data/starters.js';
 import {
   QUEST_DEFS,
@@ -195,12 +195,15 @@ export function renderHub(state) {
   const arenaN = readyGymCount(state);
   const exN = pendingExpeditionCount(state);
   const dayN = pendingDaycareCount(state);
-  const tile = (id, label, ico, badge = 0) => `
-    <button type="button" class="hub-tile" data-hub="${id}">
+  const tile = (id, label, ico, badge = 0) => {
+    const art = id === 'battle' ? zone?.image : PAGE_ART[id];
+    return `
+    <button type="button" class="hub-tile ${art ? 'has-art' : ''}" data-hub="${id}"${art ? ` style="--tile-art:${cssUrl(art)}"` : ''}>
       <span class="hub-tile-ico">${icon(ico)}</span>
       <span class="hub-tile-label">${label}</span>
       ${badge > 0 ? `<span class="hub-badge">${badge}</span>` : ''}
     </button>`;
+  };
 
   return `
     <div class="hub-overlay" id="hub-overlay" hidden>

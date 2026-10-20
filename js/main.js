@@ -23,6 +23,9 @@ import {
   isGenUnlocked,
   BALLS,
   BRAND,
+  PAGE_ART,
+  ZONES,
+  cssUrl,
   renderBootSplash,
 } from './game.js';
 import {
@@ -273,6 +276,7 @@ function enterGame() {
 function renderShell() {
   UI.$('#app').innerHTML = `
     <div class="game-shell pi-shell">
+      <div class="pi-page-bg" id="page-bg" aria-hidden="true"></div>
       <div id="side-nav-host">${Shell.renderSideNav(tab, state)}</div>
       <div class="pi-main">
       ${Shell.renderTopbar(state)}
@@ -671,8 +675,25 @@ function setTab(id) {
   UI.$$('.panel').forEach((p) => {
     p.classList.toggle('active', p.id === `panel-${panelId}`);
   });
+  syncPageArt(panelId);
 
   refreshAll();
+}
+
+function syncPageArt(panelId = tab) {
+  const bg = UI.$('#page-bg');
+  if (!bg) return;
+  const art =
+    panelId === 'battle'
+      ? ZONES.find((z) => z.id === state?.currentZone)?.image
+      : PAGE_ART[panelId];
+  bg.style.backgroundImage = art ? `url('${art}')` : '';
+  bg.dataset.page = panelId;
+  const shell = UI.$('.pi-shell');
+  if (shell) {
+    if (art) shell.style.setProperty('--page-art', cssUrl(art));
+    else shell.style.removeProperty('--page-art');
+  }
 }
 
 function refreshSideNav(active = tab) {
@@ -1011,6 +1032,7 @@ function onClick(e) {
         battle = createBattle(state);
       }
     }
+    syncPageArt();
     refreshAll();
     return;
   }
