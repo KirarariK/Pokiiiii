@@ -29,6 +29,19 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import * as Audio from './audio.js';
+import {
+  shouldShowTutorial,
+  renderTutorial,
+  tutorialStepCount,
+} from './tutorial.js';
+import {
+  canAscend,
+  performAscension,
+  renderAscensionPanel,
+  renderAscendConfirmModal,
+} from './ascension.js';
+import { icon } from './icons.js';
 
 let state = null;
 let battle = null;
@@ -39,6 +52,7 @@ let starterGen = 1;
 let dexGen = 0;
 let dexQuery = '';
 let hubOpen = false;
+let tutorialStep = 0;
 
 const TICK_BASE_MS = 750;
 
@@ -48,11 +62,27 @@ async function boot() {
 
   const params = new URLSearchParams(location.search);
   const demo = params.get('demo');
-  if (demo === '1' || demo === 'hub' || demo === 'pass' || demo === 'quests') {
+  if (
+    demo === '1' ||
+    demo === 'hub' ||
+    demo === 'pass' ||
+    demo === 'quests' ||
+    demo === 'ascension' ||
+    demo === 'tutorial'
+  ) {
     startNew(4);
-    if (demo === 'hub') setTimeout(() => openHub(), 50);
+    if (demo !== 'tutorial') {
+      state.tutorialDone = true;
+      hideTutorialOverlay();
+    } else {
+      state.tutorialDone = false;
+      tutorialStep = 0;
+      setTimeout(() => showTutorialOverlay(), 80);
+    }
+    if (demo === 'hub' || demo === 'ascension') setTimeout(() => openHub(), 50);
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
+    if (demo === 'ascension') setTimeout(() => setTab('ascension'), 80);
     return;
   }
 
@@ -86,12 +116,14 @@ function bindTitle() {
 
 function startNew(starterId) {
   state = createNewGame(starterId);
+  Audio.syncMuteFromState(state);
   saveGame(state);
   enterGame();
 }
 
 function startExisting(s) {
   state = s;
+  Audio.syncMuteFromState(state);
   initDailyBaselines(state);
   const offline = applyOfflineProgress(state);
   enterGame();
@@ -107,6 +139,10 @@ function enterGame() {
   setTab('battle');
   startLoop();
   saveTimer = setInterval(() => saveGame(state), 8000);
+  if (shouldShowTutorial(state)) {
+    tutorialStep = 0;
+    showTutorialOverlay();
+  }
 }
 
 function renderShell() {
@@ -186,12 +222,20 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-ascension" class="panel">
+          <div id="ascension-view"></div>
+        </section>
+
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
             <p>Sauvegarde auto · ${speciesCount()} espèces Gen I–IX · ${BRAND.name}</p>
             <label class="field">Nom du dresseur
               <input id="player-name" type="text" maxlength="16" value="${state.playerName || 'Dresseur'}" />
+            </label>
+            <label class="chk settings-mute">
+              <input type="checkbox" id="opt-mute" ${state.settings?.mute ? 'checked' : ''} />
+              ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
             </label>
             <button id="btn-save" class="btn-primary" type="button">Sauvegarder</button>
             <button id="btn-reset" class="btn-danger" type="button">Réinitialiser la partie</button>
@@ -204,6 +248,7 @@ function renderShell() {
     </div>
     <div id="toasts"></div>
     <div id="modal-overlay" hidden><div class="modal" id="modal-body"></div></div>
+    <div id="tutorial-host"></div>
   `;
 }
 
@@ -223,18 +268,35 @@ function bindShell() {
   });
 
   UI.$('#btn-heal')?.addEventListener('click', () => {
+    Audio.play('ui');
     healTeam(state);
     refreshAll();
     UI.toast('Équipe soignée');
   });
 
   UI.$('#btn-evolve-all')?.addEventListener('click', () => {
+    Audio.play('ui');
     const n = autoEvolveAll(state);
     UI.toast(n ? `${n} évolution(s)` : 'Aucune évolution disponible');
     refreshAll();
   });
 
+  UI.$('#opt-mute')?.addEventListener('change', (e) => {
+    if (!state.settings) state.settings = { mute: false };
+    state.settings.mute = !!e.target.checked;
+    Audio.syncMuteFromState(state);
+    saveGame(state);
+    const ico = UI.$('.settings-mute .ico');
+    if (ico) {
+      const wrap = document.createElement('span');
+      wrap.innerHTML = icon(state.settings.mute ? 'mute' : 'volume');
+      ico.replaceWith(wrap.firstElementChild);
+    }
+    if (!state.settings.mute) Audio.play('ui');
+  });
+
   UI.$('#btn-save')?.addEventListener('click', () => {
+    Audio.play('ui');
     const name = UI.$('#player-name')?.value?.trim();
     if (name) state.playerName = name.slice(0, 16);
     saveGame(state);
@@ -277,6 +339,7 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    ascension: 'ascension',
     settings: 'settings',
     heal: 'battle',
   };
@@ -327,9 +390,75 @@ function onInput(e) {
   }
 }
 
+function showTutorialOverlay() {
+  const host = UI.$('#tutorial-host');
+  if (!host) return;
+  host.innerHTML = renderTutorial(tutorialStep);
+}
+
+function hideTutorialOverlay() {
+  const host = UI.$('#tutorial-host');
+  if (host) host.innerHTML = '';
+}
+
+function finishTutorial() {
+  state.tutorialDone = true;
+  saveGame(state);
+  hideTutorialOverlay();
+  Audio.play('ui');
+}
+
 function onClick(e) {
+  const tut = e.target.closest('[data-tut]');
+  if (tut) {
+    const a = tut.dataset.tut;
+    if (a === 'next') {
+      tutorialStep = Math.min(tutorialStepCount() - 1, tutorialStep + 1);
+      Audio.play('ui');
+      showTutorialOverlay();
+    } else if (a === 'prev') {
+      tutorialStep = Math.max(0, tutorialStep - 1);
+      Audio.play('ui');
+      showTutorialOverlay();
+    } else if (a === 'skip' || a === 'done') {
+      finishTutorial();
+    }
+    return;
+  }
+
+  if (e.target.closest('[data-ascend-open]')) {
+    Audio.play('ui');
+    if (!canAscend(state)) {
+      UI.toast('Conditions d’ascension non remplies');
+      return;
+    }
+    UI.showModal(renderAscendConfirmModal(state));
+    return;
+  }
+  if (e.target.closest('[data-ascend-cancel]')) {
+    Audio.play('ui');
+    UI.hideModal();
+    return;
+  }
+  if (e.target.closest('[data-ascend-confirm]')) {
+    const res = performAscension(state);
+    UI.hideModal();
+    if (!res.ok) {
+      UI.toast('Ascension impossible');
+      return;
+    }
+    Audio.play('levelup');
+    battle = createBattle(state);
+    saveGame(state);
+    UI.toast(`Ascension N.${res.level} !`);
+    setTab('ascension');
+    refreshAll();
+    return;
+  }
+
   const nav = e.target.closest('[data-nav]');
   if (nav) {
+    Audio.play('ui');
     const id = nav.dataset.nav;
     if (id === 'hub') {
       if (hubOpen) closeHub();
@@ -341,12 +470,14 @@ function onClick(e) {
   }
 
   if (e.target.closest('[data-hub-close]')) {
+    Audio.play('ui');
     closeHub();
     return;
   }
 
   const hubTile = e.target.closest('[data-hub]');
   if (hubTile) {
+    Audio.play('ui');
     const id = hubTile.dataset.hub;
     if (id === 'heal') {
       healTeam(state);
@@ -388,10 +519,14 @@ function onClick(e) {
     const res = attemptCatch(state, battle, catchBtn.dataset.catch);
     if (!res.ok) UI.toast(res.reason === 'no-ball' ? 'Plus de Balls' : 'Capture impossible');
     else if (res.success) {
+      Audio.play('catch');
       UI.toast(`Capturé ${pokeName(res.pokemon)}`);
       showCatchModal(res.pokemon);
       battle = createBattle(state);
-    } else UI.toast(`${res.ball.name} a échoué`);
+    } else {
+      Audio.play('hit');
+      UI.toast(`${res.ball.name} a échoué`);
+    }
     refreshAll();
     return;
   }
@@ -467,6 +602,7 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  if (UI.$('#ascension-view')) UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }
@@ -495,6 +631,7 @@ function gameTick() {
       if ((state.balls[ballId] || 0) > 0) {
         const res = attemptCatch(state, battle, ballId);
         if (res.ok && res.success) {
+          Audio.play('catch');
           UI.toast(`Auto-capture : ${pokeName(res.pokemon)}`);
           battle = createBattle(state);
           refreshAll();
@@ -506,6 +643,7 @@ function gameTick() {
 
   const events = battleTick(state, battle);
   if (events.length) {
+    Audio.playFromEvents(events);
     refreshAll();
     if (typeof UI.applyBattleFx === 'function') UI.applyBattleFx(events);
   }

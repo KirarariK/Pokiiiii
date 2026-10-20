@@ -13,6 +13,7 @@ import {
 import { BALLS, ZONES, BRAND } from './game.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
 import { icon } from './icons.js';
+import { renderEventBanner } from './events.js';
 
 const REGION_FR = {
   kanto: 'Kanto',
@@ -112,6 +113,24 @@ export function renderPokeCard(poke, opts = {}) {
     </article>`;
 }
 
+
+/** Classe CSS d’ambiance selon le nom / id de zone */
+function battleZoneTone(zone) {
+  if (!zone) return '';
+  const key = `${zone.id} ${zone.name} ${zone.desc}`.toLowerCase();
+  if (/grotte|cave|tunnel|moon|seleni|dark|obscur|mine|cristal/.test(key)) {
+    return 'bg-zone-cave';
+  }
+  if (/forêt|forest|bois|jungle|safari/.test(key)) return 'bg-zone-forest';
+  if (/mont|mountain|peak|route\s*victoire|summit|neige|ice|glace/.test(key)) {
+    return 'bg-zone-mountain';
+  }
+  if (/eau|lake|mer|ocean|surf|plage|beach|river|lac|archipel/.test(key)) {
+    return 'bg-zone-water';
+  }
+  return '';
+}
+
 function floatHtml(float, side) {
   if (!float || float.side !== side) return '';
   const kindClass =
@@ -140,8 +159,9 @@ export function renderBattle(state, battle) {
   const next = battle.nextActor;
   const actingAlly = !battle.over && next === 'player';
   const actingEnemy = !battle.over && next === 'wild';
-  const regionKey = (zone?.region || '').toLowerCase();
+  const regionKey = (zone?.region || 'kanto').toLowerCase();
   const regionLabel = REGION_FR[regionKey] || zone?.region || '';
+  const zoneTone = battleZoneTone(zone);
   const labelKind =
     battle.lastAttack?.typeMult === 0
       ? 'immune'
@@ -161,8 +181,10 @@ export function renderBattle(state, battle) {
       : `${pokeName(wild)} attaque`;
 
   return `
-    <div class="battle-arena duel" style="--zone-bg:${zone?.bg || '#1a1a2e'}">
+    <div class="battle-arena duel bg-region bg-region-${regionKey} ${zoneTone}" style="--zone-bg:${zone?.bg || '#1a1a2e'}">
+      <div class="battle-bg-overlay" aria-hidden="true"></div>
       <div class="battle-zone-label">${zone?.name || ''}${regionLabel ? ` · ${regionLabel}` : ''} · Gen ${zone?.gen || '?'} · 1v1</div>
+      ${renderEventBanner()}
       <div class="battle-layout duel-grid">
         <div class="battle-side ally ${actingAlly ? 'acting' : ''}" data-side="ally">
           <div class="battle-info">

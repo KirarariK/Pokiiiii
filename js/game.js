@@ -19,9 +19,21 @@ import {
 } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { ensureDaily, initDailyBaselines } from './quests.js';
+import { eventMultipliers } from './events.js';
+import { ascensionBonuses, tryAwardRegionBadge } from './ascension.js';
 
 const SAVE_KEY = 'pokiiiii_save_v3';
 const SAVE_KEY_LEGACY = ['pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
+
+function rewardMults(state) {
+  const ev = eventMultipliers();
+  const asc = ascensionBonuses(state);
+  return {
+    xp: ev.xp * asc.xpMult,
+    money: ev.money * asc.moneyMult,
+    shiny: ev.shiny,
+  };
+}
 
 export const BALLS = {
   pokeball: { id: 'pokeball', name: 'Poké Ball', bonus: 1, price: 200, icon: 'ball' },
@@ -40,6 +52,7 @@ export function createNewGame(starterId) {
   const state = {
     version: 3,
     playerName: 'Dresseur',
+    starterId,
     money: 800,
     balls: { pokeball: 15, greatball: 2, ultraball: 0, masterball: 0 },
     team: [starter],
@@ -51,6 +64,10 @@ export function createNewGame(starterId) {
     autoCatch: false,
     autoCatchBall: 'pokeball',
     battleSpeed: 1,
+    settings: { mute: false },
+    tutorialDone: false,
+    badges: [],
+    ascensionLevel: 0,
     stats: { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 },
     lastTick: Date.now(),
     startedAt: Date.now(),
@@ -85,11 +102,17 @@ export function loadGame() {
     const state = JSON.parse(raw);
     state.version = 3;
     if (!state.playerName) state.playerName = 'Dresseur';
+    if (!state.starterId) state.starterId = state.team?.[0]?.speciesId || STARTERS[0];
     if (!state.balls) state.balls = { pokeball: 10, greatball: 0, ultraball: 0, masterball: 0 };
     if (!state.balls.masterball) state.balls.masterball = 0;
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
+    if (!state.settings) state.settings = { mute: false };
+    if (typeof state.settings.mute !== 'boolean') state.settings.mute = false;
+    if (typeof state.tutorialDone !== 'boolean') state.tutorialDone = true;
+    if (!Array.isArray(state.badges)) state.badges = [];
+    if (typeof state.ascensionLevel !== 'number') state.ascensionLevel = 0;
     initDailyBaselines(state);
     ensureDaily(state);
     // Ensure current zone still exists
@@ -145,7 +168,8 @@ export function spawnWild(state) {
   if (!getSpecies(speciesId)) speciesId = zone.pokemon.find((id) => getSpecies(id)) || 1;
   const level =
     zone.minLevel + Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1));
-  const wild = createPokemon(speciesId, level);
+  const shinyRate = (1 / 4096) * rewardMults(state).shiny;
+  const wild = createPokemon(speciesId, level, { shinyRate });
   state.seen[speciesId] = true;
   if (zone.rare?.some((r) => r.id === speciesId)) {
     addLog(state, `Rencontre rare : ${displayName(getSpecies(speciesId))} !`, 'unlock');
@@ -172,6 +196,7 @@ export function unlockZone(state, zoneId) {
   state.money -= zone.unlockCost;
   state.unlockedZones.push(zoneId);
   addLog(state, `Zone débloquée : ${zone.name} !`, 'unlock');
+  tryAwardRegionBadge(state, zone);
   return true;
 }
 
@@ -263,8 +288,9 @@ function floatKind(typeMult) {
 }
 
 function awardKo(state, battle, fighter, wild, events) {
-  const xp = xpFromWild(wild, fighter.level);
-  const money = moneyFromWild(wild);
+  const mults = rewardMults(state);
+  const xp = Math.max(1, Math.floor(xpFromWild(wild, fighter.level) * mults.xp));
+  const money = Math.max(1, Math.floor(moneyFromWild(wild) * mults.money));
   const levelInfo = gainXp(fighter, xp);
   state.money += money;
   state.stats.battles++;
@@ -278,6 +304,9 @@ function awardKo(state, battle, fighter, wild, events) {
     wildName: pokeName(wild),
     shiny: wild.shiny,
   });
+  if (levelInfo.leveled) {
+    events.push({ type: 'levelup', newLevel: levelInfo.newLevel });
+  }
   addLog(
     state,
     `${pokeName(fighter)} bat ${pokeName(wild)} (+${xp} XP, ${money}₽)`,
@@ -405,18 +434,20 @@ export function attemptCatch(state, battle, ballId = 'pokeball') {
     else state.box.push(caught);
 
     const fighter = activeFighter(state);
+    const mults = rewardMults(state);
     if (fighter) {
-      const xp = Math.floor(xpFromWild(battle.wild, fighter.level) * 0.5);
-      const money = Math.floor(moneyFromWild(battle.wild) * 0.5);
+      const xp = Math.floor(xpFromWild(battle.wild, fighter.level) * 0.5 * mults.xp);
+      const money = Math.floor(moneyFromWild(battle.wild) * 0.5 * mults.money);
       gainXp(fighter, xp);
       state.money += money;
+      state.stats.moneyEarned += money;
     }
 
     battle.over = true;
     battle.result = 'catch';
     addLog(
       state,
-      `Capturé ${pokeName(caught)}${caught.shiny ? ' ✨' : ''} avec ${ball.name} !`,
+      `Capturé ${pokeName(caught)}${caught.shiny ? ' (chromatique)' : ''} avec ${ball.name} !`,
       'catch'
     );
     return { ok: true, success: true, pokemon: caught, chance, ball };
@@ -443,13 +474,14 @@ export function applyOfflineProgress(state) {
   if (!fighter) return null;
 
   const zone = getZone(state.currentZone) || ZONES[0];
+  const mults = rewardMults(state);
   for (let i = 0; i < Math.min(battles, 800); i++) {
     const sid = zone.pokemon[i % zone.pokemon.length];
     if (!getSpecies(sid)) continue;
     const lvl = Math.floor((zone.minLevel + zone.maxLevel) / 2);
-    const fake = createPokemon(sid, lvl);
-    xpGain += xpFromWild(fake, fighter.level);
-    moneyGain += moneyFromWild(fake);
+    const fake = createPokemon(sid, lvl, { shiny: false });
+    xpGain += Math.floor(xpFromWild(fake, fighter.level) * mults.xp);
+    moneyGain += Math.floor(moneyFromWild(fake) * mults.money);
     if (state.autoCatch && (state.balls.pokeball || 0) > 0 && Math.random() < 0.1) {
       state.balls.pokeball--;
       const c = createPokemon(sid, lvl);

@@ -1,0 +1,76 @@
+/* Fonds d’arène par région / zone — motifs SVG en data-URI */
+
+.battle-arena.bg-region {
+  background-image: var(--zone-bg), var(--zone-pattern, none);
+  background-blend-mode: normal, soft-light;
+  background-size: cover, 48px 48px;
+}
+
+.battle-arena .battle-bg-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-image: var(--zone-pattern);
+  background-size: 56px 56px;
+  mix-blend-mode: soft-light;
+}
+
+.battle-arena .battle-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.battle-arena.bg-region-kanto {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M0 24h48M24 0v48' stroke='%23ffffff' stroke-opacity='.08'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-johto {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Ccircle cx='8' cy='8' r='1.5' fill='%23fff' fill-opacity='.12'/%3E%3Ccircle cx='32' cy='28' r='1.2' fill='%23fff' fill-opacity='.1'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-hoenn {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M0 36c8-8 16 0 24-8s16 0 24-8' stroke='%23fff' stroke-opacity='.1' fill='none'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-sinnoh {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M24 6l6 18H18L24 6z' fill='%23fff' fill-opacity='.07'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-unova {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect x='4' y='4' width='16' height='16' fill='none' stroke='%23fff' stroke-opacity='.08'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-kalos {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M24 4l4 12h12l-10 8 4 12-10-8-10 8 4-12-10-8h12z' fill='%23fff' fill-opacity='.06'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-alola {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Ccircle cx='24' cy='20' r='10' fill='none' stroke='%23fff' stroke-opacity='.1'/%3E%3Cpath d='M14 34h20' stroke='%23fff' stroke-opacity='.08'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-galar {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cpath d='M8 40V8l16 10 16-10v32' stroke='%23fff' stroke-opacity='.09' fill='none'/%3E%3C/svg%3E");
+}
+
+.battle-arena.bg-region-paldea {
+  --zone-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Ccircle cx='24' cy='24' r='14' fill='none' stroke='%23fff' stroke-opacity='.08'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23fff' fill-opacity='.06'/%3E%3C/svg%3E");
+}
+
+/* Zones particulières (grotte / forêt / montagne) */
+.battle-arena.bg-zone-cave {
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.55);
+}
+
+.battle-arena.bg-zone-forest {
+  box-shadow: inset 0 -40px 60px rgba(0, 40, 0, 0.35);
+}
+
+.battle-arena.bg-zone-mountain {
+  box-shadow: inset 0 30px 50px rgba(255, 255, 255, 0.06);
+}
+
+.battle-arena.bg-zone-water {
+  box-shadow: inset 0 -50px 70px rgba(20, 80, 140, 0.35);
+}

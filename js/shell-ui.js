@@ -10,21 +10,26 @@ import {
   pendingPassCount,
   hubBadgeCount,
 } from './quests.js';
+import { getDailyEvent } from './events.js';
+import { ascensionBonuses } from './ascension.js';
 
 export function renderTopbar(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
   const lvl = Math.max(1, ...state.team.map((p) => p.level || 1));
   const caught = Object.keys(state.caught || {}).length;
+  const ev = getDailyEvent();
+  const asc = ascensionBonuses(state);
   return `
     <header class="pi-topbar">
       <div class="pi-brand">
         <span class="pi-logo">${icon('logo')}</span>
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
-          <small>${state.playerName || 'Dresseur'} · N.${lvl} · ${zone?.region || '—'}</small>
+          <small>${state.playerName || 'Dresseur'} · N.${lvl} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
         </div>
       </div>
       <div class="pi-hud">
+        <div class="pi-pill event" title="${ev.desc}">${icon('sparkle')}<span>${ev.short}</span></div>
         <div class="pi-pill gold">${icon('coin')}<span id="money">${(state.money || 0).toLocaleString('fr-FR')} ₽</span></div>
         <div class="pi-pill">${icon('team')}<span id="team-count">${state.team.length}/6</span></div>
         <div class="pi-pill">${icon('dex')}<span id="dex-count">${caught}/${speciesCount()}</span></div>
@@ -105,6 +110,7 @@ export function renderHub(state) {
             ${tile('shop', 'Boutique', 'shop')}
             ${tile('dex', 'Pokédex', 'dex')}
             ${tile('bonus', 'Bonus', 'bolt')}
+            ${tile('ascension', 'Ascension', 'crown')}
             ${tile('settings', 'Options', 'settings')}
           </div>
         </div>
@@ -215,8 +221,24 @@ export function renderProfile(state) {
 }
 
 export function renderBonus(state) {
+  const ev = getDailyEvent();
+  const asc = ascensionBonuses(state);
   return `
     <div class="panel-head"><h2>Bonus</h2></div>
+    <div class="bonus-card">
+      <div class="bonus-ico">${icon('sparkle')}</div>
+      <div>
+        <strong>Événement du jour — ${ev.title}</strong>
+        <p class="muted">${ev.desc}</p>
+      </div>
+    </div>
+    <div class="bonus-card">
+      <div class="bonus-ico">${icon('crown')}</div>
+      <div>
+        <strong>Ascension N.${asc.level}</strong>
+        <p class="muted">XP ×${asc.xpMult.toFixed(2)} · Argent ×${asc.moneyMult.toFixed(2)} — Hub → Ascension.</p>
+      </div>
+    </div>
     <div class="bonus-card">
       <div class="bonus-ico">${icon('bolt')}</div>
       <div>

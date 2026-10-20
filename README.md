@@ -15,7 +15,16 @@ Fan-game idle Pokémon navigateur — **marque propre** (pas poke-idle), Pokéde
 npm start
 # http://localhost:4173
 # demo: http://localhost:4173/?demo=1
+# tutoriel: ?demo=tutorial · ascension: ?demo=ascension
 ```
+
+## Fonctions
+
+- **Audio** : bips WebAudio (Options → Couper le son)
+- **Tutoriel** : overlay au premier lancement
+- **Événements** : boost journalier rotatif (chromatique / XP / argent)
+- **Ascension** : prestige NG+ (Hub → Gestion → Ascension)
+- **Fonds de combat** : dégradés + motifs par région/zone
 
 ## Crédits
 

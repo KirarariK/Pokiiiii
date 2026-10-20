@@ -85,7 +85,8 @@ export function createPokemon(speciesId, level = 5, opts = {}) {
   const sp = getSpecies(speciesId);
   if (!sp) throw new Error('Unknown species ' + speciesId);
   const iv = opts.iv ?? Math.floor(Math.random() * 16);
-  const shiny = opts.shiny ?? Math.random() < 1 / 4096;
+  const shinyRate = opts.shinyRate ?? 1 / 4096;
+  const shiny = opts.shiny ?? Math.random() < shinyRate;
   const xp = opts.xp ?? xpForLevel(level);
   const poke = {
     uid: opts.uid ?? `p${Date.now()}_${uidCounter++}`,

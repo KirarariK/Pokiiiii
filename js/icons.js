@@ -49,6 +49,15 @@ export const ICO = {
     `<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/>`,
   ),
   lang: S(`<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>`),
+  volume: S(
+    `<path d="M4 10v4h3l5 4V6L7 10H4z"/><path d="M16 9a4 4 0 010 6M18.5 7a7 7 0 010 10"/>`,
+  ),
+  mute: S(
+    `<path d="M4 10v4h3l5 4V6L7 10H4z"/><path d="M17 9l5 5M22 9l-5 5"/>`,
+  ),
+  sparkle: S(
+    `<path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/>`,
+  ),
 };
 
 export function icon(name, cls = '') {
