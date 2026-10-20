@@ -19,6 +19,12 @@ export const ICO = {
   summon: S(`<path d="M12 3l2.2 4.5L19 8.2l-3.5 3.4.8 4.9L12 14.2 7.7 16.5l.8-4.9L5 8.2l4.8-.7L12 3z"/><circle cx="12" cy="12" r="9" opacity=".35"/>`),
   dice: S(`<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/>`),
   badge: S(`<circle cx="12" cy="10" r="5"/><path d="M9 14l-2 7 5-3 5 3-2-7"/>`),
+  gymbadge: S(
+    `<circle cx="12" cy="9.5" r="6.2"/><circle cx="12" cy="9.5" r="3.2"/><path d="M8.5 14.5L7 21l5-2.5L17 21l-1.5-6.5"/><path d="M12 6.5v6M9.5 9.5h5"/>`,
+  ),
+  arena: S(
+    `<path d="M4 18h16M6 18V9l6-5 6 5v9"/><path d="M10 18v-5h4v5"/><circle cx="12" cy="11" r="1.6"/>`,
+  ),
   crown: S(`<path d="M3 17h18l-1.5-9-4.5 4L12 5l-3 7-4.5-4L3 17z"/><path d="M5 17h14v2H5z"/>`),
   trophy: S(`<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 6H5a2 2 0 000 4h2M17 6h2a2 2 0 010 4h-2"/>`),
   users: S(`<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19c1-3 3.5-4.5 6-4.5S14 16 15 19M14 14.5c1.5.2 3 1.2 4 3.5"/>`),

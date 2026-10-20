@@ -29,6 +29,7 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import { challengeGym, renderArenasPanel, ensureArena } from './arena.js';
 import {
   startExpedition,
   claimExpedition,
@@ -53,6 +54,29 @@ import {
   renderAscendConfirmModal,
 } from './ascension.js';
 import { icon } from './icons.js';
+
+function handleGymChallenge(gymId) {
+  ensureArena(state);
+  const res = challengeGym(state, gymId);
+  if (!res.ok) {
+    const msg =
+      res.reason === 'already'
+        ? 'Badge déjà obtenu'
+        : res.reason === 'locked'
+          ? res.needLeader
+            ? `Battre ${res.needLeader} ou N.${res.need}`
+            : `Niveau N.${res.need} requis`
+          : 'Défi impossible';
+    UI.toast(msg);
+  } else if (res.win) {
+    const label = res.badgeName || res.badgeId || res.badge || 'Badge';
+    UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
+  } else {
+    UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
+  }
+  saveGame(state);
+  refreshAll();
+}
 
 let state = null;
 let battle = null;
@@ -79,7 +103,11 @@ async function boot() {
     demo === 'pass' ||
     demo === 'quests' ||
     demo === 'ascension' ||
-    demo === 'tutorial'
+    demo === 'tutorial' ||
+    demo === 'expeditions' ||
+    demo === 'pension' ||
+    demo === 'arenas' ||
+    demo === 'summon'
   ) {
     startNew(4);
     if (demo !== 'tutorial') {
@@ -94,6 +122,10 @@ async function boot() {
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
     if (demo === 'ascension') setTimeout(() => setTab('ascension'), 80);
+    if (demo === 'expeditions') setTimeout(() => setTab('expeditions'), 50);
+    if (demo === 'pension') setTimeout(() => setTab('pension'), 50);
+    if (demo === 'arenas') setTimeout(() => setTab('arenas'), 50);
+    if (demo === 'summon') setTimeout(() => setTab('summon'), 50);
     return;
   }
 
@@ -128,8 +160,22 @@ function bindTitle() {
 function startNew(starterId) {
   state = createNewGame(starterId);
   Audio.syncMuteFromState(state);
+  seedDemoRoster(state);
   saveGame(state);
   enterGame();
+}
+
+function seedDemoRoster(state) {
+  if (!new URLSearchParams(location.search).has('demo')) return;
+  for (const sid of [7, 10, 16, 19, 25]) {
+    try {
+      const poke = createPokemon(sid, 5 + Math.floor(Math.random() * 5));
+      state.caught[sid] = true;
+      state.seen[sid] = true;
+      if (state.team.length < 6) state.team.push(poke);
+      else state.box.push(poke);
+    } catch (_) {}
+  }
 }
 
 function startExisting(s) {
@@ -227,6 +273,18 @@ function renderShell() {
 
         <section id="panel-profile" class="panel">
           <div id="profile-view"></div>
+        </section>
+
+        <section id="panel-expeditions" class="panel">
+          <div id="expeditions-view"></div>
+        </section>
+
+        <section id="panel-pension" class="panel">
+          <div id="pension-view"></div>
+        </section>
+
+        <section id="panel-arenas" class="panel">
+          <div id="arenas-view"></div>
         </section>
 
         <section id="panel-bonus" class="panel">
@@ -356,6 +414,10 @@ function setTab(id) {
     bonus: 'bonus',
     summon: 'summon',
     ascension: 'ascension',
+    arenas: 'arenas',
+    arena: 'arenas',
+    expeditions: 'expeditions',
+    pension: 'pension',
     settings: 'settings',
     heal: 'battle',
   };
@@ -720,6 +782,10 @@ function refreshAll() {
   if (UI.$('#expeditions-view') && Shell.renderExpeditionsPanel) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
   if (UI.$('#pension-view') && Shell.renderPensionPanel) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
   if (UI.$('#ascension-view')) UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
+  const arenasRoot = UI.$('#arenas-view');
+  if (arenasRoot && (tab === 'arenas' || tab === 'arena')) {
+    renderArenasPanel(arenasRoot, state, { onChallenge: handleGymChallenge });
+  }
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }

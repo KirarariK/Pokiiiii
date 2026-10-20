@@ -22,6 +22,7 @@ import { ensureDaily, initDailyBaselines } from './quests.js';
 import { ensureSummon } from './summon.js';
 import { ensureExpeditions, expeditionBusyUids } from './expedition.js';
 import { ensureDaycare, daycareBusyUids } from './daycare.js';
+import { ensureArena } from './arena.js';
 import { eventMultipliers } from './events.js';
 import { ascensionBonuses, tryAwardRegionBadge } from './ascension.js';
 
@@ -69,7 +70,6 @@ export function createNewGame(starterId) {
     battleSpeed: 1,
     settings: { mute: false },
     tutorialDone: false,
-    badges: [],
     ascensionLevel: 0,
     stats: { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 },
     lastTick: Date.now(),
@@ -80,9 +80,14 @@ export function createNewGame(starterId) {
     summon: null,
     expeditions: [],
     daycare: [],
+    badges: {},
+    arenaWins: 0,
   };
   initDailyBaselines(state);
   ensureSummon(state);
+  ensureExpeditions(state);
+  ensureDaycare(state);
+  ensureArena(state);
   return state;
 }
 
@@ -128,10 +133,10 @@ export function loadGame() {
     if (!state.settings) state.settings = { mute: false };
     if (typeof state.settings.mute !== 'boolean') state.settings.mute = false;
     if (typeof state.tutorialDone !== 'boolean') state.tutorialDone = true;
-    if (!Array.isArray(state.badges)) state.badges = [];
     if (typeof state.ascensionLevel !== 'number') state.ascensionLevel = 0;
     ensureExpeditions(state);
     ensureDaycare(state);
+    ensureArena(state);
     initDailyBaselines(state);
     ensureDaily(state);
     ensureSummon(state);
