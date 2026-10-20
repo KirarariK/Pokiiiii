@@ -16,7 +16,7 @@ export const QUEST_DEFS = [
   {
     id: 'catch_3',
     title: 'Captureur',
-    desc: 'Capturer 3 Pokémon',
+    desc: 'Sceller 3 shinobi',
     icon: 'ball',
     target: 3,
     track: 'catches',
@@ -25,7 +25,7 @@ export const QUEST_DEFS = [
   {
     id: 'earn_5k',
     title: 'Économe',
-    desc: 'Gagner 5 000 ₽',
+    desc: 'Gagner 5 000 両',
     icon: 'coin',
     target: 5000,
     track: 'moneyEarned',

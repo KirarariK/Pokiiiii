@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Pokiiiii — Idle Pokémon Gen I–IX</title>
+    <title>Shinobiiii — Idle Naruto · Tous les ninja</title>
     <meta
       name="description"
-      content="Pokiiiii : idle Pokémon fan — 1025 espèces, combat 1v1, quêtes, pass journalier, toutes les régions."
+      content="Shinobiiii : idle Naruto fan — tous les personnages & modes, combat 1v1, quêtes, invocations, sagas Konoha → Boruto."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,27 +14,26 @@
       href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="preconnect" href="https://raw.githubusercontent.com" />
+    <link rel="preconnect" href="https://s4.anilist.co" />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/battle-bgs.css" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <meta name="theme-color" content="#0b0f1a" />
+    <meta name="theme-color" content="#0a0705" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%230f1b2e' stroke='%233b82f6' stroke-width='4'/%3E%3Cpath d='M4 32h56' stroke='%23f8fafc' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%23f5c518'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a0c06'/%3E%3Cpath d='M32 8c8 12 16 16 16 28S40 56 32 56 16 48 16 36 24 20 32 8z' fill='none' stroke='%23f97316' stroke-width='4'/%3E%3Ccircle cx='32' cy='34' r='6' fill='%23fbbf24'/%3E%3C/svg%3E"
     />
   </head>
   <body>
     <div id="app">
       <div class="loading" id="boot-loading">
         <div class="loading-orb" aria-hidden="true"></div>
-        <span>Chargement Pokiiiii…</span>
+        <span>Chargement Shinobiiii…</span>
       </div>
     </div>
-    <script type="module" src="./js/main.js?v=1382737"></script>
+    <script type="module" src="./js/main.js?v=naruto1"></script>
     <script>
       (function () {
-        // Si le SW bloque les modules, on se débloque tout seul
         const BOOT_MS = 10000;
         function showRescue(msg) {
           const app = document.getElementById('app');
@@ -43,8 +42,8 @@
           app.innerHTML =
             '<div class="loading" style="gap:1rem;padding:1.5rem;text-align:center">' +
             '<div class="loading-orb" aria-hidden="true"></div>' +
-            '<strong style="color:#f5c518">Chargement bloqué</strong>' +
-            '<p style="color:#8b9bb8;max-width:22rem;margin:0 auto;font-size:.9rem">' +
+            '<strong style="color:#f97316">Chargement bloqué</strong>' +
+            '<p style="color:#c4a484;max-width:22rem;margin:0 auto;font-size:.9rem">' +
             (msg || 'Le cache du navigateur empêche le démarrage.') +
             '</p>' +
             '<button type="button" id="boot-rescue" class="btn-primary" style="margin-top:.5rem">Vider le cache &amp; recharger</button>' +
@@ -65,9 +64,7 @@
             showRescue('Erreur de script — vide le cache puis recharge.');
           }
         });
-        window.addEventListener('unhandledrejection', () => {
-          /* ignore — boot() gère déjà */
-        });
+        window.addEventListener('unhandledrejection', () => {});
 
         setTimeout(() => {
           const app = document.getElementById('app');
@@ -80,19 +77,22 @@
 
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            // Purge anciennes versions puis enregistre v4
             caches
               .keys()
               .then((keys) =>
                 Promise.all(
                   keys
-                    .filter((k) => k.startsWith('pokiiiii-shell-') && k !== 'pokiiiii-shell-v4')
+                    .filter(
+                      (k) =>
+                        (k.startsWith('shinobiiii-shell-') || k.startsWith('pokiiiii-shell-')) &&
+                        k !== 'shinobiiii-shell-v5',
+                    )
                     .map((k) => caches.delete(k)),
                 ),
               )
               .catch(() => {})
               .finally(() => {
-                navigator.serviceWorker.register('./sw.js?v=4').then((reg) => reg.update()).catch(() => {});
+                navigator.serviceWorker.register('./sw.js?v=5').then((reg) => reg.update()).catch(() => {});
               });
           });
         }

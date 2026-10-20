@@ -6,25 +6,25 @@ const STEPS = [
   {
     id: 'combat',
     title: 'Combat 1v1',
-    body: 'Votre premier Pokémon combat automatiquement les sauvages. Surveillez les PV et la vitesse du duel.',
+    body: 'Ton premier shinobi affronte automatiquement les ninjas rencontrés. Surveille les PV et la vitesse du duel.',
     tip: 'Onglet Combat',
   },
   {
     id: 'catch',
-    title: 'Capturer',
-    body: 'Quand le sauvage est affaibli, utilisez une Ball. L’auto-capture peut le faire pour vous.',
-    tip: 'Boutons Ball sous l’arène',
+    title: 'Sceller',
+    body: 'Quand l’adversaire est affaibli, utilise un parchemin de sceau. L’auto-sceau peut le faire pour toi.',
+    tip: 'Boutons sceau sous l’arène',
   },
   {
     id: 'hub',
     title: 'Hub',
-    body: 'Le Hub regroupe quêtes, pass, profil, zones et options. Ouvrez-le depuis la barre du bas.',
+    body: 'Le Hub regroupe quêtes, pass, profil, zones et options. Ouvre-le depuis le menu de gauche.',
     tip: 'Icône Hub',
   },
   {
     id: 'quests',
     title: 'Quêtes & Pass',
-    body: 'Chaque jour, des quêtes et un pass offrent des récompenses. Un événement rotatif booste aussi vos gains.',
+    body: 'Chaque jour, des missions et un pass offrent des récompenses. Un événement rotatif booste aussi tes gains.',
     tip: 'Hub → Quêtes',
   },
 ];

@@ -50,12 +50,12 @@ export function renderTopbar(state) {
         <span class="pi-logo">${icon('logo')}</span>
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
-          <small>${state.playerName || 'Dresseur'} · N.${lvl} · Gen ${zone?.gen || 1} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
+          <small>${state.playerName || 'Ninja'} · N.${lvl} · Gen ${zone?.gen || 1} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
         </div>
       </div>
       <div class="pi-hud">
         <div class="pi-pill event" title="${ev.desc}">${icon('sparkle')}<span>${ev.short}</span></div>
-        <div class="pi-pill gold">${icon('coin')}<span id="money">${(state.money || 0).toLocaleString('fr-FR')} ₽</span></div>
+        <div class="pi-pill gold">${icon('coin')}<span id="money">${(state.money || 0).toLocaleString('fr-FR')} 両</span></div>
         <div class="pi-pill">${icon('team')}<span id="team-count">${state.team.length}/6</span></div>
         <div class="pi-pill">${icon('dex')}<span id="dex-count">${caught}/${speciesCount()}</span></div>
       </div>
@@ -103,7 +103,7 @@ export function renderSideNav(active, state) {
       items: [
         { id: 'zones', label: 'Zones', ico: 'map' },
         { id: 'arenas', label: 'Arènes', ico: 'arena', badge: arenaN },
-        { id: 'pokemon', label: 'Équipe / PC', ico: 'cube' },
+        { id: 'pokemon', label: 'Escouade / Parchemins', ico: 'cube' },
         { id: 'expeditions', label: 'Expéditions', ico: 'compass', badge: exN },
         { id: 'pension', label: 'Pension', ico: 'egg', badge: dayN },
       ],
@@ -112,7 +112,7 @@ export function renderSideNav(active, state) {
       title: 'Gestion',
       items: [
         { id: 'shop', label: 'Boutique', ico: 'shop' },
-        { id: 'dex', label: 'Pokédex', ico: 'dex' },
+        { id: 'dex', label: 'Bingo Book', ico: 'dex' },
         { id: 'bonus', label: 'Bonus', ico: 'bolt' },
         { id: 'ascension', label: 'Ascension', ico: 'crown' },
         { id: 'minigame', label: 'Mini-jeu', ico: 'dice' },
@@ -179,9 +179,9 @@ export function renderSideNav(active, state) {
           <span class="nav-ico">${icon('hub')}${hubN > 0 ? `<span class="nav-badge">${hubN}</span>` : ''}</span>
           <span class="nav-label">Hub</span>
         </button>
-        <button type="button" class="side-nav-item" data-hub="heal" title="Centre Pokémon">
+        <button type="button" class="side-nav-item" data-hub="heal" title="Infirmerie">
           <span class="nav-ico">${icon('heal')}</span>
-          <span class="nav-label">Centre</span>
+          <span class="nav-label">Infirmerie</span>
         </button>
       </div>
     </nav>`;
@@ -213,7 +213,7 @@ export function renderHub(state) {
         <div class="hub-head">
           <div>
             <h2>HUB</h2>
-            <p>${state.playerName} · N.${lvl} · ${zone?.region || 'Kanto'}</p>
+            <p>${state.playerName} · N.${lvl} · ${zone?.region || 'Konoha'}</p>
           </div>
           <button type="button" class="hub-close" data-hub-close aria-label="Fermer">${icon('close')}</button>
         </div>
@@ -244,7 +244,7 @@ export function renderHub(state) {
           <h3>Gestion</h3>
           <div class="hub-grid">
             ${tile('shop', 'Boutique', 'shop')}
-            ${tile('dex', 'Pokédex', 'dex')}
+            ${tile('dex', 'Bingo Book', 'dex')}
             ${tile('bonus', 'Bonus', 'bolt')}
             ${tile('ascension', 'Ascension', 'crown')}
             ${tile('minigame', 'Mini-jeu', 'dice')}
@@ -291,7 +291,7 @@ export function renderExpeditionsPanel(state) {
       </label>`
         )
         .join('')
-    : `<p class="muted">Aucun Pokémon disponible (garde au moins 1 lead).</p>`;
+    : `<p class="muted">Aucun shinobi disponible (garde au moins 1 lead).</p>`;
 
   const active = state.expeditions.filter((e) => !e.claimed);
   const list = active.length
@@ -328,7 +328,7 @@ export function renderExpeditionsPanel(state) {
       <span class="muted">${icon('compass')} temps réel</span>
     </div>
     <div class="ex-form">
-      <p class="muted">Envoie 1 à 3 Pokémon explorer une zone. Ils sont indisponibles au combat jusqu’au retour. Récompenses : argent, Balls, XP partagée, chance de capture.</p>
+      <p class="muted">Envoie 1 à 3 shinobi explorer une zone. Ils sont indisponibles au combat jusqu’au retour. Récompenses : argent, Balls, XP partagée, chance de capture.</p>
       <div class="ex-picks">${picks}</div>
       <div class="ex-fields">
         <label class="field">Zone
@@ -364,7 +364,7 @@ export function renderPensionPanel(state) {
       </label>`
         )
         .join('')
-    : `<p class="muted">Pas assez de Pokémon libres (il faut en garder 1 en lead).</p>`;
+    : `<p class="muted">Pas assez de shinobi libres (il faut en garder 1 en lead).</p>`;
 
   const jobs = state.daycare.filter((j) => !j.claimed);
   const list = jobs.length
@@ -402,7 +402,7 @@ export function renderPensionPanel(state) {
       <span class="muted">${icon('egg')} œufs</span>
     </div>
     <div class="ex-form">
-      <p class="muted">Dépose 2 Pokémon (pas le dernier lead). Après le délai, un œuf éclot en une forme de base de la lignée du 1er parent, ou une espèce commune de la même génération.</p>
+      <p class="muted">Dépose 2 shinobi (pas le dernier lead). Après le délai, un œuf éclot en une forme de base de la lignée du 1er parent, ou une espèce commune de la même génération.</p>
       <div class="ex-picks">${picks}</div>
       <div class="ex-fields">
         <label class="field">Durée
@@ -454,7 +454,7 @@ export function renderPassPanel(state) {
     const claimed = state.daily.claimedTiers.includes(t.id);
     const unlocked = xp >= t.need;
     const rewardBits = [];
-    if (t.reward.money) rewardBits.push(`${t.reward.money.toLocaleString('fr-FR')} ₽`);
+    if (t.reward.money) rewardBits.push(`${t.reward.money.toLocaleString('fr-FR')} 両`);
     if (t.reward.balls) {
       for (const [k, v] of Object.entries(t.reward.balls)) {
         rewardBits.push(`${v}× ${BALLS[k]?.name || k}`);
@@ -538,14 +538,14 @@ export function renderProfile(state) {
         <span class="collection-pct">${pct}%</span>
       </div>
       <div class="quest-bar collection-bar"><div style="width:${pct}%"></div></div>
-      <p class="muted tiny">${caughtN} / ${total} espèces capturées</p>
+      <p class="muted tiny">${caughtN} / ${total} shinobi scellés</p>
       <div class="dex-region-list">${genBars}</div>
     </div>
     <div class="stat-grid">
       <div class="stat-box"><span>Combats</span><strong>${state.stats.battles}</strong></div>
       <div class="stat-box"><span>Captures</span><strong>${state.stats.catches}</strong></div>
-      <div class="stat-box"><span>Argent gagné</span><strong>${state.stats.moneyEarned.toLocaleString('fr-FR')} ₽</strong></div>
-      <div class="stat-box"><span>Pokédex</span><strong>${caughtN}/${total}</strong></div>
+      <div class="stat-box"><span>Argent gagné</span><strong>${state.stats.moneyEarned.toLocaleString('fr-FR')} 両</strong></div>
+      <div class="stat-box"><span>Bingo Book</span><strong>${caughtN}/${total}</strong></div>
       <div class="stat-box"><span>Zone</span><strong>${zone?.name || '—'}</strong></div>
       <div class="stat-box"><span>Temps</span><strong>${Math.floor(state.stats.playTime / 60)} min</strong></div>
       <div class="stat-box"><span>Badges</span><strong>${ownedBadgeCount(state)}</strong></div>
@@ -621,7 +621,7 @@ export function renderSummonPanel(state) {
         </div>
         <div class="summon-stage-copy">
           <strong>Portail Gen ${playGen}</strong>
-          <p>Invoque un Pokémon de la génération de ta zone. Ticket gratuit chaque jour.</p>
+          <p>Invoque un shinobi de la génération de ta zone. Ticket gratuit chaque jour.</p>
         </div>
         <div class="summon-actions">
           <button type="button" class="btn-primary summon-pull summon-btn-main" data-summon-pull="1" ${canPull ? '' : 'disabled'}>
@@ -634,7 +634,7 @@ export function renderSummonPanel(state) {
         <div class="summon-stats">
           <span class="pi-pill">${icon('gift')} ${sm.tickets} ticket${sm.tickets !== 1 ? 's' : ''}</span>
           <span class="pi-pill">${icon('crown')} Pity ${pity.pity}/${SUMMON.PITY_LEGENDARY}</span>
-          <span class="pi-pill">${icon('coin')} ${price} ₽</span>
+          <span class="pi-pill">${icon('coin')} ${price} 両</span>
         </div>
       </div>
 

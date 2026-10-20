@@ -3,7 +3,7 @@ import { addLog } from './game-log.js';
 import { todayKey } from './quests.js';
 import { currentPlayGen } from './game.js';
 
-/** Configuration Invocation / gacha Pokiiiii */
+/** Invocation / gacha Shinobiiii */
 export const SUMMON = {
   FREE_DAILY: 1,
   TICKET_PRICE: 2500,
@@ -138,7 +138,7 @@ export function getPools(genFilter = null) {
   return poolsCache[key];
 }
 
-/** Invalide le cache (tests / reload espèces). */
+/** Invalide le cache (tests / reload shinobi). */
 export function resetPoolsCache() {
   poolsCache = null;
 }
@@ -198,7 +198,7 @@ export function buyTickets(state, qty = 1) {
   if (state.money < cost) return { ok: false, reason: 'no-money' };
   state.money -= cost;
   state.summon.tickets += n;
-  addLog(state, `Acheté ${n}× ticket d’invocation (−${cost.toLocaleString('fr-FR')} ₽).`, 'shop');
+  addLog(state, `Acheté ${n}× ticket d’invocation (−${cost.toLocaleString('fr-FR')} 両).`, 'shop');
   return { ok: true, tickets: state.summon.tickets, cost };
 }
 

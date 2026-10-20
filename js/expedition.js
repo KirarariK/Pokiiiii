@@ -18,10 +18,10 @@ export const EXPEDITION_DURATIONS = [
 const DEMO_DURATION = { id: '30s', label: '30 s (demo)', ms: 30_000 };
 
 const BALL_NAMES = {
-  pokeball: 'Poké Ball',
-  greatball: 'Super Ball',
-  ultraball: 'Hyper Ball',
-  masterball: 'Master Ball',
+  pokeball: 'Parchemin',
+  greatball: 'Sceau de liaison',
+  ultraball: 'Fûinjutsu',
+  masterball: 'Sceau des Cinq Kage',
 };
 
 let expUid = 1;
@@ -216,7 +216,7 @@ export function claimExpedition(state, expeditionId) {
   const ballBits = Object.entries(balls)
     .map(([k, v]) => `${v}× ${BALL_NAMES[k] || k}`)
     .join(', ');
-  let msg = `Expédition terminée (+${money}₽, ${ballBits}, +${xpEach} XP)`;
+  let msg = `Expédition terminée (+${money}両, ${ballBits}, +${xpEach} XP)`;
   if (found) msg += ` · trouvé ${displayName(getSpecies(found.speciesId))} !`;
   addLog(state, msg, 'unlock');
 

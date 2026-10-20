@@ -1,6 +1,6 @@
 import { icon } from './icons.js';
 
-const KEY = 'pokiiiii_leaderboard_v1';
+const KEY = 'shinobiiii_leaderboard_v1';
 
 function badgeCount(state) {
   const b = state.badges;
@@ -25,7 +25,7 @@ export function readLeaderboard() {
 /** Met à jour le classement local avec l’état actuel, garde le top 25. */
 export function pushLeaderboard(state) {
   const entry = {
-    name: state.playerName || 'Dresseur',
+    name: state.playerName || 'Ninja',
     battles: state.stats?.battles || 0,
     catches: state.stats?.catches || 0,
     dex: Object.keys(state.caught || {}).length,

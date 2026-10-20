@@ -1,31 +1,30 @@
-# Pokiiiii
+# Shinobiiii
 
-Fan-game idle Pokémon navigateur — **marque propre** (pas poke-idle), Pokédex national **1025**, combat **1v1**, **Hub**, **Quêtes** et **Pass journalier**.
+Idle shinobi fan-game (thème Naruto) — vanilla JS, offline-friendly.
 
-## UI
+## Contenu
 
-- Barre du bas : Combat · Pokémon · Zones · Boutique · Pass · Hub
-- Hub overlay (Essentiels / Aventure / Gestion) avec **icônes SVG** (aucun emoji)
-- Quêtes du jour + Pass journalier à paliers
-- Sprites artwork PokéAPI
+- **650+ formes** de personnages (AniList HQ) : enfant / ado / adulte, modes ermite, bijû, Sharingan, Karma…
+- Combat 1v1, zones par saga (Partie I → Shippuden → Guerre → Boruto)
+- Examens & défis Kage, invocations, quêtes, pass, expéditions, pension
+- Escouade / parchemins de sceau, Bingo Book, ascension
 
 ## Lancer
 
+Ouvre `index.html` via un serveur local (modules ES) :
+
 ```bash
-npm start
-# http://localhost:4173
-# demo: http://localhost:4173/?demo=1
-# tutoriel: ?demo=tutorial · ascension: ?demo=ascension
+npx serve .
+# ou
+python3 -m http.server 8080
 ```
 
-## Fonctions
+Smoke tests :
 
-- **Audio** : bips WebAudio (Options → Couper le son)
-- **Tutoriel** : overlay au premier lancement
-- **Événements** : boost journalier rotatif (chromatique / XP / argent)
-- **Ascension** : prestige NG+ (Hub → Gestion → Ascension)
-- **Fonds de combat** : dégradés + motifs par région/zone
+```bash
+node scripts/smoke.mjs
+```
 
-## Crédits
+## Notes
 
-Fan-game non officiel. Pokémon © Nintendo / Creatures / Game Freak. Données via PokéAPI.
+Fan-game non officiel. Illustrations via AniList CDN. Naruto © Masashi Kishimoto / Shueisha / Pierrot.

@@ -1,46 +1,57 @@
-/** Table d'efficacité des types (multiplicateurs) */
-export const TYPE_CHART = {
-  normal: { rock: 0.5, ghost: 0, steel: 0.5 },
-  fire: { fire: 0.5, water: 0.5, grass: 2, ice: 2, bug: 2, rock: 0.5, dragon: 0.5, steel: 2 },
-  water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
-  electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
-  grass: { fire: 0.5, water: 2, grass: 0.5, poison: 0.5, ground: 2, flying: 0.5, bug: 0.5, rock: 2, dragon: 0.5, steel: 0.5 },
-  ice: { fire: 0.5, water: 0.5, grass: 2, ice: 0.5, ground: 2, flying: 2, dragon: 2, steel: 0.5 },
-  fighting: { normal: 2, ice: 2, poison: 0.5, flying: 0.5, psychic: 0.5, bug: 0.5, rock: 2, ghost: 0, dark: 2, steel: 2, fairy: 0.5 },
-  poison: { grass: 2, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2 },
-  ground: { fire: 2, electric: 2, grass: 0.5, poison: 2, flying: 0, bug: 0.5, rock: 2, steel: 2 },
-  flying: { electric: 0.5, grass: 2, fighting: 2, bug: 2, rock: 0.5, steel: 0.5 },
-  psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
-  bug: { fire: 0.5, grass: 2, fighting: 0.5, poison: 0.5, flying: 0.5, psychic: 2, ghost: 0.5, dark: 2, steel: 0.5, fairy: 0.5 },
-  rock: { fire: 2, ice: 2, fighting: 0.5, ground: 0.5, flying: 2, bug: 2, steel: 0.5 },
-  ghost: { normal: 0, psychic: 2, ghost: 2, dark: 0.5 },
-  dragon: { dragon: 2, steel: 0.5, fairy: 0 },
-  dark: { fighting: 0.5, psychic: 2, ghost: 2, dark: 0.5, fairy: 0.5 },
-  steel: { fire: 0.5, water: 0.5, electric: 0.5, ice: 2, rock: 2, steel: 0.5, fairy: 2 },
-  fairy: { fire: 0.5, fighting: 2, poison: 0.5, dragon: 2, dark: 2, steel: 0.5 },
-};
-
+/** Natures de chakra / spécialités — thème Naruto */
 export const TYPE_COLORS = {
-  normal: '#A8A878', fire: '#F08030', water: '#6890F0', electric: '#F8D030',
-  grass: '#78C850', ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0',
-  ground: '#E0C068', flying: '#A890F0', psychic: '#F85888', bug: '#A8B820',
-  rock: '#B8A038', ghost: '#705898', dragon: '#7038F8', dark: '#705848',
-  steel: '#B8B8D0', fairy: '#EE99AC',
+  katon: '#ef4444',
+  suiton: '#3b82f6',
+  doton: '#a16207',
+  futon: '#86efac',
+  raiton: '#facc15',
+  yin: '#a855f7',
+  yang: '#f97316',
+  medical: '#fb7185',
+  taijutsu: '#22c55e',
+  genjutsu: '#c084fc',
+  kekkei: '#e11d48',
 };
 
 export const TYPE_FR = {
-  normal: 'Normal', fire: 'Feu', water: 'Eau', electric: 'Électrik',
-  grass: 'Plante', ice: 'Glace', fighting: 'Combat', poison: 'Poison',
-  ground: 'Sol', flying: 'Vol', psychic: 'Psy', bug: 'Insecte',
-  rock: 'Roche', ghost: 'Spectre', dragon: 'Dragon', dark: 'Ténèbres',
-  steel: 'Acier', fairy: 'Fée',
+  katon: 'Katon',
+  suiton: 'Suiton',
+  doton: 'Doton',
+  futon: 'Fûton',
+  raiton: 'Raiton',
+  yin: 'Yin',
+  yang: 'Yang',
+  medical: 'Médical',
+  taijutsu: 'Taijutsu',
+  genjutsu: 'Genjutsu',
+  kekkei: 'Kekkei Genkai',
 };
 
-export function typeEffectiveness(atkType, defTypes) {
+/** Efficacité simplifiée (natures opposées). */
+const CHART = {
+  katon: { futon: 2, suiton: 0.5, katon: 0.5 },
+  suiton: { katon: 2, doton: 0.5, suiton: 0.5 },
+  doton: { suiton: 2, raiton: 0.5, doton: 0.5 },
+  futon: { raiton: 2, katon: 0.5, futon: 0.5 },
+  raiton: { doton: 2, futon: 0.5, raiton: 0.5 },
+  yin: { yang: 2, yin: 0.5 },
+  yang: { yin: 2, yang: 0.5 },
+  medical: { taijutsu: 1.5 },
+  taijutsu: { genjutsu: 1.5, medical: 0.75 },
+  genjutsu: { taijutsu: 0.5, yin: 1.5 },
+  kekkei: { katon: 1.25, suiton: 1.25, doton: 1.25, futon: 1.25, raiton: 1.25 },
+};
+
+export function typeEffectiveness(atkTypes, defTypes) {
+  const atk = atkTypes || [];
+  const def = defTypes || [];
+  if (!atk.length || !def.length) return 1;
   let mult = 1;
-  const chart = TYPE_CHART[atkType] || {};
-  for (const t of defTypes) {
-    mult *= chart[t] ?? 1;
+  for (const a of atk) {
+    const row = CHART[a] || {};
+    for (const d of def) {
+      if (row[d] != null) mult *= row[d];
+    }
   }
   return mult;
 }

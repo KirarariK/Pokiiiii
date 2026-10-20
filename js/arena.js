@@ -123,7 +123,7 @@ export function challengeGym(state, gymId) {
       ok: false,
       reason: 'no-gen-fighter',
       needGen: gymGen,
-      message: `Il faut un Pokémon Gen ${gymGen} vivant dans l’équipe pour ce défi.`,
+      message: `Il faut un shinobi Gen ${gymGen} vivant dans l’équipe pour ce défi.`,
     };
   }
 
@@ -173,7 +173,7 @@ export function challengeGym(state, gymId) {
   };
   state.arenaWins = (state.arenaWins || 0) + 1;
   const kind = gym.champion ? 'Titre de Champion' : (gym.badgeName || 'Badge');
-  addLog(state, `${kind} remporté : ${gym.leaderName} (${REGION_LABELS[gym.region] || gym.region}) — +${gym.rewardMoney}₽`, 'unlock');
+  addLog(state, `${kind} remporté : ${gym.leaderName} (${REGION_LABELS[gym.region] || gym.region}) — +${gym.rewardMoney}両`, 'unlock');
   healTeamSilent(state);
   return { ok: true, win: true, gym, duels: duelLogs, playerFaints, money: gym.rewardMoney, reward: gym.rewardMoney, badgeId: gym.badgeId, badge: gym.badgeId, badgeName: gym.badgeName };
 }
@@ -269,7 +269,7 @@ function buildArenasHtml(state) {
             <strong>${g.name}</strong>
             <p>${g.champion ? 'Champion' : 'Champion d’arène'} <em>${g.leaderName}</em> · ${TYPE_FR[g.type] || g.type} · Gen ${g.gen}</p>
             <p class="muted arena-team">${teamPreview}</p>
-            <p class="muted">${g.badgeName} · ${g.rewardMoney.toLocaleString('fr-FR')} ₽</p>
+            <p class="muted">${g.badgeName} · ${g.rewardMoney.toLocaleString('fr-FR')} 両</p>
             ${status}
           </div>
           <div class="arena-actions">${btn}</div>
@@ -292,7 +292,7 @@ function buildArenasHtml(state) {
         <span class="badge-showcase-ico">${icon('gymbadge')}</span>
         <div>
           <strong>Collection de badges</strong>
-          <p class="muted">Défie les champions d’arène région par région.</p>
+          <p class="muted">Défie les champions d’village par région.</p>
         </div>
       </div>
       <div class="arena-progress">${progressBars}</div>

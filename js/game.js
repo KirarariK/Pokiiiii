@@ -27,8 +27,8 @@ import { eventMultipliers } from './events.js';
 import { ascensionBonuses, tryAwardRegionBadge } from './ascension.js';
 import { GEN_META } from './data/starters.js';
 
-const SAVE_KEY = 'pokiiiii_save_v3';
-const SAVE_KEY_LEGACY = ['pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
+const SAVE_KEY = 'shinobiiii_save_v1';
+const SAVE_KEY_LEGACY = ['shinobiiii_save_v3', 'pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
 
 function rewardMults(state) {
   const ev = eventMultipliers();
@@ -41,15 +41,15 @@ function rewardMults(state) {
 }
 
 export const BALLS = {
-  pokeball: { id: 'pokeball', name: 'Poké Ball', bonus: 1, price: 200, icon: 'ball' },
-  greatball: { id: 'greatball', name: 'Super Ball', bonus: 1.5, price: 600, icon: 'greatball' },
-  ultraball: { id: 'ultraball', name: 'Hyper Ball', bonus: 2, price: 1200, icon: 'ultraball' },
-  masterball: { id: 'masterball', name: 'Master Ball', bonus: 100, price: 75000, icon: 'masterball' },
+  pokeball: { id: 'pokeball', name: 'Parchemin', bonus: 1, price: 200, icon: 'scroll' },
+  greatball: { id: 'greatball', name: 'Sceau de liaison', bonus: 1.5, price: 600, icon: 'seal' },
+  ultraball: { id: 'ultraball', name: 'Fûinjutsu', bonus: 2, price: 1200, icon: 'fuin' },
+  masterball: { id: 'masterball', name: 'Sceau des Cinq Kage', bonus: 100, price: 75000, icon: 'kage' },
 };
 
 export const BRAND = {
-  name: 'Pokiiiii',
-  tagline: 'Idle national · 1v1 · Gen I–IX',
+  name: 'Shinobiiii',
+  tagline: 'Idle shinobi · 1v1 · Tous les ninja & modes',
 };
 
 /** Génération de la zone actuelle (combat / invocations). */
@@ -93,7 +93,7 @@ export function maxUnlockedGen(state) {
 export function unlockGen(state, gen) {
   ensureUnlockedGens(state);
   const g = Number(gen);
-  if (!g || g < 2 || g > 9) return { ok: false, reason: 'invalid' };
+  if (!g || g < 2 || g > 4) return { ok: false, reason: 'invalid' };
   if (state.unlockedGens.includes(g)) return { ok: false, reason: 'already' };
   if (g !== maxUnlockedGen(state) + 1) return { ok: false, reason: 'order' };
 
@@ -111,7 +111,7 @@ export function unlockGen(state, gen) {
   const meta = GEN_META[g] || { name: `Gen ${g}`, roman: String(g) };
   addLog(
     state,
-    `Génération ${meta.roman} (${meta.name}) débloquée ! ${pokeName(gift)} rejoint l’aventure.`,
+    `Saga ${meta.roman} (${meta.name}) débloquée ! ${pokeName(gift)} rejoint l'escouade.`,
     'unlock'
   );
   return { ok: true, gen: g, pokemon: gift, meta };
@@ -125,7 +125,7 @@ export function createNewGame(starterId) {
   const starter = createPokemon(safeId, 5);
   const state = {
     version: 3,
-    playerName: 'Dresseur',
+    playerName: 'Ninja',
     starterId: safeId,
     money: 800,
     balls: { pokeball: 15, greatball: 2, ultraball: 0, masterball: 0 },
@@ -196,7 +196,7 @@ export function loadGame() {
     if (!raw) return null;
     const state = JSON.parse(raw);
     state.version = 3;
-    if (!state.playerName) state.playerName = 'Dresseur';
+    if (!state.playerName) state.playerName = 'Ninja';
     if (!state.starterId) state.starterId = state.team?.[0]?.speciesId || STARTERS[0];
     if (!state.balls) state.balls = { pokeball: 10, greatball: 0, ultraball: 0, masterball: 0 };
     if (!state.balls.masterball) state.balls.masterball = 0;
@@ -258,11 +258,20 @@ function randomFrom(arr) {
 export function spawnWild(state) {
   const zone = getZone(state.currentZone) || ZONES[0];
   const zoneGen = Number(zone.gen) || 1;
-  const pool = (zone.pokemon || []).filter((id) => {
+  const featured = (zone.pokemon || []).filter((id) => {
     const sp = getSpecies(id);
     return sp && (Number(sp.generation) || 1) === zoneGen;
   });
-  let speciesId = randomFrom(pool.length ? pool : zone.pokemon);
+  // Pool élargi : tous les shinobi de la saga + featured boostés
+  const genPool = allSpecies()
+    .filter((s) => (Number(s.generation) || 1) === zoneGen)
+    .map((s) => s.id);
+  const pool = featured.length
+    ? [...featured, ...featured, ...genPool]
+    : genPool.length
+      ? genPool
+      : zone.pokemon;
+  let speciesId = randomFrom(pool.length ? pool : [14]);
   if (zone.rare?.length) {
     for (const r of zone.rare) {
       const sp = getSpecies(r.id);
@@ -273,7 +282,7 @@ export function spawnWild(state) {
       }
     }
   }
-  if (!getSpecies(speciesId)) speciesId = (pool.length ? pool : zone.pokemon).find((id) => getSpecies(id)) || 1;
+  if (!getSpecies(speciesId)) speciesId = featured.find((id) => getSpecies(id)) || genPool[0] || 14;
   const level =
     zone.minLevel + Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1));
   const shinyRate = (1 / 4096) * rewardMults(state).shiny;
@@ -298,7 +307,7 @@ export function healTeam(state) {
     refreshStats(p);
     p.hp = p.maxHp;
   }
-  addLog(state, 'Votre équipe a été soignée au Centre Pokémon.', 'heal');
+  addLog(state, "Votre escouade a été soignée à l'Infirmerie.", 'heal');
 }
 
 export function unlockZone(state, zoneId) {
@@ -424,7 +433,7 @@ function awardKo(state, battle, fighter, wild, events) {
   }
   addLog(
     state,
-    `${pokeName(fighter)} bat ${pokeName(wild)} (+${xp} XP, ${money}₽)`,
+    `${pokeName(fighter)} bat ${pokeName(wild)} (+${xp} XP, ${money}両)`,
     'battle'
   );
   if (levelInfo.leveled) {
@@ -613,7 +622,7 @@ export function applyOfflineProgress(state) {
   state.stats.playTime += seconds;
   addLog(
     state,
-    `Hors-ligne : ~${battles} combats, +${xpGain} XP, +${moneyGain}₽` +
+    `Hors-ligne : ~${battles} combats, +${xpGain} XP, +${moneyGain}両` +
       (catches ? `, ${catches} captures` : ''),
     'offline'
   );

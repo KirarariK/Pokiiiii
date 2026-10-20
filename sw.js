@@ -1,5 +1,5 @@
-/** Shell PWA — network-first, sans modifier les Request (sinon les modules ES bloquent). */
-const CACHE = 'pokiiiii-shell-v4';
+/** Shell PWA Shinobiiii — network-first, sans modifier les Request (sinon les modules ES bloquent). */
+const CACHE = 'shinobiiii-shell-v5';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {

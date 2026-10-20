@@ -1,5 +1,5 @@
 /**
- * Node ESM smoke tests for Pokiiiii (no browser).
+ * Node ESM smoke tests for Shinobiiii (no browser).
  * Polyfills: fetch (JSON from disk), localStorage, minimal location.
  */
 import { readFile, readdir } from 'node:fs/promises';
@@ -114,7 +114,7 @@ async function main() {
   // Species bootstrap (required by createPokemon)
   try {
     const species = await pokemon.loadSpecies();
-    assert(Array.isArray(species) && species.length >= 1000, `species count ${species.length}`);
+    assert(Array.isArray(species) && species.length >= 500, `species count ${species.length}`);
     pass(`loadSpecies (${species.length})`);
   } catch (e) {
     fail('loadSpecies', e);
@@ -122,22 +122,24 @@ async function main() {
     process.exit(1);
   }
 
+  const STARTER_ID = 14; // Naruto Uzumaki — Enfant (saga I)
+
   // 2) createNewGame + loadGame with localStorage
   let state;
   try {
     localStorage.clear();
-    state = game.createNewGame(1);
-    assert(state.team?.[0]?.speciesId === 1, 'starter');
+    state = game.createNewGame(STARTER_ID);
+    assert(state.team?.[0]?.speciesId === STARTER_ID, 'starter');
     game.saveGame(state);
     const loaded = game.loadGame();
     assert(loaded, 'loadGame returns state');
-    assert(loaded.team?.[0]?.speciesId === 1, 'loaded starter');
+    assert(loaded.team?.[0]?.speciesId === STARTER_ID, 'loaded starter');
     assert(loaded.version === 3, 'version 3');
     state = loaded;
     pass('createNewGame / saveGame / loadGame');
   } catch (e) {
     fail('createNewGame/loadGame', e);
-    state = game.createNewGame(1);
+    state = game.createNewGame(STARTER_ID);
   }
 
   // 3) ensure* helpers
@@ -159,7 +161,7 @@ async function main() {
 
   // 4) challengeGym on first gym with leveled team
   try {
-    const gymState = game.createNewGame(1);
+    const gymState = game.createNewGame(STARTER_ID);
     for (const p of gymState.team) {
       p.xp = pokemon.xpForLevel(25);
       pokemon.refreshStats(p);
@@ -167,7 +169,7 @@ async function main() {
     }
     // Pad team so gym fights are survivable (still may lose — must not throw)
     while (gymState.team.length < 3) {
-      const extra = pokemon.createPokemon(4, 25);
+      const extra = pokemon.createPokemon(29, 25); // Sasuke enfant
       gymState.team.push(extra);
       gymState.caught[extra.speciesId] = true;
       gymState.seen[extra.speciesId] = true;
@@ -182,12 +184,12 @@ async function main() {
 
   // 5) startExpedition + claim (time skip)
   try {
-    const exState = game.createNewGame(1);
+    const exState = game.createNewGame(STARTER_ID);
     // Keep a lead on team; send a box mon so last-team rule passes
-    const scout = pokemon.createPokemon(16, 8);
+    const scout = pokemon.createPokemon(23, 8); // Sakura enfant
     exState.box.push(scout);
-    exState.caught[16] = true;
-    exState.seen[16] = true;
+    exState.caught[23] = true;
+    exState.seen[23] = true;
     const dur = expedition.EXPEDITION_DURATIONS[0].ms;
     const zoneId = exState.currentZone;
     const started = expedition.startExpedition(exState, {
@@ -208,7 +210,7 @@ async function main() {
 
   // 6) pullOnce with tickets
   try {
-    const pullState = game.createNewGame(1);
+    const pullState = game.createNewGame(STARTER_ID);
     summon.ensureSummon(pullState);
     if (pullState.summon.tickets < 1) pullState.summon.tickets = 1;
     const before = pullState.team.length + pullState.box.length;
@@ -222,7 +224,7 @@ async function main() {
 
   // 7) resolveMinigame
   try {
-    const mgState = game.createNewGame(1);
+    const mgState = game.createNewGame(STARTER_ID);
     minigame.ensureMinigame(mgState);
     const res = minigame.resolveMinigame(mgState, 72);
     assert(res.ok, `resolveMinigame: ${res.reason || 'ok'}`);
@@ -235,7 +237,7 @@ async function main() {
 
   // 8) pushLeaderboard
   try {
-    const lbState = game.createNewGame(1);
+    const lbState = game.createNewGame(STARTER_ID);
     lbState.playerName = 'SmokeTest';
     lbState.stats.catches = 3;
     const list = leaderboard.pushLeaderboard(lbState);
@@ -261,7 +263,7 @@ async function main() {
 
   // 10) Hub panel render functions → HTML strings
   try {
-    const renderState = game.createNewGame(1);
+    const renderState = game.createNewGame(STARTER_ID);
     summon.ensureSummon(renderState);
     arena.ensureArena(renderState);
     expedition.ensureExpeditions(renderState);
@@ -295,22 +297,22 @@ async function main() {
 
   // Legacy regression checks (kept cheap)
   try {
-    // Nouvelle partie force Gen 1 même si on passe un id Gen 9
-    const g9 = game.createNewGame(906);
-    assert(g9.team[0].speciesId === 1, 'new game forces gen1 starter');
-    assert(Array.isArray(g9.unlockedGens) && g9.unlockedGens.length === 1 && g9.unlockedGens[0] === 1, 'only gen1 unlocked');
+    // Nouvelle partie force saga I même si on passe un id Boruto (saga IV)
+    const g9 = game.createNewGame(1);
+    assert(g9.team[0].speciesId === 14, 'new game forces saga I starter');
+    assert(Array.isArray(g9.unlockedGens) && g9.unlockedGens.length === 1 && g9.unlockedGens[0] === 1, 'only saga I unlocked');
     assert(game.currentPlayGen(g9) === 1, 'play gen 1');
     const unlocked = game.unlockGen(g9, 2);
-    assert(unlocked.ok, 'unlock gen2');
-    assert(g9.unlockedGens.includes(2), 'gen2 in list');
-    assert([152, 155, 158].includes(unlocked.pokemon?.speciesId), 'gen2 starter gift');
-    pass('gen lock: new game Gen1 + unlockGen(2)');
+    assert(unlocked.ok, 'unlock saga II');
+    assert(g9.unlockedGens.includes(2), 'saga II in list');
+    assert([15, 31, 24].includes(unlocked.pokemon?.speciesId), 'saga II starter gift');
+    pass('gen lock: new game saga I + unlockGen(2)');
   } catch (e) {
     fail('gen lock', e);
   }
 
   try {
-    const battleState = game.createNewGame(4);
+    const battleState = game.createNewGame(STARTER_ID);
     let battle = game.createBattle(battleState);
     let ticks = 0;
     for (let i = 0; i < 120; i++) {

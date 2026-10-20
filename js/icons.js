@@ -1,10 +1,22 @@
-/** Icônes SVG exclusives Pokiiiii — aucun emoji */
+/** Icônes SVG Shinobiiii — thème Naruto — aucun emoji */
 const S = (body, view = '0 0 24 24') =>
   `<svg class="ico" width="24" height="24" viewBox="${view}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
 export const ICO = {
   logo: S(
-    `<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/>`,
+    `<path d="M12 3c3.5 4 7 5.5 7 10.5S15.5 21 12 21 5 18.5 5 13.5 8.5 7 12 3z"/><path d="M12 7c1.8 2 3.5 2.8 3.5 5.2S13.8 16 12 16s-3.5-1.2-3.5-3.8S10.2 9 12 7z"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>`,
+  ),
+  scroll: S(
+    `<path d="M7 4h9a2 2 0 012 2v12l-2-1-2 1-2-1-2 1-2-1-2 1V6a2 2 0 012-2z"/><path d="M9 8h6M9 12h6M9 16h3"/>`,
+  ),
+  seal: S(
+    `<circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8v8"/><circle cx="12" cy="12" r="2.5"/>`,
+  ),
+  fuin: S(
+    `<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/><path d="M8 4v3M16 4v3"/>`,
+  ),
+  kage: S(
+    `<path d="M12 3l2.5 5 5.5.5-4.2 3.8 1.2 5.4L12 15.2 7 17.7l1.2-5.4L4 8.5l5.5-.5L12 3z"/>`,
   ),
   swords: S(`<path d="M4 20L14 10M10 14L20 4M14 4h6v6M4 14v6h6"/>`),
   cube: S(`<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 21V12M12 12L4 7.5M12 12l8-4.5"/>`),
@@ -37,16 +49,16 @@ export const ICO = {
   close: S(`<path d="M6 6l12 12M18 6L6 18"/>`),
   heal: S(`<path d="M12 4v16M4 12h16"/><rect x="8" y="3" width="8" height="4" rx="1"/><rect x="3" y="8" width="4" height="8" rx="1"/><rect x="17" y="8" width="4" height="8" rx="1"/><rect x="8" y="17" width="8" height="4" rx="1"/>`),
   ball: S(
-    `<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><circle cx="12" cy="12" r="2.6"/>`,
+    `<path d="M7 4h9a2 2 0 012 2v12l-2-1-2 1-2-1-2 1-2-1-2 1V6a2 2 0 012-2z"/><path d="M9 9h6M9 13h5"/>`,
   ),
   greatball: S(
-    `<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M7 8h2M15 8h2"/><circle cx="12" cy="12" r="2.6"/>`,
+    `<circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8v8"/><circle cx="12" cy="12" r="2.2"/>`,
   ),
   ultraball: S(
-    `<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M8 7l2 2M16 7l-2 2"/><circle cx="12" cy="12" r="2.6"/>`,
+    `<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6"/><path d="M8 4v3M16 4v3"/>`,
   ),
   masterball: S(
-    `<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M9 7l3 3 3-3"/><circle cx="12" cy="12" r="2.6"/>`,
+    `<path d="M12 3l2.5 5 5.5.5-4.2 3.8 1.2 5.4L12 15.2 7 17.7l1.2-5.4L4 8.5l5.5-.5L12 3z"/>`,
   ),
   check: S(`<path d="M5 12l5 5L20 7"/>`),
   gift: S(`<rect x="4" y="10" width="16" height="10" rx="1"/><path d="M12 10v10M4 14h16M12 10c-2-3-5-3-5-1s2 2 5 1c3 1 5 0 5-1s-3 0-5 1z"/>`),

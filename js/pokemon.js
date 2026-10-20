@@ -1,21 +1,29 @@
 import { typeEffectiveness } from './data/types.js';
 
-const ART = (id) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
-const SPRITE = (id) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+function fallbackArt(id, name = '?') {
+  const label = encodeURIComponent(String(name).slice(0, 18));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c2d12"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#111827"/>
+    </linearGradient></defs>
+    <rect width="512" height="512" fill="url(#g)"/>
+    <circle cx="256" cy="200" r="110" fill="none" stroke="#fde68a" stroke-width="10"/>
+    <path d="M140 200h232M256 90v220" stroke="#fde68a" stroke-width="8"/>
+    <text x="256" y="400" text-anchor="middle" fill="#fff7ed" font-family="sans-serif" font-size="36" font-weight="700">${label}</text>
+  </svg>`;
+  return `data:image/svg+xml,${svg.replace(/#/g, '%23').replace(/\n/g, '')}`;
+}
 
 let SPECIES = [];
 const byId = new Map();
 
 export async function loadSpecies() {
-  // Prefer full national dex; fall back to Gen 1 if all-species file is missing/empty.
-  const sources = ['./js/data/pokemon-all.json', './js/data/pokemon-gen1.json'];
+  const sources = ['./js/data/shinobi-all.json', './js/data/pokemon-all.json'];
   let lastErr;
   for (const url of sources) {
     try {
       const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
-        ? AbortSignal.timeout(12000)
+        ? AbortSignal.timeout(15000)
         : undefined;
       const res = await fetch(url, ctrl ? { signal: ctrl } : undefined);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
@@ -31,7 +39,7 @@ export async function loadSpecies() {
       lastErr = err;
     }
   }
-  throw lastErr || new Error('Impossible de charger les espèces');
+  throw lastErr || new Error('Impossible de charger les shinobi');
 }
 
 export function getSpecies(id) {
@@ -46,18 +54,20 @@ export function speciesCount() {
   return SPECIES.length;
 }
 
-/** Toujours l’artwork PokeAPI par id national (pas de sprite local requis). */
+/** Artwork AniList HQ (image) — fallback SVG thématique. */
 export function artUrl(id) {
-  return ART(Number(id));
+  const s = byId.get(Number(id));
+  if (s?.image) return s.image;
+  return fallbackArt(id, s?.nameFr || s?.name || id);
 }
 
 export function spriteUrl(id) {
-  return SPRITE(Number(id));
+  return artUrl(id);
 }
 
 export function displayName(species) {
   if (!species) return '???';
-  return species.nameFr || capitalize(species.name);
+  return species.nameFr || species.baseName || capitalize(species.name);
 }
 
 function capitalize(s) {

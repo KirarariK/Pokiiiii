@@ -76,7 +76,7 @@ function handleGymChallenge(gymId) {
       res.reason === 'already'
         ? 'Badge déjà obtenu'
         : res.reason === 'no-gen-fighter'
-          ? res.message || `Il faut un Pokémon Gen ${res.needGen}`
+          ? res.message || `Il faut un shinobi Gen ${res.needGen}`
           : res.reason === 'locked'
             ? res.needLeader
               ? `Battre ${res.needLeader} ou N.${res.need}`
@@ -85,7 +85,7 @@ function handleGymChallenge(gymId) {
     UI.toast(msg);
   } else if (res.win) {
     const label = res.badgeName || res.badgeId || res.badge || 'Badge';
-    UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
+    UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} 両`);
     Audio.play('win');
     // Champion de région → débloque la génération suivante
     if (res.gym?.champion) {
@@ -221,7 +221,7 @@ function startExisting(s) {
   if (expClaim.count || dayClaim.count) saveGame(state);
   enterGame();
   if (offline) {
-    UI.toast(`Hors-ligne : ${offline.battles} combats · +${offline.xpGain} XP · +${offline.moneyGain}₽`);
+    UI.toast(`Hors-ligne : ${offline.battles} combats · +${offline.xpGain} XP · +${offline.moneyGain}両`);
   }
   if (expClaim.count || dayClaim.count) {
     const bits = [];
@@ -306,7 +306,7 @@ function renderShell() {
 
         <section id="panel-pokemon" class="panel">
           <div class="panel-head">
-            <h2>Pokémon</h2>
+            <h2>Shinobi</h2>
             <button id="btn-evolve-all" class="btn-secondary" type="button">Tout évoluer</button>
           </div>
           <h3 class="subhead">Équipe <small class="muted">(lead = combat 1v1)</small></h3>
@@ -334,7 +334,7 @@ function renderShell() {
         </section>
 
         <section id="panel-dex" class="panel">
-          <div class="panel-head"><h2>Pokédex National</h2></div>
+          <div class="panel-head"><h2>Bingo Book National</h2></div>
           <div id="dex-view"></div>
         </section>
 
@@ -381,15 +381,15 @@ function renderShell() {
               <span class="settings-hero-ico">${icon('logo')}</span>
               <div>
                 <strong>${BRAND.name}</strong>
-                <p>Sauvegarde auto · ${speciesCount()} espèces Gen I–IX</p>
+                <p>Sauvegarde auto · ${speciesCount()} shinobi Sagas I–IV</p>
               </div>
             </div>
 
             <div class="settings-card">
-              <h3 class="settings-card-title">Dresseur</h3>
+              <h3 class="settings-card-title">Ninja</h3>
               <label class="pi-field block">
                 <span class="pi-field-label">${icon('profile')} Nom</span>
-                <input id="player-name" class="pi-input" type="text" maxlength="16" value="${state.playerName || 'Dresseur'}" />
+                <input id="player-name" class="pi-input" type="text" maxlength="16" value="${state.playerName || 'Ninja'}" />
               </label>
             </div>
 
@@ -450,7 +450,7 @@ function renderShell() {
               <button id="btn-replay-tutorial" class="btn-ghost" type="button">${icon('help')} Tutoriel</button>
               <button id="btn-reset" class="btn-danger" type="button">${icon('close')} Réinitialiser</button>
             </div>
-            <p class="muted disclaimer">Fan-game non officiel. Sprites © Pokémon / Nintendo / Creatures / Game Freak — via PokéAPI.</p>
+            <p class="muted disclaimer">Fan-game non officiel. Art AniList · Naruto © Kishimoto / Shueisha / Pierrot.</p>
           </div>
         </section>
       </main>
@@ -702,7 +702,7 @@ function refreshChrome() {
 function onInput(e) {
   if (e.target.id === 'dex-search') {
     dexQuery = e.target.value;
-    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+    UI.$('#dex-view').innerHTML = UI.renderBingoBook(state, { gen: dexGen, query: dexQuery });
   }
 }
 
@@ -852,12 +852,12 @@ function onClick(e) {
     const zoneId = UI.$('#ex-zone')?.value;
     const res = startExpedition(state, { pokemonUids: uids, durationMs, zoneId }, daycareBusyUids(state));
     const msgs = {
-      count: 'Choisis 1 à 3 Pokémon',
+      count: 'Choisis 1 à 3 shinobi',
       duration: 'Durée invalide',
       zone: 'Zone verrouillée',
       'last-team': 'Garde au moins 1 lead disponible',
-      busy: 'Pokémon déjà occupé',
-      missing: 'Pokémon introuvable',
+      busy: 'Shinobi déjà occupé',
+      missing: 'Shinobi introuvable',
     };
     UI.toast(res.ok ? 'Expédition lancée' : msgs[res.reason] || 'Impossible');
     if (res.ok) { saveGame(state); refreshAll(); }
@@ -869,7 +869,7 @@ function onClick(e) {
     const res = claimExpedition(state, claimEx.dataset.claimEx);
     if (res.ok) {
       const r = res.reward;
-      let msg = `+${r.money}₽ · +${r.xpEach} XP`;
+      let msg = `+${r.money}両 · +${r.xpEach} XP`;
       if (r.pokemon) msg += ` · ${pokeName(r.pokemon)}`;
       UI.toast(msg);
       saveGame(state);
@@ -884,11 +884,11 @@ function onClick(e) {
     const durationMs = Number(UI.$('#day-dur')?.value || 0);
     const res = depositDaycare(state, { parentUids: uids, durationMs }, expeditionBusyUids(state));
     const msgs = {
-      count: 'Choisis exactement 2 Pokémon',
+      count: 'Choisis exactement 2 shinobi',
       duration: 'Durée invalide',
       'last-team': 'Garde au moins 1 lead disponible',
-      busy: 'Pokémon déjà occupé',
-      missing: 'Pokémon introuvable',
+      busy: 'Shinobi déjà occupé',
+      missing: 'Shinobi introuvable',
     };
     UI.toast(res.ok ? 'Déposés à la pension' : msgs[res.reason] || 'Impossible');
     if (res.ok) { saveGame(state); refreshAll(); }
@@ -917,7 +917,7 @@ function onClick(e) {
   const genChip = e.target.closest('[data-dex-gen]');
   if (genChip) {
     dexGen = Number(genChip.dataset.dexGen);
-    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+    UI.$('#dex-view').innerHTML = UI.renderBingoBook(state, { gen: dexGen, query: dexQuery });
     return;
   }
 
@@ -984,7 +984,7 @@ function onClick(e) {
     const id = zoneBtn.dataset.zone;
     if (state.unlockedZones.includes(id)) {
       if (!setZone(state, id)) {
-        UI.toast('Génération verrouillée');
+        UI.toast('Saga verrouillée');
       } else {
         battle = createBattle(state);
         UI.toast(`Zone Gen ${currentPlayGen(state)}`);
@@ -1115,7 +1115,7 @@ function refreshActivePanel() {
     if (arenasRoot) renderArenasPanel(arenasRoot, state, { onChallenge: handleGymChallenge });
   }
   if (t === 'dex' && UI.$('#dex-view')) {
-    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+    UI.$('#dex-view').innerHTML = UI.renderBingoBook(state, { gen: dexGen, query: dexQuery });
   }
   if (t === 'leaderboard' && UI.$('#leaderboard-view')) {
     UI.$('#leaderboard-view').innerHTML = renderLeaderboardPanel(state);
@@ -1132,7 +1132,7 @@ function refreshActivePanel() {
             saveGame(state);
             pushLeaderboard(state);
             UI.toast(
-              `Score ${res.score} · +${res.money}₽${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
+              `Score ${res.score} · +${res.money}両${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
             );
             UI.updateHud(state);
           }

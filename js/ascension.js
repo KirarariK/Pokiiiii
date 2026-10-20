@@ -66,7 +66,7 @@ export function performAscension(state) {
       ? { ...state.badges }
       : Object.fromEntries(badgeList(state).map((r) => [`region:${r}`, { region: r, at: Date.now() }]));
   const settings = { ...(state.settings || { mute: false }) };
-  const playerName = state.playerName || 'Dresseur';
+  const playerName = state.playerName || 'Ninja';
   const stats = { ...(state.stats || { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 }) };
   const ascensionLevel = (state.ascensionLevel || 0) + 1;
 
@@ -123,7 +123,7 @@ export function tryAwardRegionBadge(state, zone) {
   const unlockedInRegion = regionZones.filter((z) => state.unlockedZones.includes(z.id));
   if (unlockedInRegion.length < 2 && zone.unlockCost === 0) return false;
   state.badges[key] = { region: zone.region, at: Date.now() };
-  addLog(state, `Badge obtenu : région ${zone.region} !`, 'unlock');
+  addLog(state, `Insigne obtenu : village ${zone.region} !`, 'unlock');
   return true;
 }
 
@@ -145,13 +145,13 @@ export function renderAscensionPanel(state) {
       </div>
     </div>
     <div class="ascend-keep">
-      <p><strong>Conservé</strong> : Pokédex (${preview.keepDex}), badges (${preview.keepBadges}), bonus d’ascension.</p>
+      <p><strong>Conservé</strong> : Bingo Book (${preview.keepDex}), badges (${preview.keepBadges}), bonus d’ascension.</p>
       <p><strong>Réinitialisé</strong> : argent, zones, équipe, boîte PC, expéditions, pension.</p>
     </div>
-    <div class="badge-row">${chips || '<span class="muted">Aucun badge région pour l’instant</span>'}</div>
+    <div class="badge-row">${chips || '<span class="muted">Aucun insigne village pour l’instant</span>'}</div>
     <p class="muted">Condition : 5 zones débloquées, 15 captures, ou 2 badges.</p>
     <button type="button" class="btn-primary" data-ascend-open ${ok ? '' : 'disabled'}>
-      Ascension → N.${preview.nextLevel} (XP ×${preview.xpMult.toFixed(2)} · ₽ ×${preview.moneyMult.toFixed(2)})
+      Ascension → N.${preview.nextLevel} (XP ×${preview.xpMult.toFixed(2)} · 両 ×${preview.moneyMult.toFixed(2)})
     </button>`;
 }
 

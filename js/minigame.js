@@ -51,8 +51,8 @@ export function resolveMinigame(state, score) {
     state.daily.passXp = (state.daily.passXp || 0) + passXp;
   }
 
-  const bits = [`+${money}₽`];
-  if (balls) bits.push(`+${balls} Poké Ball`);
+  const bits = [`+${money}両`];
+  if (balls) bits.push(`+${balls} Parchemin`);
   if (xp) bits.push(`+${xp} XP`);
   if (passXp) bits.push(`+${passXp} XP pass`);
   addLog(state, `Mini-jeu ${s} pts → ${bits.join(' · ')}`, 'shop');
@@ -117,7 +117,7 @@ export function bindMinigameHandlers(root, state, onDone) {
     start.disabled = !canPlayMinigame(state);
     if (result) {
       result.textContent = res.ok
-        ? `Score ${score} · +${res.money}₽${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`
+        ? `Score ${score} · +${res.money}両${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`
         : 'Limite quotidienne atteinte';
     }
     onDone?.(res);
