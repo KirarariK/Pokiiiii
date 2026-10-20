@@ -1,6 +1,6 @@
 import { icon } from './icons.js';
-import { speciesCount } from './pokemon.js';
-import { ZONES, BRAND, BALLS } from './game.js';
+import { speciesCount, pokeName, artUrl, spriteUrl } from './pokemon.js';
+import { ZONES, BRAND, BALLS, busyPokemonUids } from './game.js';
 import {
   QUEST_DEFS,
   PASS_TIERS,
@@ -12,6 +12,22 @@ import {
 } from './quests.js';
 import { getDailyEvent } from './events.js';
 import { ascensionBonuses } from './ascension.js';
+import {
+  ensureExpeditions,
+  getExpeditionDurations,
+  expeditionRemainingMs,
+  isExpeditionReady,
+  pendingExpeditionCount,
+  formatRemain,
+  findOwnedPokemon,
+} from './expedition.js';
+import {
+  ensureDaycare,
+  getDaycareDurations,
+  daycareRemainingMs,
+  isDaycareReady,
+  pendingDaycareCount,
+} from './daycare.js';
 
 export function renderTopbar(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
@@ -67,6 +83,8 @@ export function renderHub(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
   const lvl = Math.max(...state.team.map((p) => p.level), 1);
   const q = pendingQuestCount(state);
+  const exN = pendingExpeditionCount(state);
+  const dayN = pendingDaycareCount(state);
   const tile = (id, label, ico, badge = 0) => `
     <button type="button" class="hub-tile" data-hub="${id}">
       <span class="hub-tile-ico">${icon(ico)}</span>
@@ -101,6 +119,8 @@ export function renderHub(state) {
             ${tile('zones', 'Zones', 'map')}
             ${tile('battle', 'Combat', 'swords')}
             ${tile('pokemon', 'Équipe / PC', 'cube')}
+            ${tile('expeditions', 'Expéditions', 'compass', exN)}
+            ${tile('pension', 'Pension', 'egg', dayN)}
           </div>
         </div>
 
@@ -125,6 +145,157 @@ export function renderHub(state) {
         </div>
       </div>
     </div>`;
+}
+
+
+export function renderExpeditionsPanel(state) {
+  ensureExpeditions(state);
+  const busy = busyPokemonUids(state);
+  const avail = [...state.team, ...state.box].filter((p) => !busy.has(p.uid));
+  const zoneOpts = ZONES.filter((z) => state.unlockedZones.includes(z.id))
+    .map(
+      (z) =>
+        `<option value="${z.id}" ${z.id === state.currentZone ? 'selected' : ''}>${z.name}</option>`
+    )
+    .join('');
+  const durOpts = getExpeditionDurations()
+    .map((d) => `<option value="${d.ms}">${d.label}</option>`)
+    .join('');
+  const picks = avail.length
+    ? avail
+        .slice(0, 24)
+        .map(
+          (p) => `
+      <label class="ex-pick">
+        <input type="checkbox" name="ex-uid" value="${p.uid}" />
+        <img src="${artUrl(p.speciesId)}" alt="" loading="lazy"
+          onerror="this.onerror=null;this.src='${spriteUrl(p.speciesId)}'" />
+        <span>${pokeName(p)} <small>N.${p.level}</small></span>
+      </label>`
+        )
+        .join('')
+    : `<p class="muted">Aucun Pokémon disponible (garde au moins 1 lead).</p>`;
+
+  const active = state.expeditions.filter((e) => !e.claimed);
+  const list = active.length
+    ? active
+        .map((e) => {
+          const left = expeditionRemainingMs(e);
+          const ready = isExpeditionReady(e);
+          const zone = ZONES.find((z) => z.id === e.zoneId);
+          const names = (e.pokemonUids || [])
+            .map((uid) => {
+              const p = findOwnedPokemon(state, uid);
+              return p ? pokeName(p) : '?';
+            })
+            .join(', ');
+          return `
+        <article class="ex-card ${ready ? 'ready' : ''}">
+          <div class="ex-ico">${icon(ready ? 'gift' : 'compass')}</div>
+          <div class="ex-body">
+            <strong>${zone?.name || e.zoneId}</strong>
+            <p class="muted">${names}</p>
+            <p class="ex-timer">${icon('clock')} ${formatRemain(left)}</p>
+          </div>
+          <button type="button" class="btn-claim" data-claim-ex="${e.id}" ${ready ? '' : 'disabled'}>
+            Réclamer
+          </button>
+        </article>`;
+        })
+        .join('')
+    : `<p class="muted">Aucune expédition en cours.</p>`;
+
+  return `
+    <div class="panel-head">
+      <h2>Expéditions</h2>
+      <span class="muted">${icon('compass')} temps réel</span>
+    </div>
+    <div class="ex-form">
+      <p class="muted">Envoie 1 à 3 Pokémon explorer une zone. Ils sont indisponibles au combat jusqu’au retour. Récompenses : argent, Balls, XP partagée, chance de capture.</p>
+      <div class="ex-picks">${picks}</div>
+      <div class="ex-fields">
+        <label class="field">Zone
+          <select id="ex-zone">${zoneOpts}</select>
+        </label>
+        <label class="field">Durée
+          <select id="ex-dur">${durOpts}</select>
+        </label>
+      </div>
+      <button type="button" class="btn-primary" data-start-ex>Lancer l’expédition</button>
+    </div>
+    <h3 class="subhead">En cours</h3>
+    <div class="ex-list">${list}</div>`;
+}
+
+export function renderPensionPanel(state) {
+  ensureDaycare(state);
+  const busy = busyPokemonUids(state);
+  const avail = [...state.team, ...state.box].filter((p) => !busy.has(p.uid));
+  const durOpts = getDaycareDurations()
+    .map((d) => `<option value="${d.ms}">${d.label}</option>`)
+    .join('');
+  const picks = avail.length
+    ? avail
+        .slice(0, 24)
+        .map(
+          (p) => `
+      <label class="ex-pick">
+        <input type="checkbox" name="day-uid" value="${p.uid}" />
+        <img src="${artUrl(p.speciesId)}" alt="" loading="lazy"
+          onerror="this.onerror=null;this.src='${spriteUrl(p.speciesId)}'" />
+        <span>${pokeName(p)} <small>N.${p.level}</small></span>
+      </label>`
+        )
+        .join('')
+    : `<p class="muted">Pas assez de Pokémon libres (il faut en garder 1 en lead).</p>`;
+
+  const jobs = state.daycare.filter((j) => !j.claimed);
+  const list = jobs.length
+    ? jobs
+        .map((j) => {
+          const left = daycareRemainingMs(j);
+          const ready = isDaycareReady(j);
+          const names = (j.parentUids || [])
+            .map((uid) => {
+              const p =
+                state.team.find((x) => x.uid === uid) ||
+                state.box.find((x) => x.uid === uid);
+              return p ? pokeName(p) : '?';
+            })
+            .join(' + ');
+          return `
+        <article class="ex-card ${ready ? 'ready' : ''}">
+          <div class="ex-ico">${icon(ready ? 'egg' : 'clock')}</div>
+          <div class="ex-body">
+            <strong>${ready ? 'Œuf prêt !' : 'Incubation…'}</strong>
+            <p class="muted">${names}</p>
+            <p class="ex-timer">${icon('clock')} ${formatRemain(left)}</p>
+          </div>
+          <button type="button" class="btn-claim" data-claim-day="${j.id}" ${ready ? '' : 'disabled'}>
+            ${ready ? 'Éclore' : 'Attendre'}
+          </button>
+        </article>`;
+        })
+        .join('')
+    : `<p class="muted">Aucun couple en pension.</p>`;
+
+  return `
+    <div class="panel-head">
+      <h2>Pension</h2>
+      <span class="muted">${icon('egg')} œufs</span>
+    </div>
+    <div class="ex-form">
+      <p class="muted">Dépose 2 Pokémon (pas le dernier lead). Après le délai, un œuf éclot en une forme de base de la lignée du 1er parent, ou une espèce commune de la même génération.</p>
+      <div class="ex-picks">${picks}</div>
+      <div class="ex-fields">
+        <label class="field">Durée
+          <select id="day-dur">${durOpts}</select>
+        </label>
+      </div>
+      <button type="button" class="btn-primary" data-start-day>Déposer à la pension</button>
+    </div>
+    <h3 class="subhead">En pension</h3>
+    <div class="ex-list">${list}</div>`;
 }
 
 export function renderQuestsPanel(state) {

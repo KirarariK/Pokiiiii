@@ -78,7 +78,9 @@ async function boot() {
     demo === 'pass' ||
     demo === 'quests' ||
     demo === 'ascension' ||
-    demo === 'tutorial'
+    demo === 'tutorial' ||
+    demo === 'expeditions' ||
+    demo === 'pension'
   ) {
     startNew(4);
     if (demo !== 'tutorial') {
@@ -93,6 +95,8 @@ async function boot() {
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
     if (demo === 'ascension') setTimeout(() => setTab('ascension'), 80);
+    if (demo === 'expeditions') setTimeout(() => setTab('expeditions'), 50);
+    if (demo === 'pension') setTimeout(() => setTab('pension'), 50);
     return;
   }
 
@@ -228,6 +232,14 @@ function renderShell() {
           <div id="profile-view"></div>
         </section>
 
+        <section id="panel-expeditions" class="panel">
+          <div id="expeditions-view"></div>
+        </section>
+
+        <section id="panel-pension" class="panel">
+          <div id="pension-view"></div>
+        </section>
+
         <section id="panel-bonus" class="panel">
           <div id="bonus-view"></div>
         </section>
@@ -350,6 +362,8 @@ function setTab(id) {
     profile: 'profile',
     bonus: 'bonus',
     ascension: 'ascension',
+    expeditions: 'expeditions',
+    pension: 'pension',
     settings: 'settings',
     heal: 'battle',
   };
@@ -681,6 +695,50 @@ function refreshAll() {
   }
 }
 
+
+function refreshTimedPanels() {
+  if (!state) return;
+  const preserve = (viewSel, checkName, selects) => {
+    const view = UI.$(viewSel);
+    if (!view) return null;
+    const checked = [...view.querySelectorAll(`input[name="${checkName}"]:checked`)].map((el) => el.value);
+    const vals = {};
+    for (const id of selects) {
+      const el = UI.$(id);
+      if (el) vals[id] = el.value;
+    }
+    return { checked, vals };
+  };
+  const restore = (viewSel, checkName, snap) => {
+    if (!snap) return;
+    const view = UI.$(viewSel);
+    if (!view) return;
+    for (const uid of snap.checked) {
+      const inp = view.querySelector(`input[name="${checkName}"][value="${uid}"]`);
+      if (inp) inp.checked = true;
+    }
+    for (const [id, value] of Object.entries(snap.vals)) {
+      const el = UI.$(id);
+      if (el) el.value = value;
+    }
+  };
+
+  if (tab === 'expeditions' && UI.$('#expeditions-view')) {
+    const snap = preserve('#expeditions-view', 'ex-uid', ['#ex-zone', '#ex-dur']);
+    UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
+    restore('#expeditions-view', 'ex-uid', snap);
+  }
+  if (tab === 'pension' && UI.$('#pension-view')) {
+    const snap = preserve('#pension-view', 'day-uid', ['#day-dur']);
+    UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
+    restore('#pension-view', 'day-uid', snap);
+  }
+  // Update hub badge when something becomes ready
+  if (!hubOpen) {
+    UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav(tab, state);
+  }
+}
+
 function startLoop() {
   clearInterval(tickTimer);
   const ms = TICK_BASE_MS / (state.battleSpeed || 1);
@@ -690,6 +748,11 @@ function startLoop() {
 function gameTick() {
   if (!state || !battle) return;
   state.stats.playTime += TICK_BASE_MS / 1000 / (state.battleSpeed || 1);
+
+  // Keep expedition / daycare timers live without wiping form checkboxes every battle tick
+  if (tab === 'expeditions' || tab === 'pension') {
+    refreshTimedPanels();
+  }
 
   if (battle.over) {
     battle = createBattle(state);

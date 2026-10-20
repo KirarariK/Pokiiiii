@@ -27,6 +27,10 @@ export function getDaycareDurations() {
 }
 
 export function ensureDaycare(state) {
+  // Migrate legacy `{ slots: [...] }` shape → jobs array used by shell-ui
+  if (state.daycare && !Array.isArray(state.daycare) && state.daycare.slots) {
+    state.daycare = [];
+  }
   if (!Array.isArray(state.daycare)) state.daycare = [];
   return state.daycare;
 }
@@ -159,4 +163,14 @@ export function claimDaycare(state, jobId) {
   const name = displayName(getSpecies(speciesId));
   addLog(state, `L’œuf a éclos : ${name} (N.${hatchLevel}) !`, 'catch');
   return { ok: true, pokemon: baby };
+}
+
+/** Aliases — shell / older callers */
+export const startDaycare = depositDaycare;
+export const withdrawDaycare = claimDaycare;
+
+export function hatchEgg(state) {
+  const ready = ensureDaycare(state).find((j) => isDaycareReady(j));
+  if (!ready) return { ok: false, reason: 'none' };
+  return claimDaycare(state, ready.id);
 }

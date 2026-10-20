@@ -80,6 +80,8 @@ export function createNewGame(starterId) {
     daycare: [],
   };
   initDailyBaselines(state);
+  ensureExpeditions(state);
+  ensureDaycare(state);
   return state;
 }
 
