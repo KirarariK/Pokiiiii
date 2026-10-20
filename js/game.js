@@ -19,7 +19,6 @@ import {
 } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { ensureDaily, initDailyBaselines } from './quests.js';
-import { ensureArena } from './arena.js';
 import { ensureExpeditions, expeditionBusyUids } from './expedition.js';
 import { ensureDaycare, daycareBusyUids } from './daycare.js';
 
