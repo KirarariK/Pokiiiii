@@ -746,13 +746,13 @@ button:disabled {
 .battle-vs {
   display: grid;
   place-items: center;
+  gap: 0.45rem;
   z-index: 2;
 }
 
-.battle-vs span {
+.battle-vs > span {
   font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: 0.18em;
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.45);
   background: rgba(0, 0, 0, 0.35);
@@ -762,8 +762,101 @@ button:disabled {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  letter-spacing: 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.battle-side.acting {
+  outline: 2px solid rgba(96, 165, 250, 0.5);
+  outline-offset: 6px;
+  border-radius: 16px;
+}
+
+.battle-role {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.turn-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  text-align: center;
+  max-width: 11rem;
+  line-height: 1.25;
+}
+
+.eff-banner {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  padding: 0.25rem 0.55rem;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 12rem;
+}
+
+.eff-banner.super {
+  background: rgba(251, 191, 36, 0.22);
+  color: #fbbf24;
+}
+
+.eff-banner.resist {
+  background: rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
+}
+
+.eff-banner.immune {
+  background: rgba(100, 116, 139, 0.28);
+  color: #94a3b8;
+}
+
+.gen-pill,
+.lead-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.gen-pill {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.4rem;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  color: var(--muted);
+}
+
+.lead-tag {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.shiny-glow {
+  filter: drop-shadow(0 0 12px rgba(255, 203, 5, 0.55)) drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+}
+
+.hp-text {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.muted.tiny {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
 }
 
 /* Bars */

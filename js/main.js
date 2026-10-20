@@ -400,11 +400,7 @@ function gameTick() {
         el.classList.add('hit');
         setTimeout(() => el.classList.remove('hit'), 180);
       }
-      const floater = UI.$('.dmg-float');
-      if (floater) {
-        floater.classList.add('pop');
-        setTimeout(() => floater.classList.remove('pop'), 480);
-      }
+      /* damage numbers animate via .dmg-num CSS */
     }
   }
 }
