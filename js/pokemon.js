@@ -9,13 +9,18 @@ let SPECIES = [];
 const byId = new Map();
 
 export async function loadSpecies() {
+  // Prefer full national dex; fall back to Gen 1 if all-species file is missing/empty.
   const sources = ['./js/data/pokemon-all.json', './js/data/pokemon-gen1.json'];
   let lastErr;
   for (const url of sources) {
     try {
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      SPECIES = await res.json();
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error(`Empty species list from ${url}`);
+      }
+      SPECIES = data;
       byId.clear();
       for (const s of SPECIES) byId.set(s.id, s);
       return SPECIES;
