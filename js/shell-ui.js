@@ -1,6 +1,7 @@
 import { icon } from './icons.js';
-import { speciesCount, artUrl, displayName, getSpecies, pokeName, spriteUrl } from './pokemon.js';
+import { speciesCount, allSpecies, artUrl, displayName, getSpecies, pokeName, spriteUrl } from './pokemon.js';
 import { ZONES, BRAND, BALLS, busyPokemonUids } from './game.js';
+import { GEN_META } from './data/starters.js';
 import {
   QUEST_DEFS,
   PASS_TIERS,
@@ -381,23 +382,66 @@ export function renderPassPanel(state) {
     <div class="pass-track">${tiers}</div>`;
 }
 
+export function collectionByGen(state) {
+  const totals = Object.create(null);
+  const caught = Object.create(null);
+  for (let g = 1; g <= 9; g++) {
+    totals[g] = 0;
+    caught[g] = 0;
+  }
+  for (const sp of allSpecies()) {
+    const g = Number(sp.generation) || 1;
+    if (!totals[g]) totals[g] = 0;
+    if (!caught[g]) caught[g] = 0;
+    totals[g]++;
+    if (state.caught?.[sp.id]) caught[g]++;
+  }
+  return { totals, caught };
+}
+
 export function renderProfile(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
-  const caught = Object.keys(state.caught).length;
+  const total = speciesCount() || 1;
+  const caughtN = Object.keys(state.caught || {}).length;
+  const pct = Math.min(100, Math.round((caughtN / total) * 1000) / 10);
+  const byGen = collectionByGen(state);
+  const genBars = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    .map((g) => {
+      const t = byGen.totals[g] || 0;
+      const c = byGen.caught[g] || 0;
+      const p = t ? Math.round((c / t) * 100) : 0;
+      const meta = GEN_META[g] || { name: `Gen ${g}` };
+      return `
+        <div class="dex-region-row" title="${meta.name} : ${c}/${t}">
+          <span class="dex-region-label"><em>G${g}</em> ${meta.name}</span>
+          <div class="dex-region-bar"><div style="width:${p}%"></div></div>
+          <span class="dex-region-pct">${c}/${t}</span>
+        </div>`;
+    })
+    .join('');
   return `
     <div class="panel-head"><h2>Profil</h2></div>
     <div class="profile-card">
       <div class="profile-avatar">${icon('profile')}</div>
       <div>
         <strong>${state.playerName}</strong>
-        <p class="muted">Région : ${new Date(state.startedAt).toLocaleDateString('fr-FR')}</p>
+        <p class="muted">Début : ${new Date(state.startedAt).toLocaleDateString('fr-FR')}</p>
       </div>
+    </div>
+    <div class="collection-card">
+      <div class="collection-head">
+        <strong>Collection nationale</strong>
+        <span class="collection-pct">${pct}%</span>
+      </div>
+      <div class="quest-bar collection-bar"><div style="width:${pct}%"></div></div>
+      <p class="muted tiny">${caughtN} / ${total} espèces capturées</p>
+      <div class="dex-region-list">${genBars}</div>
     </div>
     <div class="stat-grid">
       <div class="stat-box"><span>Combats</span><strong>${state.stats.battles}</strong></div>
       <div class="stat-box"><span>Captures</span><strong>${state.stats.catches}</strong></div>
       <div class="stat-box"><span>Argent gagné</span><strong>${state.stats.moneyEarned.toLocaleString('fr-FR')} ₽</strong></div>
-      <div class="stat-box"><span>Pokédex</span><strong>${caught}/${speciesCount()}</strong></div>
+      <div class="stat-box"><span>Pokédex</span><strong>${caughtN}/${total}</strong></div>
       <div class="stat-box"><span>Zone</span><strong>${zone?.name || '—'}</strong></div>
       <div class="stat-box"><span>Temps</span><strong>${Math.floor(state.stats.playTime / 60)} min</strong></div>
       <div class="stat-box"><span>Badges</span><strong>${ownedBadgeCount(state)}</strong></div>
@@ -463,10 +507,10 @@ export function renderSummonPanel(state) {
       </div>
     </div>
     <div class="pity-block">
-      <div class="pity-row"><span>Rare+ garanti</span><strong>${pity.untilRare === 0 ? 'Prêt' : `dans ${pity.untilRare}`}</strong></div>
-      <div class="quest-bar"><div style="width:${pity.rarePct}%"></div></div>
-      <div class="pity-row"><span>Légendaire garanti</span><strong>${pity.untilLegendary === 0 ? 'Prêt' : `dans ${pity.untilLegendary}`}</strong></div>
-      <div class="quest-bar"><div style="width:${pity.legendaryPct}%"></div></div>
+      <div class="pity-row"><span>Rare+ garanti</span><strong class="${pity.untilRare === 0 ? 'pity-ready' : ''}">${pity.untilRare === 0 ? 'Prêt' : `dans ${pity.untilRare}`}</strong></div>
+      <div class="pity-bar ${pity.untilRare === 0 ? 'is-ready' : ''}" role="progressbar" aria-valuenow="${Math.round(pity.rarePct)}" aria-valuemin="0" aria-valuemax="100"><div class="pity-fill pity-fill-rare" style="width:${pity.rarePct}%"></div></div>
+      <div class="pity-row"><span>Légendaire garanti</span><strong class="${pity.untilLegendary === 0 ? 'pity-ready' : ''}">${pity.untilLegendary === 0 ? 'Prêt' : `dans ${pity.untilLegendary}`}</strong></div>
+      <div class="pity-bar ${pity.untilLegendary === 0 ? 'is-ready' : ''}" role="progressbar" aria-valuenow="${Math.round(pity.legendaryPct)}" aria-valuemin="0" aria-valuemax="100"><div class="pity-fill pity-fill-legendary" style="width:${pity.legendaryPct}%"></div></div>
     </div>
     <div class="summon-actions">
       <button type="button" class="btn-primary summon-pull" data-summon-pull="1" ${canPull ? '' : 'disabled'}>${icon('summon')} Invoquer ×1</button>

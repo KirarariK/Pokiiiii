@@ -99,6 +99,7 @@ let dexGen = 0;
 let dexQuery = '';
 let hubOpen = false;
 let tutorialStep = 0;
+let logFilter = 'all';
 
 const TICK_BASE_MS = 750;
 
@@ -265,7 +266,10 @@ function renderShell() {
             </div>
           </div>
           <div class="log-panel">
-            <h3>Journal</h3>
+            <div class="log-panel-head">
+              <h3>Journal</h3>
+            </div>
+            <div id="log-toolbar">${UI.renderLogToolbar(logFilter)}</div>
             <div id="log"></div>
           </div>
         </section>
@@ -351,6 +355,7 @@ function renderShell() {
               <input id="opt-mute" type="checkbox" ${state.settings?.mute ? 'checked' : ''} />
               ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
             </label>
+            <p class="muted tiny settings-keys">Raccourcis : <kbd>1</kbd>–<kbd>6</kbd> nav · <kbd>H</kbd> Hub · <kbd>M</kbd> mute</p>
             <label class="chk">
               <input id="opt-auto-catch" type="checkbox" ${state.autoCatch ? 'checked' : ''} />
               Auto-capture
@@ -496,6 +501,65 @@ function bindShell() {
 
   UI.$('#app').addEventListener('click', onClick);
   UI.$('#app').addEventListener('input', onInput);
+  document.addEventListener('keydown', onKeydown);
+}
+
+function toggleMute() {
+  if (!state.settings) state.settings = { mute: false };
+  state.settings.mute = !state.settings.mute;
+  Audio.syncMuteFromState(state);
+  saveGame(state);
+  const cb = UI.$('#opt-mute');
+  if (cb) cb.checked = state.settings.mute;
+  const ico = UI.$('.settings-mute .ico');
+  if (ico) {
+    const wrap = document.createElement('span');
+    wrap.innerHTML = icon(state.settings.mute ? 'mute' : 'volume');
+    ico.replaceWith(wrap.firstElementChild);
+  }
+  UI.toast(state.settings.mute ? 'Son coupé' : 'Son activé');
+  if (!state.settings.mute) Audio.play('ui');
+}
+
+function onKeydown(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag = (e.target?.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable) return;
+  if (UI.$('#modal-overlay') && !UI.$('#modal-overlay').hidden) return;
+  if (UI.$('#tutorial-host')?.querySelector('.tutorial-card')) return;
+
+  const key = e.key;
+  const navMap = {
+    '1': 'battle',
+    '2': 'pokemon',
+    '3': 'zones',
+    '4': 'shop',
+    '5': 'pass',
+    '6': 'hub',
+  };
+  if (navMap[key]) {
+    e.preventDefault();
+    Audio.play('ui');
+    const id = navMap[key];
+    if (id === 'hub') {
+      if (hubOpen) closeHub();
+      else openHub();
+    } else {
+      setTab(id);
+    }
+    return;
+  }
+  if (key === 'h' || key === 'H') {
+    e.preventDefault();
+    Audio.play('ui');
+    if (hubOpen) closeHub();
+    else openHub();
+    return;
+  }
+  if (key === 'm' || key === 'M') {
+    e.preventDefault();
+    toggleMute();
+  }
 }
 
 function setTab(id) {
@@ -637,6 +701,23 @@ function onClick(e) {
     UI.toast(`Ascension N.${res.level} !`);
     setTab('ascension');
     refreshAll();
+    return;
+  }
+
+  const logChip = e.target.closest('[data-log-filter]');
+  if (logChip) {
+    Audio.play('ui');
+    logFilter = logChip.dataset.logFilter || 'all';
+    if (UI.$('#log-toolbar')) UI.$('#log-toolbar').innerHTML = UI.renderLogToolbar(logFilter);
+    if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
+    return;
+  }
+  if (e.target.closest('[data-log-clear]')) {
+    Audio.play('ui');
+    state.log = [];
+    saveGame(state);
+    if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
+    UI.toast('Journal effacé');
     return;
   }
 
@@ -875,7 +956,8 @@ function refreshAll() {
 
   if (UI.$('#battle-view')) UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
   if (UI.$('#catch-btns')) UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
-  if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state);
+  if (UI.$('#log-toolbar')) UI.$('#log-toolbar').innerHTML = UI.renderLogToolbar(logFilter);
+  if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
   if (UI.$('#team-grid')) UI.$('#team-grid').innerHTML = UI.renderTeam(state);
   if (UI.$('#box-grid')) UI.$('#box-grid').innerHTML = UI.renderBox(state);
   if (UI.$('#zones-list')) UI.$('#zones-list').innerHTML = UI.renderZones(state);

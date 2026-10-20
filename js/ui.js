@@ -413,7 +413,34 @@ export function renderZones(state) {
     byRegion.get(key).push(z);
   }
 
-  let html = '<div class="zones-map">';
+  const nextUnlocks = ZONES.filter((z) => !state.unlockedZones.includes(z.id) && z.unlockCost > 0)
+    .slice()
+    .sort((a, b) => a.unlockCost - b.unlockCost || a.gen - b.gen)
+    .slice(0, 4);
+  const preview =
+    nextUnlocks.length === 0
+      ? ''
+      : `<div class="zone-unlock-preview">
+      <div class="zone-unlock-head">
+        <strong>Prochains déblocages</strong>
+        <span class="muted">${state.money.toLocaleString('fr-FR')} ₽</span>
+      </div>
+      <ul class="zone-unlock-list">
+        ${nextUnlocks
+          .map((z) => {
+            const afford = state.money >= z.unlockCost;
+            const short = Math.max(0, z.unlockCost - state.money);
+            return `<li class="${afford ? 'can-buy' : 'need-more'}">
+              <span class="zu-name">${z.name}</span>
+              <span class="zu-meta">G${z.gen} · N.${z.minLevel}–${z.maxLevel}</span>
+              <span class="zu-cost">${afford ? 'OK' : `−${short.toLocaleString('fr-FR')}`} · ${z.unlockCost.toLocaleString('fr-FR')} ₽</span>
+            </li>`;
+          })
+          .join('')}
+      </ul>
+    </div>`;
+
+  let html = `<div class="zones-map">${preview}`;
   for (const [key, list] of byRegion) {
     const [gen, region] = key.split('|');
     const regionName = REGION_FR[region] || region;
@@ -471,10 +498,46 @@ export function renderShop(state) {
     .join('');
 }
 
-export function renderLog(state) {
-  return state.log
+/** Filtres journal — groupes logiques pour l’UI combat */
+export const LOG_FILTERS = [
+  { id: 'all', label: 'Tout' },
+  { id: 'catch', label: 'Captures', types: ['catch'] },
+  { id: 'battle', label: 'Combat', types: ['battle', 'faint', 'miss', 'level', 'evolve'] },
+  { id: 'unlock', label: 'Débloc.', types: ['unlock'] },
+  { id: 'shop', label: 'Boutique', types: ['shop', 'heal'] },
+  { id: 'other', label: 'Autre', types: ['offline', 'info'] },
+];
+
+export function renderLogToolbar(filter = 'all') {
+  const chips = LOG_FILTERS.map(
+    (f) =>
+      `<button type="button" class="log-chip ${filter === f.id ? 'active' : ''}" data-log-filter="${f.id}">${f.label}</button>`
+  ).join('');
+  return `<div class="log-toolbar">
+    <div class="log-filters" role="group" aria-label="Filtrer le journal">${chips}</div>
+    <button type="button" class="log-clear btn-secondary" data-log-clear title="Vider le journal">Effacer</button>
+  </div>`;
+}
+
+export function renderLog(state, filter = 'all') {
+  const def = LOG_FILTERS.find((f) => f.id === filter) || LOG_FILTERS[0];
+  const lines = (state.log || []).filter((l) => {
+    if (filter === 'all') return true;
+    const t = l.type || 'info';
+    if (def.types?.includes(t)) return true;
+    // Types inconnus → « Autre »
+    if (filter === 'other') {
+      const known = new Set(LOG_FILTERS.flatMap((f) => f.types || []));
+      return !known.has(t);
+    }
+    return false;
+  });
+  if (!lines.length) {
+    return `<div class="log-empty muted">Aucune entrée${filter === 'all' ? '' : ' pour ce filtre'}.</div>`;
+  }
+  return lines
     .slice(0, 40)
-    .map((l) => `<div class="log-line log-${l.type}">${l.msg}</div>`)
+    .map((l) => `<div class="log-line log-${l.type || 'info'}">${l.msg}</div>`)
     .join('');
 }
 
