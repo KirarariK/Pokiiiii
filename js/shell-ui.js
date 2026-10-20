@@ -285,7 +285,7 @@ export function renderExpeditionsPanel(state) {
           (p) => `
       <label class="ex-pick">
         <input type="checkbox" name="ex-uid" value="${p.uid}" />
-        <img src="${artUrl(p.speciesId)}" alt="" loading="lazy"
+        <img referrerpolicy="no-referrer" src="${artUrl(p.speciesId)}" alt="" loading="lazy"
           onerror="this.onerror=null;this.src='${spriteUrl(p.speciesId)}'" />
         <span>${pokeName(p)} <small>N.${p.level}</small></span>
       </label>`
@@ -358,7 +358,7 @@ export function renderPensionPanel(state) {
           (p) => `
       <label class="ex-pick">
         <input type="checkbox" name="day-uid" value="${p.uid}" />
-        <img src="${artUrl(p.speciesId)}" alt="" loading="lazy"
+        <img referrerpolicy="no-referrer" src="${artUrl(p.speciesId)}" alt="" loading="lazy"
           onerror="this.onerror=null;this.src='${spriteUrl(p.speciesId)}'" />
         <span>${pokeName(p)} <small>N.${p.level}</small></span>
       </label>`
@@ -680,7 +680,7 @@ export function renderSummonRevealCard(result, delayMs = 0) {
         <div class="summon-card-back"><span class="summon-flash">${icon('summon')}</span></div>
         <div class="summon-card-front">
           <span class="summon-rarity">${label}</span>
-          <img src="${artUrl(poke.speciesId)}" alt="" loading="lazy"
+          <img referrerpolicy="no-referrer" src="${artUrl(poke.speciesId)}" alt="" loading="lazy"
             onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
           <strong>${displayName(sp)}</strong>
           <small>N.${poke.level}${poke.shiny ? ' · Chromatique' : ''} · Gen ${sp?.generation ?? '?'}</small>

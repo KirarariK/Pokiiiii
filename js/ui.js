@@ -104,7 +104,7 @@ export function renderPokeCard(poke, opts = {}) {
     <article class="poke-card ${opts.selected ? 'selected' : ''} ${poke.shiny ? 'shiny' : ''}" data-uid="${poke.uid}">
       <div class="poke-card-img">
         <div class="poke-card-glow" aria-hidden="true"></div>
-        <img src="${artUrl(poke.speciesId)}" alt="${name}" loading="lazy"
+        <img referrerpolicy="no-referrer" src="${artUrl(poke.speciesId)}" alt="${name}" loading="lazy"
           onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
         ${poke.shiny ? `<span class="shiny-badge shiny-sparkle" title="Chromatique">${icon('sparkle')}</span>` : ''}
         ${evo ? '<span class="evo-badge">Évoluer</span>' : ''}
@@ -195,7 +195,7 @@ export function renderBattle(state, battle) {
             ${xpBar(fighter)}
           </div>
           <div class="sprite-wrap ally-wrap">
-            <img class="battle-sprite ally-sprite ${fighter.hp <= 0 ? 'faint' : ''} ${fighter.shiny ? 'shiny-sparkle' : ''}"
+            <img referrerpolicy="no-referrer" class="battle-sprite ally-sprite ${fighter.hp <= 0 ? 'faint' : ''} ${fighter.shiny ? 'shiny-sparkle' : ''}"
               data-sid="${fighter.speciesId}" data-uid="${fighter.uid || ''}"
               src="${artUrl(fighter.speciesId)}" alt="${pokeName(fighter)}"
               onerror="this.onerror=null;this.src='${spriteUrl(fighter.speciesId)}'" />
@@ -213,7 +213,7 @@ export function renderBattle(state, battle) {
         <div class="battle-side enemy ${actingEnemy ? 'acting' : ''}" data-side="enemy">
           <div class="sprite-wrap enemy-wrap">
             ${wild.shiny ? '<div class="shiny-burst" aria-hidden="true"></div>' : ''}
-            <img class="battle-sprite enemy-sprite ${wild.hp <= 0 ? 'faint' : ''} ${wild.shiny ? 'shiny-glow shiny-sparkle' : ''}"
+            <img referrerpolicy="no-referrer" class="battle-sprite enemy-sprite ${wild.hp <= 0 ? 'faint' : ''} ${wild.shiny ? 'shiny-glow shiny-sparkle' : ''}"
               data-sid="${wild.speciesId}"
               src="${artUrl(wild.speciesId)}" alt="${pokeName(wild)}"
               onerror="this.onerror=null;this.src='${spriteUrl(wild.speciesId)}'" />
@@ -871,7 +871,7 @@ export function renderStarterSelect(selectedGen = 1) {
       if (!sp) {
         return `
           <button class="starter-card unavailable" type="button" disabled>
-            <div class="starter-art"><img src="${artUrl(sid)}" alt="" /></div>
+            <div class="starter-art"><img referrerpolicy="no-referrer" src="${artUrl(sid)}" alt="" /></div>
             <strong>${entry?.label || '???'}</strong>
             <div class="muted">Chargement…</div>
           </button>`;
@@ -879,7 +879,7 @@ export function renderStarterSelect(selectedGen = 1) {
       return `
         <button class="starter-card" data-starter="${sid}" type="button">
           <div class="starter-art">
-            <img src="${artUrl(sid)}" alt="${displayName(sp)}" />
+            <img referrerpolicy="no-referrer" src="${artUrl(sid)}" alt="${displayName(sp)}" />
           </div>
           <strong>${displayName(sp)}</strong>
           <div class="types">${typeBadges(sp.types)}</div>

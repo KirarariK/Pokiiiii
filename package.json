@@ -8,6 +8,8 @@
     "start": "python3 -m http.server 4173 --bind 0.0.0.0",
     "serve": "python3 -m http.server 4173 --bind 0.0.0.0",
     "smoke": "node scripts/smoke.mjs",
-    "enrich": "node scripts/enrich-shinobi.mjs"
+    "enrich": "node scripts/enrich-shinobi.mjs",
+    "images:refresh": "node scripts/refresh-images.mjs",
+    "images:curate": "node scripts/curate-major-images.mjs"
   }
 }
