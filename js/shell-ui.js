@@ -12,6 +12,7 @@ import {
 } from './quests.js';
 import { getDailyEvent } from './events.js';
 import { ascensionBonuses } from './ascension.js';
+import { readyGymCount, badgeCount as ownedBadgeCount } from './arena.js';
 
 export function renderTopbar(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
@@ -67,6 +68,7 @@ export function renderHub(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
   const lvl = Math.max(...state.team.map((p) => p.level), 1);
   const q = pendingQuestCount(state);
+  const arenaN = readyGymCount(state);
   const tile = (id, label, ico, badge = 0) => `
     <button type="button" class="hub-tile" data-hub="${id}">
       <span class="hub-tile-ico">${icon(ico)}</span>
