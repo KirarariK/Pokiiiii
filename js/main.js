@@ -29,6 +29,12 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import { renderMinigame, bindMinigame } from './minigame.js';
+import {
+  renderLeaderboard,
+  submitScore,
+  clearLeaderboard,
+} from './leaderboard.js';
 
 let state = null;
 let battle = null;
@@ -48,12 +54,25 @@ async function boot() {
 
   const params = new URLSearchParams(location.search);
   const demo = params.get('demo');
-  if (demo === '1' || demo === 'hub' || demo === 'pass' || demo === 'quests') {
+  if (
+    demo === '1' ||
+    demo === 'hub' ||
+    demo === 'pass' ||
+    demo === 'quests' ||
+    demo === 'minigame' ||
+    demo === 'leaderboard'
+  ) {
     startNew(4);
     if (demo === 'hub') setTimeout(() => openHub(), 50);
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
+    if (demo === 'minigame') setTimeout(() => setTab('minigame'), 50);
+    if (demo === 'leaderboard') setTimeout(() => setTab('leaderboard'), 50);
     return;
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
   showTitle();
@@ -186,6 +205,14 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-minigame" class="panel">
+          <div id="minigame-view"></div>
+        </section>
+
+        <section id="panel-leaderboard" class="panel">
+          <div id="leaderboard-view"></div>
+        </section>
+
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
@@ -277,6 +304,8 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    minigame: 'minigame',
+    leaderboard: 'leaderboard',
     settings: 'settings',
     heal: 'battle',
   };
@@ -383,6 +412,24 @@ function onClick(e) {
     return;
   }
 
+  const lbSubmit = e.target.closest('[data-lb-submit]');
+  if (lbSubmit) {
+    submitScore(state);
+    saveGame(state);
+    UI.toast('Score enregistré');
+    refreshAll();
+    return;
+  }
+  const lbClear = e.target.closest('[data-lb-clear]');
+  if (lbClear) {
+    if (confirm('Effacer le classement local ?')) {
+      clearLeaderboard();
+      UI.toast('Classement effacé');
+      refreshAll();
+    }
+    return;
+  }
+
   const catchBtn = e.target.closest('[data-catch]');
   if (catchBtn) {
     const res = attemptCatch(state, battle, catchBtn.dataset.catch);
@@ -467,6 +514,22 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  if (UI.$('#minigame-view')) {
+    UI.$('#minigame-view').innerHTML = renderMinigame(state);
+    if (tab === 'minigame') {
+      bindMinigame(state, {
+        onDone: () => {
+          saveGame(state);
+          refreshChrome();
+          UI.updateHud(state);
+          UI.toast(UI.$('#mg-status')?.textContent || 'Réaction capture');
+        },
+      });
+    }
+  }
+  if (UI.$('#leaderboard-view')) {
+    UI.$('#leaderboard-view').innerHTML = renderLeaderboard(state);
+  }
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }

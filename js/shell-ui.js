@@ -100,11 +100,19 @@ export function renderHub(state) {
         </div>
 
         <div class="hub-section">
+          <h3>Loisirs</h3>
+          <div class="hub-grid">
+            ${tile('minigame', 'Réaction', 'dice')}
+            ${tile('leaderboard', 'Classement', 'trophy')}
+            ${tile('bonus', 'Bonus', 'bolt')}
+          </div>
+        </div>
+
+        <div class="hub-section">
           <h3>Gestion</h3>
           <div class="hub-grid">
             ${tile('shop', 'Boutique', 'shop')}
             ${tile('dex', 'Pokédex', 'dex')}
-            ${tile('bonus', 'Bonus', 'bolt')}
             ${tile('settings', 'Options', 'settings')}
           </div>
         </div>
