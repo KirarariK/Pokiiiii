@@ -10,7 +10,7 @@ export const REGION_LABELS = {
 };
 
 export const GYMS = [
-  { id:'kanto-pierre', region:'kanto', gen:1, name:'Arène d’Argenta', type:'rock', leaderName:'Pierre', minTeamLevel:10, rewardMoney:1200, badgeId:'boulder', order:1, pokemon:[{speciesId:74,level:8},{speciesId:74,level:10}] },
+  { id:'kanto-pierre', region:'kanto', gen:1, name:'Arène d’Argenta', type:'rock', leaderName:'Pierre', minTeamLevel:10, rewardMoney:1200, badgeId:'boulder', badgeName:'Badge Roche', order:1, pokemon:[{speciesId:74,level:8},{speciesId:74,level:10}] },
   { id:'kanto-ondine', region:'kanto', gen:1, name:'Arène d’Azuria', type:'water', leaderName:'Ondine', minTeamLevel:16, rewardMoney:2200, badgeId:'cascade', badgeName:'Badge Cascade', order:2, pokemon:[{speciesId:120,level:18},{speciesId:121,level:21}] },
   { id:'kanto-bob', region:'kanto', gen:1, name:'Arène de Carmin', type:'electric', leaderName:'Major Bob', minTeamLevel:22, rewardMoney:3500, badgeId:'thunder', badgeName:'Badge Foudre', order:3, pokemon:[{speciesId:100,level:21},{speciesId:25,level:24},{speciesId:26,level:26}] },
   { id:'kanto-erika', region:'kanto', gen:1, name:'Arène de Céladopole', type:'grass', leaderName:'Erika', minTeamLevel:28, rewardMoney:4800, badgeId:'rainbow', badgeName:'Badge Prisme', order:4, pokemon:[{speciesId:44,level:29},{speciesId:114,level:31},{speciesId:45,level:33}] },
