@@ -1,6 +1,6 @@
 import { icon } from './icons.js';
-import { speciesCount, pokeName, artUrl, spriteUrl } from './pokemon.js';
-import { ZONES, BRAND, BALLS, busyPokemonUids } from './game.js';
+import { speciesCount } from './pokemon.js';
+import { ZONES, BRAND, BALLS } from './game.js';
 import {
   QUEST_DEFS,
   PASS_TIERS,
@@ -10,44 +10,26 @@ import {
   pendingPassCount,
   hubBadgeCount,
 } from './quests.js';
-import {
-  SUMMON,
-  RARITY_LABELS,
-  ensureSummon,
-  pityProgress,
-  poolStats,
-} from './summon.js';
-import {
-  ensureExpeditions,
-  getExpeditionDurations,
-  expeditionRemainingMs,
-  isExpeditionReady,
-  pendingExpeditionCount,
-  formatRemain,
-  findOwnedPokemon,
-} from './expedition.js';
-import {
-  ensureDaycare,
-  getDaycareDurations,
-  daycareRemainingMs,
-  isDaycareReady,
-  pendingDaycareCount,
-} from './daycare.js';
+import { getDailyEvent } from './events.js';
+import { ascensionBonuses } from './ascension.js';
 
 export function renderTopbar(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
   const lvl = Math.max(1, ...state.team.map((p) => p.level || 1));
   const caught = Object.keys(state.caught || {}).length;
+  const ev = getDailyEvent();
+  const asc = ascensionBonuses(state);
   return `
     <header class="pi-topbar">
       <div class="pi-brand">
         <span class="pi-logo">${icon('logo')}</span>
         <div>
           <strong class="pi-title">${BRAND.name}</strong>
-          <small>${state.playerName || 'Dresseur'} · N.${lvl} · ${zone?.region || '—'}</small>
+          <small>${state.playerName || 'Dresseur'} · N.${lvl} · ${zone?.region || '—'}${asc.level ? ` · Asc.${asc.level}` : ''}</small>
         </div>
       </div>
       <div class="pi-hud">
+        <div class="pi-pill event" title="${ev.desc}">${icon('sparkle')}<span>${ev.short}</span></div>
         <div class="pi-pill gold">${icon('coin')}<span id="money">${(state.money || 0).toLocaleString('fr-FR')} ₽</span></div>
         <div class="pi-pill">${icon('team')}<span id="team-count">${state.team.length}/6</span></div>
         <div class="pi-pill">${icon('dex')}<span id="dex-count">${caught}/${speciesCount()}</span></div>
@@ -85,8 +67,6 @@ export function renderHub(state) {
   const zone = ZONES.find((z) => z.id === state.currentZone);
   const lvl = Math.max(...state.team.map((p) => p.level), 1);
   const q = pendingQuestCount(state);
-  const exN = pendingExpeditionCount(state);
-  const dayN = pendingDaycareCount(state);
   const tile = (id, label, ico, badge = 0) => `
     <button type="button" class="hub-tile" data-hub="${id}">
       <span class="hub-tile-ico">${icon(ico)}</span>
@@ -111,7 +91,6 @@ export function renderHub(state) {
           <div class="hub-grid">
             ${tile('quests', 'Quêtes', 'quest', q)}
             ${tile('pass', 'Pass', 'pass', pendingPassCount(state))}
-            ${tile('summon', 'Invocation', 'summon', state.summon?.tickets || 0)}
             ${tile('profile', 'Profil', 'profile')}
           </div>
         </div>
@@ -120,10 +99,9 @@ export function renderHub(state) {
           <h3>Aventure</h3>
           <div class="hub-grid">
             ${tile('zones', 'Zones', 'map')}
+            ${tile('arenas', 'Arènes', 'arena')}
             ${tile('battle', 'Combat', 'swords')}
             ${tile('pokemon', 'Équipe / PC', 'cube')}
-            ${tile('expeditions', 'Expéditions', 'compass', exN)}
-            ${tile('pension', 'Pension', 'egg', dayN)}
           </div>
         </div>
 
@@ -133,6 +111,7 @@ export function renderHub(state) {
             ${tile('shop', 'Boutique', 'shop')}
             ${tile('dex', 'Pokédex', 'dex')}
             ${tile('bonus', 'Bonus', 'bolt')}
+            ${tile('ascension', 'Ascension', 'crown')}
             ${tile('settings', 'Options', 'settings')}
           </div>
         </div>
@@ -147,156 +126,6 @@ export function renderHub(state) {
         </div>
       </div>
     </div>`;
-}
-
-export function renderExpeditionsPanel(state) {
-  ensureExpeditions(state);
-  const busy = busyPokemonUids(state);
-  const avail = [...state.team, ...state.box].filter((p) => !busy.has(p.uid));
-  const zoneOpts = ZONES.filter((z) => state.unlockedZones.includes(z.id))
-    .map(
-      (z) =>
-        `<option value="${z.id}" ${z.id === state.currentZone ? 'selected' : ''}>${z.name}</option>`
-    )
-    .join('');
-  const durOpts = getExpeditionDurations()
-    .map((d) => `<option value="${d.ms}">${d.label}</option>`)
-    .join('');
-  const picks = avail.length
-    ? avail
-        .slice(0, 24)
-        .map(
-          (p) => `
-      <label class="ex-pick">
-        <input type="checkbox" name="ex-uid" value="${p.uid}" />
-        <img src="${artUrl(p.speciesId)}" alt="" loading="lazy"
-          onerror="this.onerror=null;this.src='${spriteUrl(p.speciesId)}'" />
-        <span>${pokeName(p)} <small>N.${p.level}</small></span>
-      </label>`
-        )
-        .join('')
-    : `<p class="muted">Aucun Pokémon disponible (garde au moins 1 lead).</p>`;
-
-  const active = state.expeditions.filter((e) => !e.claimed);
-  const list = active.length
-    ? active
-        .map((e) => {
-          const left = expeditionRemainingMs(e);
-          const ready = isExpeditionReady(e);
-          const zone = ZONES.find((z) => z.id === e.zoneId);
-          const names = (e.pokemonUids || [])
-            .map((uid) => {
-              const p = findOwnedPokemon(state, uid);
-              return p ? pokeName(p) : '?';
-            })
-            .join(', ');
-          return `
-        <article class="ex-card ${ready ? 'ready' : ''}">
-          <div class="ex-ico">${icon(ready ? 'gift' : 'compass')}</div>
-          <div class="ex-body">
-            <strong>${zone?.name || e.zoneId}</strong>
-            <p class="muted">${names}</p>
-            <p class="ex-timer">${icon('clock')} ${formatRemain(left)}</p>
-          </div>
-          <button type="button" class="btn-claim" data-claim-ex="${e.id}" ${ready ? '' : 'disabled'}>
-            Réclamer
-          </button>
-        </article>`;
-        })
-        .join('')
-    : `<p class="muted">Aucune expédition en cours.</p>`;
-
-  return `
-    <div class="panel-head">
-      <h2>Expéditions</h2>
-      <span class="muted">${icon('compass')} temps réel</span>
-    </div>
-    <div class="ex-form">
-      <p class="muted">Envoie 1 à 3 Pokémon explorer une zone. Ils sont indisponibles au combat jusqu’au retour. Récompenses : argent, Balls, XP partagée, chance de capture.</p>
-      <div class="ex-picks">${picks}</div>
-      <div class="ex-fields">
-        <label class="field">Zone
-          <select id="ex-zone">${zoneOpts}</select>
-        </label>
-        <label class="field">Durée
-          <select id="ex-dur">${durOpts}</select>
-        </label>
-      </div>
-      <button type="button" class="btn-primary" data-start-ex>Lancer l’expédition</button>
-    </div>
-    <h3 class="subhead">En cours</h3>
-    <div class="ex-list">${list}</div>`;
-}
-
-export function renderPensionPanel(state) {
-  ensureDaycare(state);
-  const busy = busyPokemonUids(state);
-  const avail = [...state.team, ...state.box].filter((p) => !busy.has(p.uid));
-  const durOpts = getDaycareDurations()
-    .map((d) => `<option value="${d.ms}">${d.label}</option>`)
-    .join('');
-  const picks = avail.length
-    ? avail
-        .slice(0, 24)
-        .map(
-          (p) => `
-      <label class="ex-pick">
-        <input type="checkbox" name="day-uid" value="${p.uid}" />
-        <img src="${artUrl(p.speciesId)}" alt="" loading="lazy"
-          onerror="this.onerror=null;this.src='${spriteUrl(p.speciesId)}'" />
-        <span>${pokeName(p)} <small>N.${p.level}</small></span>
-      </label>`
-        )
-        .join('')
-    : `<p class="muted">Pas assez de Pokémon libres (il faut en garder 1 en lead).</p>`;
-
-  const jobs = state.daycare.filter((j) => !j.claimed);
-  const list = jobs.length
-    ? jobs
-        .map((j) => {
-          const left = daycareRemainingMs(j);
-          const ready = isDaycareReady(j);
-          const names = (j.parentUids || [])
-            .map((uid) => {
-              const p =
-                state.team.find((x) => x.uid === uid) ||
-                state.box.find((x) => x.uid === uid);
-              return p ? pokeName(p) : '?';
-            })
-            .join(' + ');
-          return `
-        <article class="ex-card ${ready ? 'ready' : ''}">
-          <div class="ex-ico">${icon(ready ? 'egg' : 'clock')}</div>
-          <div class="ex-body">
-            <strong>${ready ? 'Œuf prêt !' : 'Incubation…'}</strong>
-            <p class="muted">${names}</p>
-            <p class="ex-timer">${icon('clock')} ${formatRemain(left)}</p>
-          </div>
-          <button type="button" class="btn-claim" data-claim-day="${j.id}" ${ready ? '' : 'disabled'}>
-            ${ready ? 'Éclore' : 'Attendre'}
-          </button>
-        </article>`;
-        })
-        .join('')
-    : `<p class="muted">Aucun couple en pension.</p>`;
-
-  return `
-    <div class="panel-head">
-      <h2>Pension</h2>
-      <span class="muted">${icon('egg')} œufs</span>
-    </div>
-    <div class="ex-form">
-      <p class="muted">Dépose 2 Pokémon (pas le dernier lead). Après le délai, un œuf éclot en une forme de base de la lignée du 1er parent, ou une espèce commune de la même génération.</p>
-      <div class="ex-picks">${picks}</div>
-      <div class="ex-fields">
-        <label class="field">Durée
-          <select id="day-dur">${durOpts}</select>
-        </label>
-      </div>
-      <button type="button" class="btn-primary" data-start-day>Déposer à la pension</button>
-    </div>
-    <h3 class="subhead">En pension</h3>
-    <div class="ex-list">${list}</div>`;
 }
 
 export function renderQuestsPanel(state) {
@@ -379,7 +208,7 @@ export function renderProfile(state) {
       <div class="profile-avatar">${icon('profile')}</div>
       <div>
         <strong>${state.playerName}</strong>
-        <p class="muted">Début : ${new Date(state.startedAt).toLocaleDateString('fr-FR')}</p>
+        <p class="muted">Région : ${new Date(state.startedAt).toLocaleDateString('fr-FR')}</p>
       </div>
     </div>
     <div class="stat-grid">
@@ -393,8 +222,24 @@ export function renderProfile(state) {
 }
 
 export function renderBonus(state) {
+  const ev = getDailyEvent();
+  const asc = ascensionBonuses(state);
   return `
     <div class="panel-head"><h2>Bonus</h2></div>
+    <div class="bonus-card">
+      <div class="bonus-ico">${icon('sparkle')}</div>
+      <div>
+        <strong>Événement du jour — ${ev.title}</strong>
+        <p class="muted">${ev.desc}</p>
+      </div>
+    </div>
+    <div class="bonus-card">
+      <div class="bonus-ico">${icon('crown')}</div>
+      <div>
+        <strong>Ascension N.${asc.level}</strong>
+        <p class="muted">XP ×${asc.xpMult.toFixed(2)} · Argent ×${asc.moneyMult.toFixed(2)} — Hub → Ascension.</p>
+      </div>
+    </div>
     <div class="bonus-card">
       <div class="bonus-ico">${icon('bolt')}</div>
       <div>
@@ -409,105 +254,4 @@ export function renderBonus(state) {
         <p class="muted">Via Quêtes + Pass — disponibles dans le Hub.</p>
       </div>
     </div>`;
-}
-
-export function renderSummonPanel(state) {
-  ensureSummon(state);
-  const sm = state.summon;
-  const pity = pityProgress(state);
-  const pools = poolStats();
-  const price = SUMMON.TICKET_PRICE.toLocaleString('fr-FR');
-  const canPull = sm.tickets >= 1;
-  const canMulti = sm.tickets >= SUMMON.MULTI_COUNT;
-  const canBuy = state.money >= SUMMON.TICKET_PRICE;
-
-  return `
-    <div class="panel-head">
-      <h2>Invocation</h2>
-      <span class="muted">${sm.totalPulls} tirages</span>
-    </div>
-
-    <div class="summon-hero">
-      <div class="summon-hero-ico">${icon('summon')}</div>
-      <div>
-        <strong>Portail Pokiiiii</strong>
-        <p class="muted">Invoque un Pokémon aléatoire Gen I–IX. Ticket gratuit chaque jour.</p>
-        <div class="summon-stats">
-          <span class="pi-pill">${icon('gift')} ${sm.tickets} ticket${sm.tickets !== 1 ? 's' : ''}</span>
-          <span class="pi-pill">${icon('crown')} Pity ${pity.pity}/${SUMMON.PITY_LEGENDARY}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="pity-block">
-      <div class="pity-row">
-        <span>Rare+ garanti</span>
-        <strong>${pity.untilRare === 0 ? 'Prêt' : `dans ${pity.untilRare}`}</strong>
-      </div>
-      <div class="quest-bar"><div style="width:${pity.rarePct}%"></div></div>
-      <div class="pity-row">
-        <span>Légendaire garanti</span>
-        <strong>${pity.untilLegendary === 0 ? 'Prêt' : `dans ${pity.untilLegendary}`}</strong>
-      </div>
-      <div class="quest-bar"><div style="width:${pity.legendaryPct}%"></div></div>
-    </div>
-
-    <div class="summon-actions">
-      <button type="button" class="btn-primary summon-pull" data-summon-pull="1" ${canPull ? '' : 'disabled'}>
-        ${icon('summon')} Invoquer ×1
-      </button>
-      <button type="button" class="btn-secondary summon-pull" data-summon-pull="10" ${canMulti ? '' : 'disabled'}>
-        ${icon('dice')} Invoquer ×${SUMMON.MULTI_COUNT}
-      </button>
-    </div>
-
-    <div class="summon-buy">
-      <p class="muted">Ticket : ${price} ₽ · Gratuit / jour : ${SUMMON.FREE_DAILY}</p>
-      <div class="summon-buy-row">
-        <button type="button" class="btn-secondary" data-summon-buy="1" ${canBuy ? '' : 'disabled'}>
-          Acheter ×1
-        </button>
-        <button type="button" class="btn-secondary" data-summon-buy="10" ${state.money >= SUMMON.TICKET_PRICE * 10 ? '' : 'disabled'}>
-          Acheter ×10
-        </button>
-      </div>
-    </div>
-
-    <div class="summon-pools">
-      <h3 class="subhead">Pools</h3>
-      <div class="stat-grid">
-        ${Object.entries(RARITY_LABELS)
-          .map(
-            ([k, label]) => `
-          <div class="stat-box rarity-${k}">
-            <span>${label}</span>
-            <strong>${pools[k] ?? 0}</strong>
-          </div>`
-          )
-          .join('')}
-      </div>
-    </div>
-
-    <div id="summon-reveal" class="summon-reveal" hidden></div>`;
-}
-
-export function renderSummonRevealCard(result, delayMs = 0) {
-  const poke = result.pokemon;
-  const sp = result.species || getSpecies(poke.speciesId);
-  const rarity = result.rarity || 'common';
-  const label = RARITY_LABELS[rarity] || rarity;
-  return `
-    <article class="summon-card rarity-${rarity}" style="animation-delay:${delayMs}ms">
-      <div class="summon-card-inner">
-        <div class="summon-card-back">
-          <span class="summon-flash">${icon('summon')}</span>
-        </div>
-        <div class="summon-card-front">
-          <span class="summon-rarity">${label}</span>
-          <img src="${artUrl(poke.speciesId)}" alt="" loading="lazy" />
-          <strong>${displayName(sp)}</strong>
-          <small>N.${poke.level}${poke.shiny ? ' · Chromatique' : ''} · Gen ${sp?.generation ?? '?'}</small>
-        </div>
-      </div>
-    </article>`;
 }

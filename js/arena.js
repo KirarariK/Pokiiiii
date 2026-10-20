@@ -76,7 +76,7 @@ export function canChallengeGym(state, gymOrId) {
 export const canChallenge = canChallengeGym;
 
 function buildGymFighter(entry) {
-  const mon = createPokemon(entry.speciesId, entry.level, { iv: 20, shiny: false });
+  const mon = createPokemon(entry.speciesId, entry.level, { iv: 10, shiny: false });
   refreshStats(mon);
   mon.hp = mon.maxHp;
   return mon;
