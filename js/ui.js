@@ -296,9 +296,73 @@ function patchHpRow(sideRoot, hp, maxHp) {
   if (bar) bar.title = `${Math.ceil(hp)}/${maxHp}`;
 }
 
+function patchXpRow(sideRoot, poke) {
+  if (!sideRoot || !poke) return;
+  const cur = xpForLevel(poke.level);
+  const next = xpForLevel(Math.min(100, poke.level + 1));
+  const pct =
+    poke.level >= 100 ? 100 : ((poke.xp - cur) / Math.max(1, next - cur)) * 100;
+  const fill = sideRoot.querySelector('.xp-fill');
+  const bar = sideRoot.querySelector('.xp-bar');
+  if (fill) fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  if (bar) bar.title = `XP ${poke.xp}`;
+}
+
+function patchSideIdentity(sideRoot, img, poke, role) {
+  if (!sideRoot || !img || !poke) return;
+  const sp = getSpecies(poke.speciesId);
+  const sid = String(poke.speciesId);
+  const uid = String(poke.uid || '');
+  const changed = img.dataset.sid !== sid || (role === 'ally' && img.dataset.uid !== uid);
+
+  if (changed) {
+    img.dataset.sid = sid;
+    if (role === 'ally') img.dataset.uid = uid;
+    img.src = artUrl(poke.speciesId);
+    img.alt = pokeName(poke);
+    img.classList.add('sprite-swap');
+    setTimeout(() => img.classList.remove('sprite-swap'), 220);
+  }
+
+  img.classList.toggle('faint', poke.hp <= 0);
+  img.classList.toggle('shiny-sparkle', !!poke.shiny);
+  if (role === 'enemy') img.classList.toggle('shiny-glow', !!poke.shiny);
+
+  const nameEl = sideRoot.querySelector('.battle-name');
+  if (nameEl) {
+    nameEl.innerHTML = `${pokeName(poke)}${
+      poke.shiny ? ` <span class="shiny-inline">${icon('sparkle')}</span>` : ''
+    } <span>N.${poke.level}</span>`;
+  }
+  const types = sideRoot.querySelector('.types');
+  if (types) types.innerHTML = typeBadges(sp?.types);
+
+  if (role === 'enemy') {
+    const meta = sideRoot.querySelector('.muted.tiny');
+    if (meta) {
+      meta.textContent = `#${String(poke.speciesId).padStart(4, '0')} · G${sp?.generation || '?'}`;
+    }
+    const wrap = sideRoot.querySelector('.enemy-wrap');
+    if (wrap) {
+      let burst = wrap.querySelector('.shiny-burst');
+      if (poke.shiny && !burst) {
+        burst = document.createElement('div');
+        burst.className = 'shiny-burst';
+        burst.setAttribute('aria-hidden', 'true');
+        wrap.insertBefore(burst, wrap.firstChild);
+      } else if (!poke.shiny && burst) {
+        burst.remove();
+      }
+    }
+  }
+
+  patchHpRow(sideRoot, poke.hp, poke.maxHp);
+  if (role === 'ally') patchXpRow(sideRoot, poke);
+}
+
 /**
- * Met à jour PV / tour / floats sans recréer les <img> (évite le flicker).
- * @returns {boolean} false si un re-render complet est nécessaire
+ * Met à jour le duel sans détruire le DOM (pas de flicker).
+ * @returns {boolean} false seulement si l’arène n’existe pas encore
  */
 export function patchBattle(state, battle) {
   const root = $('#battle-view');
@@ -311,21 +375,16 @@ export function patchBattle(state, battle) {
 
   const allyImg = arena.querySelector('.ally-sprite');
   const enemyImg = arena.querySelector('.enemy-sprite');
-  if (!allyImg || !enemyImg) return false;
-  if (Number(allyImg.dataset.sid) !== Number(fighter.speciesId)) return false;
-  if (Number(enemyImg.dataset.sid) !== Number(wild.speciesId)) return false;
-
   const allySide = arena.querySelector('.battle-side.ally');
   const enemySide = arena.querySelector('.battle-side.enemy');
-  patchHpRow(allySide, fighter.hp, fighter.maxHp);
-  patchHpRow(enemySide, wild.hp, wild.maxHp);
+  if (!allyImg || !enemyImg || !allySide || !enemySide) return false;
 
-  allyImg.classList.toggle('faint', fighter.hp <= 0);
-  enemyImg.classList.toggle('faint', wild.hp <= 0);
+  patchSideIdentity(allySide, allyImg, fighter, 'ally');
+  patchSideIdentity(enemySide, enemyImg, wild, 'enemy');
 
   const next = battle.nextActor;
-  allySide?.classList.toggle('acting', !battle.over && next === 'player');
-  enemySide?.classList.toggle('acting', !battle.over && next === 'wild');
+  allySide.classList.toggle('acting', !battle.over && next === 'player');
+  enemySide.classList.toggle('acting', !battle.over && next === 'wild');
 
   const turnHint = battle.over
     ? battle.result === 'win'
@@ -378,10 +437,59 @@ export function patchCatchButtons(state, battle) {
       ok = false;
       return;
     }
-    stock.textContent = String(n);
+    if (stock.textContent !== String(n)) stock.textContent = String(n);
     btn.disabled = !wildAlive || n <= 0;
   });
   return ok;
+}
+
+/** Ajoute seulement les nouvelles lignes du journal (pas de rebuild). */
+let lastLogStamp = 0;
+let lastLogFilter = 'all';
+
+export function resetLogPatch() {
+  lastLogStamp = 0;
+  lastLogFilter = 'all';
+}
+
+export function patchLog(state, filter = 'all') {
+  const host = $('#log');
+  if (!host) return false;
+
+  if (filter !== lastLogFilter || host.childElementCount === 0) {
+    lastLogFilter = filter;
+    lastLogStamp = 0;
+    host.innerHTML = renderLog(state, filter);
+    const top = state.log?.[0];
+    lastLogStamp = top?.t || Date.now();
+    return true;
+  }
+
+  const lines = state.log || [];
+  if (!lines.length) return true;
+  const fresh = [];
+  for (const l of lines) {
+    if ((l.t || 0) <= lastLogStamp) break;
+    fresh.push(l);
+  }
+  if (!fresh.length) return true;
+
+  lastLogStamp = fresh[0].t || lastLogStamp;
+  const def = LOG_FILTERS.find((f) => f.id === filter) || LOG_FILTERS[0];
+  const known = new Set(LOG_FILTERS.flatMap((f) => f.types || []));
+  const html = fresh
+    .filter((l) => {
+      if (filter === 'all') return true;
+      const t = l.type || 'info';
+      if (def.types?.includes(t)) return true;
+      if (filter === 'other') return !known.has(t);
+      return false;
+    })
+    .map((l) => `<div class="log-line log-${l.type || 'info'} log-enter">${l.msg}</div>`)
+    .join('');
+  if (html) host.insertAdjacentHTML('afterbegin', html);
+  while (host.childElementCount > 40) host.lastElementChild?.remove();
+  return true;
 }
 
 export function renderTeam(state) {

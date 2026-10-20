@@ -775,6 +775,7 @@ function onClick(e) {
     Audio.play('ui');
     logFilter = logChip.dataset.logFilter || 'all';
     if (UI.$('#log-toolbar')) UI.$('#log-toolbar').innerHTML = UI.renderLogToolbar(logFilter);
+    if (typeof UI.resetLogPatch === 'function') UI.resetLogPatch();
     if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
     return;
   }
@@ -782,7 +783,8 @@ function onClick(e) {
     Audio.play('ui');
     state.log = [];
     saveGame(state);
-    if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
+    if (typeof UI.resetLogPatch === 'function') UI.resetLogPatch();
+    if (UI.$('#log')) UI.$('#log').innerHTML = '';
     UI.toast('Journal effacé');
     return;
   }
@@ -1049,23 +1051,26 @@ function showCatchModal(poke) {
   UI.$('#close-modal').onclick = () => UI.hideModal();
 }
 
-/** Mise à jour légère combat (pas de rebuild Hub / nav / autres panneaux). */
-function refreshBattleLive({ syncQuests = false, hard = false } = {}) {
+/** Mise à jour légère combat — jamais de rebuild nav / Hub / autres panneaux. */
+function refreshBattleLive({ syncQuests = false } = {}) {
   if (!state) return;
   if (syncQuests) syncQuestProgress(state);
   UI.updateHud(state);
 
-  const canPatch = !hard && typeof UI.patchBattle === 'function' && UI.patchBattle(state, battle);
-  if (!canPatch && UI.$('#battle-view')) {
+  // Patch DOM in-place : pas de innerHTML sur l’arène (évite le flicker sprites)
+  const patched = typeof UI.patchBattle === 'function' && UI.patchBattle(state, battle);
+  if (!patched && UI.$('#battle-view')) {
     UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
+    if (typeof UI.resetLogPatch === 'function') UI.resetLogPatch();
   }
 
-  const catchPatched = !hard && typeof UI.patchCatchButtons === 'function' && UI.patchCatchButtons(state, battle);
-  if (!catchPatched && UI.$('#catch-btns')) {
+  const catchOk = typeof UI.patchCatchButtons === 'function' && UI.patchCatchButtons(state, battle);
+  if (!catchOk && UI.$('#catch-btns')) {
     UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
   }
 
-  if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
+  if (typeof UI.patchLog === 'function') UI.patchLog(state, logFilter);
+  else if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
 }
 
 /** Ne rafraîchit que le panneau de l’onglet actif. */
@@ -1077,6 +1082,7 @@ function refreshActivePanel() {
     if (UI.$('#battle-view')) UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
     if (UI.$('#catch-btns')) UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
     if (UI.$('#log-toolbar')) UI.$('#log-toolbar').innerHTML = UI.renderLogToolbar(logFilter);
+    if (typeof UI.resetLogPatch === 'function') UI.resetLogPatch();
     if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
     syncBattleControlsFromState();
     return;
@@ -1157,7 +1163,8 @@ function gameTick() {
 
   if (battle.over) {
     battle = createBattle(state);
-    refreshBattleLive({ syncQuests: true, hard: true });
+    // Soft swap du sauvage — pas de hard refresh
+    refreshBattleLive({ syncQuests: true });
     return;
   }
 
@@ -1171,7 +1178,7 @@ function gameTick() {
           Audio.play('catch');
           UI.toast(`Auto-capture : ${pokeName(res.pokemon)}`);
           battle = createBattle(state);
-          refreshBattleLive({ syncQuests: true, hard: true });
+          refreshBattleLive({ syncQuests: true });
           return;
         }
       }
@@ -1184,7 +1191,7 @@ function gameTick() {
     const major = events.some((ev) =>
       ['win', 'lose', 'catch', 'levelup', 'faint'].includes(ev.type),
     );
-    refreshBattleLive({ syncQuests: major, hard: major });
+    refreshBattleLive({ syncQuests: major });
     if (typeof UI.applyBattleFx === 'function') UI.applyBattleFx(events);
   }
 }

@@ -493,13 +493,10 @@ export function battleTick(state, battle) {
 
   if (hit.label) {
     events.push({ type: 'effectiveness', text: hit.label, typeMult: hit.typeMult });
-    addLog(state, `${pokeName(atk)} → ${pokeName(def)} : ${hit.label}`, hit.typeMult >= 2 ? 'level' : 'info');
-  } else {
-    addLog(
-      state,
-      `${pokeName(atk)} attaque ${pokeName(def)} (−${hit.damage} PV)`,
-      who === 'player' ? 'battle' : 'info'
-    );
+    // Journal : seulement super / immunité (évite le spam qui fait « clignoter » l’UI)
+    if (hit.typeMult === 0 || hit.typeMult >= 2) {
+      addLog(state, `${pokeName(atk)} → ${pokeName(def)} : ${hit.label}`, hit.typeMult >= 2 ? 'level' : 'info');
+    }
   }
 
   if (def.hp <= 0) {
