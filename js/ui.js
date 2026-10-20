@@ -10,7 +10,7 @@ import {
   speciesCount,
   allSpecies,
 } from './pokemon.js';
-import { BALLS, ZONES, BRAND, isPokemonBusy } from './game.js';
+import { BALLS, ZONES, BRAND, isPokemonBusy, resolveZoneBgClass } from './game.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
 import { icon } from './icons.js';
 import { renderEventBanner } from './events.js';
@@ -91,7 +91,7 @@ export function renderPokeCard(poke, opts = {}) {
         <div class="poke-card-glow" aria-hidden="true"></div>
         <img src="${artUrl(poke.speciesId)}" alt="${name}" loading="lazy"
           onerror="this.onerror=null;this.src='${spriteUrl(poke.speciesId)}'" />
-        ${poke.shiny ? '<span class="shiny-badge shiny-sparkle" title="Chromatique">✨</span>' : ''}
+        ${poke.shiny ? `<span class="shiny-badge shiny-sparkle" title="Chromatique">${icon('sparkle')}</span>` : ''}
         ${evo ? '<span class="evo-badge">Évoluer</span>' : ''}
         <span class="card-gen gen-pill">G${sp?.generation || '?'}</span>
       </div>
@@ -112,25 +112,6 @@ export function renderPokeCard(poke, opts = {}) {
       </div>
     </article>`;
 }
-
-
-/** Classe CSS d’ambiance selon le nom / id de zone */
-function battleZoneTone(zone) {
-  if (!zone) return '';
-  const key = `${zone.id} ${zone.name} ${zone.desc}`.toLowerCase();
-  if (/grotte|cave|tunnel|moon|seleni|dark|obscur|mine|cristal/.test(key)) {
-    return 'bg-zone-cave';
-  }
-  if (/forêt|forest|bois|jungle|safari/.test(key)) return 'bg-zone-forest';
-  if (/mont|mountain|peak|route\s*victoire|summit|neige|ice|glace/.test(key)) {
-    return 'bg-zone-mountain';
-  }
-  if (/eau|lake|mer|ocean|surf|plage|beach|river|lac|archipel/.test(key)) {
-    return 'bg-zone-water';
-  }
-  return '';
-}
-
 function floatHtml(float, side) {
   if (!float || float.side !== side) return '';
   const kindClass =
@@ -161,7 +142,7 @@ export function renderBattle(state, battle) {
   const actingEnemy = !battle.over && next === 'wild';
   const regionKey = (zone?.region || 'kanto').toLowerCase();
   const regionLabel = REGION_FR[regionKey] || zone?.region || '';
-  const zoneTone = battleZoneTone(zone);
+  const zoneTone = resolveZoneBgClass(zone);
   const labelKind =
     battle.lastAttack?.typeMult === 0
       ? 'immune'
@@ -190,7 +171,7 @@ export function renderBattle(state, battle) {
           <div class="battle-info">
             <div class="battle-role">Votre Pokémon</div>
             <div class="battle-name">
-              ${pokeName(fighter)}${fighter.shiny ? ' <span class="shiny-inline">✨</span>' : ''}
+              ${pokeName(fighter)}${fighter.shiny ? ` <span class="shiny-inline" title="Chromatique">${icon('sparkle')}</span>` : ''}
               <span>N.${fighter.level}</span>
             </div>
             <div class="types">${typeBadges(fSp?.types)}</div>
@@ -224,7 +205,7 @@ export function renderBattle(state, battle) {
           <div class="battle-info">
             <div class="battle-role">Sauvage</div>
             <div class="battle-name">
-              ${pokeName(wild)}${wild.shiny ? ' <span class="shiny-inline">✨</span>' : ''}
+              ${pokeName(wild)}${wild.shiny ? ` <span class="shiny-inline" title="Chromatique">${icon('sparkle')}</span>` : ''}
               <span>N.${wild.level}</span>
             </div>
             <div class="types">${typeBadges(wSp?.types)}</div>
@@ -390,7 +371,7 @@ export function renderPokedex(state, opts = {}) {
         <img src="${spriteUrl(id)}" alt="" class="${seen ? '' : 'silhouette'}" loading="lazy" />
         <div class="dex-name">${seen ? displayName(sp) : '???'}</div>
         <div class="dex-gen">G${sp.generation}</div>
-        ${caught ? '<span class="dex-ball" title="Capturé">🔴</span>' : ''}
+        ${caught ? `<span class="dex-ball" title="Capturé">${icon('ball')}</span>` : ''}
         ${seen && !caught ? '<span class="dex-seen-dot" title="Vu"></span>' : ''}
       </div>`;
     })

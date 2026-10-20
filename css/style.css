@@ -741,6 +741,21 @@ button:disabled {
 .shiny-inline {
   margin-left: 0.15rem;
   animation: sparkle-pulse 1.4s ease-in-out infinite;
+  display: inline-flex;
+  vertical-align: middle;
+  color: #f5c518;
+}
+
+.shiny-inline .ico,
+.shiny-badge .ico {
+  width: 14px;
+  height: 14px;
+}
+
+.dex-ball .ico {
+  width: 14px;
+  height: 14px;
+  color: #ef4444;
 }
 
 .battle-vs {

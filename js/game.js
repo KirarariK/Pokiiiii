@@ -1,4 +1,4 @@
-import { ZONES, STARTERS, ALL_STARTERS } from './data/zones.js';
+import { ZONES, STARTERS, ALL_STARTERS, resolveZoneBgClass } from './data/zones.js';
 import {
   createPokemon,
   getSpecies,
@@ -527,6 +527,7 @@ export {
   ZONES,
   STARTERS,
   ALL_STARTERS,
+  resolveZoneBgClass,
   artUrl,
   getSpecies,
   displayName,
