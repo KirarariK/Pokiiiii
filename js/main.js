@@ -29,6 +29,8 @@ import {
 } from './quests.js';
 import * as UI from './ui.js';
 import * as Shell from './shell-ui.js';
+import { renderMinigamePanel, bindMinigameHandlers, ensureMinigame } from './minigame.js';
+import { renderLeaderboardPanel, pushLeaderboard } from './leaderboard.js';
 
 let state = null;
 let battle = null;
@@ -48,11 +50,20 @@ async function boot() {
 
   const params = new URLSearchParams(location.search);
   const demo = params.get('demo');
-  if (demo === '1' || demo === 'hub' || demo === 'pass' || demo === 'quests') {
+  if (
+    demo === '1' ||
+    demo === 'hub' ||
+    demo === 'pass' ||
+    demo === 'quests' ||
+    demo === 'minigame' ||
+    demo === 'leaderboard'
+  ) {
     startNew(4);
     if (demo === 'hub') setTimeout(() => openHub(), 50);
     if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
     if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
+    if (demo === 'minigame') setTimeout(() => setTab('minigame'), 50);
+    if (demo === 'leaderboard') setTimeout(() => setTab('leaderboard'), 50);
     return;
   }
 
@@ -186,6 +197,14 @@ function renderShell() {
           <div id="bonus-view"></div>
         </section>
 
+        <section id="panel-minigame" class="panel">
+          <div id="minigame-view"></div>
+        </section>
+
+        <section id="panel-leaderboard" class="panel">
+          <div id="leaderboard-view"></div>
+        </section>
+
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
@@ -277,6 +296,8 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
+    minigame: 'minigame',
+    leaderboard: 'leaderboard',
     settings: 'settings',
     heal: 'battle',
   };
@@ -467,6 +488,38 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+
+  const mgView = UI.$('#minigame-view');
+  if (mgView) {
+    ensureMinigame(state);
+    if (tab === 'minigame') {
+      // Évite de réinitialiser le curseur pendant un combat en arrière-plan
+      if (mgView.dataset.live !== '1') {
+        mgView.innerHTML = renderMinigamePanel(state);
+        bindMinigameHandlers(mgView, state, (res) => {
+          if (res?.ok) {
+            saveGame(state);
+            pushLeaderboard(state);
+            UI.toast(
+              `Score ${res.score} · +${res.money}₽${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
+            );
+            refreshChrome();
+            UI.updateHud(state);
+          }
+        });
+        mgView.dataset.live = '1';
+      }
+    } else {
+      mgView.dataset.live = '';
+    }
+  }
+
+  if (UI.$('#leaderboard-view')) {
+    if (tab === 'leaderboard') {
+      UI.$('#leaderboard-view').innerHTML = renderLeaderboardPanel(state);
+    }
+  }
+
   if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }

@@ -57,6 +57,7 @@ export function createNewGame(starterId) {
     log: [],
     daily: null,
     dailyBaselines: null,
+    minigame: { playsToday: 0, day: null, best: 0 },
   };
   initDailyBaselines(state);
   return state;
@@ -90,6 +91,7 @@ export function loadGame() {
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
+    if (!state.minigame) state.minigame = { playsToday: 0, day: null, best: 0 };
     initDailyBaselines(state);
     ensureDaily(state);
     // Ensure current zone still exists

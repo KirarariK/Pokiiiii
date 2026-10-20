@@ -105,6 +105,8 @@ export function renderHub(state) {
             ${tile('shop', 'Boutique', 'shop')}
             ${tile('dex', 'Pokédex', 'dex')}
             ${tile('bonus', 'Bonus', 'bolt')}
+            ${tile('minigame', 'Mini-jeu', 'dice')}
+            ${tile('leaderboard', 'Classement', 'trophy')}
             ${tile('settings', 'Options', 'settings')}
           </div>
         </div>
