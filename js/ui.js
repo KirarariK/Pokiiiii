@@ -14,6 +14,7 @@ import {
   BALLS,
   ZONES,
   BRAND,
+  hasSave,
   isPokemonBusy,
   currentPlayGen,
   isPokemonOfGen,
@@ -899,27 +900,24 @@ export function renderStarterSelect(selectedGen = 1) {
     })
     .join('');
 
-  const hasSave =
-    localStorage.getItem('shinobiiii_save_v1') ||
-    localStorage.getItem('pokiiiii_save_v3') ||
-    localStorage.getItem('pokeidle_fan_save_v2') ||
-    localStorage.getItem('pokeidle_fan_save_v1');
+  const saved = hasSave();
 
   return `
     <div class="starter-screen" style="--starter-art:url('${BRAND.starterBg}')">
       <div class="starter-hero" style="background-image:linear-gradient(180deg,rgba(10,7,5,.55),rgba(10,7,5,.82)),url('${BRAND.hero}');background-size:cover;background-position:center;">
         <img class="brand-logo" src="${BRAND.logo}" alt="" width="64" height="64" />
         <p class="brand-mark">${BRAND.name}</p>
-        <h1>Choisis ta première recrue</h1>
+        <h1>${saved ? 'Reprendre ou recommencer' : 'Choisis ta première recrue'}</h1>
         <p class="subtitle">${BRAND.tagline} · Début en Saga I (Konoha)</p>
       </div>
+      ${
+        saved
+          ? `<button class="btn-primary btn-continue" id="btn-continue" type="button">Continuer la partie</button>
+             <p class="muted tiny starter-overwrite-hint">Choisir un starter ci-dessous efface la sauvegarde actuelle.</p>`
+          : ''
+      }
       <div class="chip-row starter-gens">${tabs}</div>
       <p class="starter-region">Région · ${meta.name} · Sagas II–IV via chaque finale de village</p>
       <div class="starter-grid">${cards}</div>
-      ${
-        hasSave
-          ? `<button class="btn-secondary btn-continue" id="btn-continue" type="button">Continuer la partie</button>`
-          : ''
-      }
     </div>`;
 }

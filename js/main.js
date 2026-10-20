@@ -165,6 +165,14 @@ async function boot() {
     return;
   }
 
+  // Sauvegarde existante → reprendre direct (pas de re-choix starter au refresh)
+  if (hasSave()) {
+    const s = loadGame();
+    if (s) {
+      startExisting(s);
+      return;
+    }
+  }
   showTitle();
 }
 
@@ -182,13 +190,19 @@ function bindTitle() {
     });
   });
   UI.$$('[data-starter]').forEach((btn) => {
-    btn.addEventListener('click', () => startNew(Number(btn.dataset.starter)));
+    btn.addEventListener('click', () => {
+      if (hasSave() && !confirm('Une partie existe déjà. Effacer et recommencer avec ce starter ?')) {
+        return;
+      }
+      startNew(Number(btn.dataset.starter));
+    });
   });
   const cont = UI.$('#btn-continue');
   if (cont) {
     cont.addEventListener('click', () => {
       const s = loadGame();
       if (s) startExisting(s);
+      else UI.toast('Aucune sauvegarde trouvée');
     });
   }
 }

@@ -27,8 +27,14 @@ import { eventMultipliers } from './events.js';
 import { ascensionBonuses, tryAwardRegionBadge } from './ascension.js';
 import { GEN_META } from './data/starters.js';
 
-const SAVE_KEY = 'shinobiiii_save_v1';
-const SAVE_KEY_LEGACY = ['shinobiiii_save_v3', 'pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
+const SAVE_KEY = 'nindo_save_v1';
+const SAVE_KEY_LEGACY = [
+  'shinobiiii_save_v1',
+  'shinobiiii_save_v3',
+  'pokiiiii_save_v3',
+  'pokeidle_fan_save_v2',
+  'pokeidle_fan_save_v1',
+];
 
 function rewardMults(state) {
   const ev = eventMultipliers();
@@ -220,6 +226,7 @@ export function loadGame() {
     if (!raw) return null;
     const state = JSON.parse(raw);
     state.version = 3;
+    // Migre vers la clé Nindō si on charge une ancienne save
     if (!state.playerName) state.playerName = 'Ninja';
     if (!state.starterId) state.starterId = state.team?.[0]?.speciesId || STARTERS[0];
     if (!state.balls) state.balls = { pokeball: 10, greatball: 0, ultraball: 0, masterball: 0 };
