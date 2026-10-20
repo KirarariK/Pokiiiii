@@ -62,6 +62,20 @@ export function renderTopbar(state) {
     </header>`;
 }
 
+/** Ids toujours visibles en mode compact (le reste reste dans le Hub). */
+const NAV_COMPACT_IDS = new Set([
+  'battle',
+  'quests',
+  'summon',
+  'zones',
+  'arenas',
+  'pokemon',
+]);
+
+function isNavExpanded(state) {
+  return !!state?.settings?.navExpanded;
+}
+
 /** Menu catégories à gauche (remplace l’ancienne barre bas). */
 export function renderSideNav(active, state) {
   const q = pendingQuestCount(state);
@@ -69,7 +83,11 @@ export function renderSideNav(active, state) {
   const exN = pendingExpeditionCount(state);
   const dayN = pendingDaycareCount(state);
   const hubN = hubBadgeCount(state);
-  const sections = [
+  const expanded = isNavExpanded(state);
+  const activeId =
+    active === 'team' || active === 'box' ? 'pokemon' : active === 'arena' ? 'arenas' : active;
+
+  const allSections = [
     {
       title: 'Essentiels',
       items: [
@@ -104,8 +122,19 @@ export function renderSideNav(active, state) {
     },
   ];
 
+  const sections = allSections
+    .map((sec) => ({
+      ...sec,
+      items: expanded
+        ? sec.items
+        : sec.items.filter(
+            (it) => NAV_COMPACT_IDS.has(it.id) || it.id === activeId,
+          ),
+    }))
+    .filter((sec) => sec.items.length > 0);
+
   const itemBtn = (it) => {
-    const on = active === it.id || (it.id === 'pokemon' && (active === 'team' || active === 'box'));
+    const on = activeId === it.id;
     const badge = it.badge > 0 ? `<span class="nav-badge">${it.badge}</span>` : '';
     return `<button type="button" class="side-nav-item ${on ? 'active' : ''}" data-nav="${it.id}" title="${it.label}">
       <span class="nav-ico">${icon(it.ico)}${badge}</span>
@@ -113,8 +142,14 @@ export function renderSideNav(active, state) {
     </button>`;
   };
 
+  const expandLabel = expanded ? 'Menu compact' : 'Tout afficher';
+  const expandIco = expanded ? 'collapse' : 'expand';
+  const expandTitle = expanded
+    ? 'Réduire le menu (le reste reste dans le Hub)'
+    : 'Afficher toutes les catégories';
+
   return `
-    <nav class="pi-side-nav" aria-label="Catégories">
+    <nav class="pi-side-nav ${expanded ? 'is-expanded' : 'is-compact'}" aria-label="Catégories">
       <div class="side-nav-brand" title="${BRAND.name}">
         <span class="side-nav-logo">${icon('logo')}</span>
         <span class="side-nav-brand-text">${BRAND.name}</span>
@@ -129,8 +164,17 @@ export function renderSideNav(active, state) {
         </div>`,
         )
         .join('')}
+      ${
+        expanded
+          ? ''
+          : `<p class="side-nav-hint">Pass, Boutique, Dex… via le <strong>Hub</strong></p>`
+      }
       </div>
       <div class="side-nav-foot">
+        <button type="button" class="side-nav-item nav-expand-btn" data-nav-expand title="${expandTitle}" aria-pressed="${expanded}">
+          <span class="nav-ico">${icon(expandIco)}</span>
+          <span class="nav-label">${expandLabel}</span>
+        </button>
         <button type="button" class="side-nav-item hub-launch ${active === 'hub' ? 'active' : ''}" data-nav="hub" title="Hub">
           <span class="nav-ico">${icon('hub')}${hubN > 0 ? `<span class="nav-badge">${hubN}</span>` : ''}</span>
           <span class="nav-label">Hub</span>

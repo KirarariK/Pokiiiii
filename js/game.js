@@ -139,7 +139,7 @@ export function createNewGame(starterId) {
     autoCatch: false,
     autoCatchBall: 'pokeball',
     battleSpeed: 1,
-    settings: { mute: false },
+    settings: { mute: false, navExpanded: false },
     tutorialDone: false,
     ascensionLevel: 0,
     stats: { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 },
@@ -203,8 +203,9 @@ export function loadGame() {
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
-    if (!state.settings) state.settings = { mute: false };
+    if (!state.settings) state.settings = { mute: false, navExpanded: false };
     if (typeof state.settings.mute !== 'boolean') state.settings.mute = false;
+    if (typeof state.settings.navExpanded !== 'boolean') state.settings.navExpanded = false;
     if (typeof state.tutorialDone !== 'boolean') state.tutorialDone = true;
     if (typeof state.ascensionLevel !== 'number') state.ascensionLevel = 0;
     ensureExpeditions(state);

@@ -2137,6 +2137,37 @@ select {
   gap: 0.15rem;
 }
 
+.side-nav-hint {
+  margin: 0.35rem 0.4rem 0.15rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #6b7c9a;
+}
+
+.side-nav-hint strong {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.nav-expand-btn {
+  color: #93c5fd !important;
+  border-style: dashed !important;
+  border-color: #2f4a72 !important;
+  margin-bottom: 0.15rem;
+}
+
+.nav-expand-btn:hover:not(:disabled) {
+  border-color: #60a5fa !important;
+  color: #e8eefc !important;
+  background: rgba(59, 130, 246, 0.12) !important;
+}
+
+.pi-side-nav.is-expanded .nav-expand-btn {
+  color: #f5c518 !important;
+  border-style: solid !important;
+  border-color: rgba(245, 197, 24, 0.35) !important;
+}
+
 .side-nav-item .nav-badge {
   top: -4px;
   right: -8px;
@@ -2163,7 +2194,8 @@ select {
 
   .side-nav-brand-text,
   .side-nav-title,
-  .side-nav-item .nav-label {
+  .side-nav-item .nav-label,
+  .side-nav-hint {
     display: none;
   }
 

@@ -72,6 +72,12 @@ export const ICO = {
     `<path d="M12 3c4.5 0 8 5.2 8 10.5S15.5 21 12 21 4 18.8 4 13.5 7.5 3 12 3z"/><path d="M9 11c.4-.8 1-.8 1.4 0M13.5 9.5c.35-.7.9-.7 1.25 0M11 15c.3-.55.75-.55 1.05 0"/>`,
   ),
   clock: S(`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>`),
+  expand: S(
+    `<path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/><path d="M4 4l5 5M20 4l-5 5M4 20l5-5M20 20l-5-5"/>`,
+  ),
+  collapse: S(
+    `<path d="M4 9h5V4M20 9h-5V4M4 15h5v5M20 15h-5v5"/><path d="M9 9L4 4M15 9l5-5M9 15l-5 5M15 15l5 5"/>`,
+  ),
 };
 
 export function icon(name, cls = '') {

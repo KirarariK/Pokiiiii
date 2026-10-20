@@ -372,7 +372,7 @@ function renderShell() {
               <input id="opt-mute" type="checkbox" ${state.settings?.mute ? 'checked' : ''} />
               ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
             </label>
-            <p class="muted tiny settings-keys">Raccourcis : <kbd>1</kbd>–<kbd>6</kbd> catégories · <kbd>H</kbd> Hub · <kbd>M</kbd> mute</p>
+            <p class="muted tiny settings-keys">Raccourcis : <kbd>1</kbd>–<kbd>6</kbd> catégories · <kbd>H</kbd> Hub · <kbd>M</kbd> mute · menu compact / Hub pour le reste</p>
             <label class="chk">
               <input id="opt-auto-catch" type="checkbox" ${state.autoCatch ? 'checked' : ''} />
               Auto-capture
@@ -742,6 +742,17 @@ function onClick(e) {
     saveGame(state);
     if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
     UI.toast('Journal effacé');
+    return;
+  }
+
+  const navExpand = e.target.closest('[data-nav-expand]');
+  if (navExpand) {
+    Audio.play('ui');
+    if (!state.settings) state.settings = { mute: false, navExpanded: false };
+    state.settings.navExpanded = !state.settings.navExpanded;
+    saveGame(state);
+    refreshSideNav();
+    UI.toast(state.settings.navExpanded ? 'Menu complet' : 'Menu compact — reste dans le Hub');
     return;
   }
 
