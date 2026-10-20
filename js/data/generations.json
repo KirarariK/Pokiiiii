@@ -1,0 +1,101 @@
+[
+  {
+    "id": 1,
+    "name": "Kanto",
+    "nameFr": "Kanto",
+    "region": "Kanto",
+    "count": 151,
+    "pokemonIdRange": [
+      1,
+      151
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Johto",
+    "nameFr": "Johto",
+    "region": "Johto",
+    "count": 100,
+    "pokemonIdRange": [
+      152,
+      251
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Hoenn",
+    "nameFr": "Hoenn",
+    "region": "Hoenn",
+    "count": 135,
+    "pokemonIdRange": [
+      252,
+      386
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Sinnoh",
+    "nameFr": "Sinnoh",
+    "region": "Sinnoh",
+    "count": 107,
+    "pokemonIdRange": [
+      387,
+      493
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Unova",
+    "nameFr": "Unys",
+    "region": "Unova",
+    "count": 156,
+    "pokemonIdRange": [
+      494,
+      649
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Kalos",
+    "nameFr": "Kalos",
+    "region": "Kalos",
+    "count": 72,
+    "pokemonIdRange": [
+      650,
+      721
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Alola",
+    "nameFr": "Alola",
+    "region": "Alola",
+    "count": 88,
+    "pokemonIdRange": [
+      722,
+      809
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Galar",
+    "nameFr": "Galar",
+    "region": "Galar",
+    "count": 96,
+    "pokemonIdRange": [
+      810,
+      905
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Paldea",
+    "nameFr": "Paldea",
+    "region": "Paldea",
+    "count": 120,
+    "pokemonIdRange": [
+      906,
+      1025
+    ]
+  }
+]

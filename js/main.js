@@ -1,4 +1,4 @@
-import { loadSpecies, pokeName, artUrl, displayName, getSpecies } from './pokemon.js';
+import { loadSpecies, pokeName, artUrl, displayName, getSpecies, speciesCount } from './pokemon.js';
 import {
   createNewGame,
   saveGame,
@@ -27,41 +27,42 @@ let battle = null;
 let tickTimer = null;
 let saveTimer = null;
 let tab = 'battle';
+let starterGen = 1;
+let dexGen = 0;
+let dexQuery = '';
 
-const TICK_BASE_MS = 900;
+const TICK_BASE_MS = 750;
 
 async function boot() {
-  UI.$('#app').innerHTML = `<div class="loading">Chargement des Pokémon…</div>`;
+  UI.$('#app').innerHTML = `<div class="loading">Chargement des ${'Pokémon'} (toutes générations)…</div>`;
   await loadSpecies();
+  UI.$('#app').innerHTML = `<div class="loading">${speciesCount()} Pokémon chargés…</div>`;
 
-  // ?demo=1 → démarre une partie Salamèche (utile pour tests / screenshots)
   const params = new URLSearchParams(location.search);
   if (params.get('demo') === '1') {
     startNew(4);
     return;
   }
 
-  if (hasSave()) {
-    showTitle(true);
-  } else {
-    showTitle(false);
-  }
+  showTitle();
 }
 
-function showTitle(canContinue) {
-  UI.$('#app').innerHTML = `
-    <div id="title-root">${UI.renderStarterSelect()}</div>
-  `;
-  // re-render properly after species loaded
-  UI.$('#title-root').innerHTML = UI.renderStarterSelect();
+function showTitle() {
+  UI.$('#app').innerHTML = `<div id="title-root">${UI.renderStarterSelect(starterGen)}</div>`;
+  bindTitle();
+}
 
-  UI.$$('[data-starter]').forEach((btn) => {
+function bindTitle() {
+  UI.$$('[data-starter-gen]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const id = Number(btn.dataset.starter);
-      startNew(id);
+      starterGen = Number(btn.dataset.starterGen);
+      UI.$('#title-root').innerHTML = UI.renderStarterSelect(starterGen);
+      bindTitle();
     });
   });
-
+  UI.$$('[data-starter]').forEach((btn) => {
+    btn.addEventListener('click', () => startNew(Number(btn.dataset.starter)));
+  });
   const cont = UI.$('#btn-continue');
   if (cont) {
     cont.addEventListener('click', () => {
@@ -105,19 +106,19 @@ function renderShell() {
           <span class="logo">⚡</span>
           <div>
             <strong>PokéIdle</strong>
-            <small>Fan idle · Kanto</small>
+            <small>Fan idle · ${speciesCount()} Pokémon · 1v1</small>
           </div>
         </div>
         <div class="hud">
-          <div class="hud-item" title="Argent"><span id="money">0 ₽</span></div>
-          <div class="hud-item" title="Équipe">👥 <span id="team-count">0/6</span></div>
-          <div class="hud-item" title="Pokédex">📕 <span id="dex-count">0/151</span></div>
-          <div class="hud-item" title="Zone">📍 <span id="zone-name">—</span></div>
+          <div class="hud-item"><span id="money">0 ₽</span></div>
+          <div class="hud-item">👥 <span id="team-count">0/6</span></div>
+          <div class="hud-item">📕 <span id="dex-count">0/0</span></div>
+          <div class="hud-item">📍 <span id="zone-name">—</span></div>
         </div>
       </header>
 
       <nav class="tabs">
-        <button data-tab="battle" class="active">Combat</button>
+        <button data-tab="battle" class="active">Combat 1v1</button>
         <button data-tab="team">Équipe</button>
         <button data-tab="box">PC</button>
         <button data-tab="zones">Zones</button>
@@ -132,22 +133,20 @@ function renderShell() {
           <div class="battle-controls">
             <div id="catch-btns" class="catch-row"></div>
             <div class="control-row">
-              <label class="chk">
-                <input type="checkbox" id="auto-catch" /> Auto-capture
-              </label>
+              <label class="chk"><input type="checkbox" id="auto-catch" /> Auto-capture</label>
               <select id="auto-ball">
                 ${Object.values(BALLS)
                   .map((b) => `<option value="${b.id}">${b.name}</option>`)
                   .join('')}
               </select>
-              <label class="speed">
-                Vitesse
+              <label class="speed">Vitesse
                 <select id="battle-speed">
                   <option value="0.75">0.75×</option>
                   <option value="1" selected>1×</option>
                   <option value="1.5">1.5×</option>
                   <option value="2">2×</option>
                   <option value="3">3×</option>
+                  <option value="5">5×</option>
                 </select>
               </label>
               <button id="btn-heal" class="btn-secondary">Centre Pokémon</button>
@@ -161,7 +160,7 @@ function renderShell() {
 
         <section id="panel-team" class="panel">
           <div class="panel-head">
-            <h2>Équipe</h2>
+            <h2>Équipe <small class="muted">(le 1er est le lead du 1v1)</small></h2>
             <button id="btn-evolve-all" class="btn-secondary">Tout évoluer</button>
           </div>
           <div id="team-grid" class="card-grid"></div>
@@ -173,8 +172,8 @@ function renderShell() {
         </section>
 
         <section id="panel-zones" class="panel">
-          <div class="panel-head"><h2>Zones</h2></div>
-          <div id="zones-list" class="zones-list"></div>
+          <div class="panel-head"><h2>Zones — toutes les régions</h2></div>
+          <div id="zones-list"></div>
         </section>
 
         <section id="panel-shop" class="panel">
@@ -183,14 +182,14 @@ function renderShell() {
         </section>
 
         <section id="panel-dex" class="panel">
-          <div class="panel-head"><h2>Pokédex</h2></div>
+          <div class="panel-head"><h2>Pokédex National</h2></div>
           <div id="dex-view"></div>
         </section>
 
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
-            <p>Sauvegarde automatique dans le navigateur (localStorage).</p>
+            <p>Sauvegarde automatique (localStorage). Données : ${speciesCount()} espèces Gen I–IX.</p>
             <button id="btn-save" class="btn-primary">Sauvegarder maintenant</button>
             <button id="btn-reset" class="btn-danger">Réinitialiser la partie</button>
             <p class="muted disclaimer">Fan-game non officiel. Sprites © Pokémon / Nintendo / Creatures / Game Freak — via PokéAPI.</p>
@@ -199,9 +198,7 @@ function renderShell() {
       </main>
     </div>
     <div id="toasts"></div>
-    <div id="modal-overlay" hidden>
-      <div class="modal" id="modal-body"></div>
-    </div>
+    <div id="modal-overlay" hidden><div class="modal" id="modal-body"></div></div>
   `;
 }
 
@@ -226,7 +223,7 @@ function bindShell() {
   UI.$('#battle-speed').value = String(state.battleSpeed || 1);
   UI.$('#battle-speed').addEventListener('change', (e) => {
     state.battleSpeed = Number(e.target.value);
-    restartLoop();
+    startLoop();
   });
 
   UI.$('#btn-heal').addEventListener('click', () => {
@@ -251,7 +248,7 @@ function bindShell() {
       clearInterval(tickTimer);
       clearInterval(saveTimer);
       clearSave();
-      location.reload();
+      location.href = location.pathname;
     }
   });
 
@@ -259,23 +256,34 @@ function bindShell() {
     if (e.target.id === 'modal-overlay') UI.hideModal();
   });
 
-  // Delegated clicks
   UI.$('#app').addEventListener('click', onClick);
+  UI.$('#app').addEventListener('input', onInput);
+}
+
+function onInput(e) {
+  if (e.target.id === 'dex-search') {
+    dexQuery = e.target.value;
+    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+  }
 }
 
 function onClick(e) {
+  const genChip = e.target.closest('[data-dex-gen]');
+  if (genChip) {
+    dexGen = Number(genChip.dataset.dexGen);
+    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+    return;
+  }
+
   const catchBtn = e.target.closest('[data-catch]');
   if (catchBtn) {
     const res = attemptCatch(state, battle, catchBtn.dataset.catch);
-    if (!res.ok) {
-      UI.toast(res.reason === 'no-ball' ? 'Plus de Balls !' : 'Capture impossible');
-    } else if (res.success) {
+    if (!res.ok) UI.toast(res.reason === 'no-ball' ? 'Plus de Balls !' : 'Capture impossible');
+    else if (res.success) {
       UI.toast(`Capturé ${pokeName(res.pokemon)} !`);
       showCatchModal(res.pokemon);
       battle = createBattle(state);
-    } else {
-      UI.toast(`${res.ball.name} a échoué…`);
-    }
+    } else UI.toast(`${res.ball.name} a échoué…`);
     refreshAll();
     return;
   }
@@ -313,13 +321,10 @@ function onClick(e) {
     if (a === 'evolve') {
       const neu = tryEvolvePokemon(state, uid);
       if (neu) UI.toast(`Évolution en ${neu.nameFr} !`);
-    } else if (a === 'box') {
-      moveToBox(state, uid);
-    } else if (a === 'team') {
+    } else if (a === 'box') moveToBox(state, uid);
+    else if (a === 'team') {
       if (!moveToTeam(state, uid)) UI.toast('Équipe pleine (6 max)');
-    } else if (a === 'up') {
-      swapTeam(state, Number(i), Number(i) - 1);
-    }
+    } else if (a === 'up') swapTeam(state, Number(i), Number(i) - 1);
     refreshAll();
   }
 }
@@ -330,7 +335,7 @@ function showCatchModal(poke) {
     <div class="catch-modal">
       <h2>${displayName(sp)} capturé !</h2>
       <img src="${artUrl(poke.speciesId)}" alt="" />
-      <p><strong>N.${poke.level}</strong>${poke.shiny ? ' ✨ Chromatique !' : ''}</p>
+      <p><strong>N.${poke.level}</strong> · Gen ${sp.generation}${poke.shiny ? ' · ✨ Chromatique !' : ''}</p>
       <button class="btn-primary" id="close-modal">Super !</button>
     </div>
   `);
@@ -347,19 +352,9 @@ function refreshAll() {
   UI.$('#box-grid').innerHTML = UI.renderBox(state);
   UI.$('#zones-list').innerHTML = UI.renderZones(state);
   UI.$('#shop-list').innerHTML = UI.renderShop(state);
-  if (tab === 'dex') UI.$('#dex-view').innerHTML = UI.renderPokedex(state);
-
-  // Auto-catch attempt each refresh if wild weak
-  maybeAutoCatch();
-}
-
-function maybeAutoCatch() {
-  if (!state.autoCatch || !battle || battle.over || battle.wild.hp <= 0) return;
-  const hpPct = battle.wild.hp / battle.wild.maxHp;
-  if (hpPct > 0.35) return;
-  const ballId = state.autoCatchBall || 'pokeball';
-  if ((state.balls[ballId] || 0) <= 0) return;
-  // Throttle: only try occasionally via battle end path — handled in loop
+  if (tab === 'dex') {
+    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+  }
 }
 
 function startLoop() {
@@ -368,22 +363,16 @@ function startLoop() {
   tickTimer = setInterval(gameTick, ms);
 }
 
-function restartLoop() {
-  startLoop();
-}
-
 function gameTick() {
   if (!state || !battle) return;
   state.stats.playTime += TICK_BASE_MS / 1000 / (state.battleSpeed || 1);
 
   if (battle.over) {
-    // Petite pause puis nouveau combat
     battle = createBattle(state);
     refreshAll();
     return;
   }
 
-  // Auto-catch avant le KO si HP bas
   if (state.autoCatch && battle.wild.hp > 0) {
     const hpPct = battle.wild.hp / battle.wild.maxHp;
     if (hpPct <= 0.4) {
@@ -391,7 +380,7 @@ function gameTick() {
       if ((state.balls[ballId] || 0) > 0) {
         const res = attemptCatch(state, battle, ballId);
         if (res.ok && res.success) {
-          UI.toast(`Auto-capture réussie !`);
+          UI.toast(`Auto-capture : ${pokeName(res.pokemon)}`);
           battle = createBattle(state);
           refreshAll();
           return;
@@ -402,19 +391,20 @@ function gameTick() {
 
   const events = battleTick(state, battle);
   if (events.length) {
-    // Flash damage on sprites
-    const hit = events.find((e) => e.type === 'attack');
     refreshAll();
+    const hit = events.find((e) => e.type === 'attack');
     if (hit) {
       const sel = hit.who === 'player' ? '.enemy-sprite' : '.ally-sprite';
       const el = UI.$(sel);
       if (el) {
         el.classList.add('hit');
-        setTimeout(() => el.classList.remove('hit'), 200);
+        setTimeout(() => el.classList.remove('hit'), 180);
       }
-    }
-    if (events.some((e) => e.type === 'win' || e.type === 'lose' || e.type === 'catch')) {
-      // prochain tick créera un nouveau combat
+      const floater = UI.$('.dmg-float');
+      if (floater) {
+        floater.classList.add('pop');
+        setTimeout(() => floater.classList.remove('pop'), 480);
+      }
     }
   }
 }
