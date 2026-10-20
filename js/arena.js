@@ -264,10 +264,13 @@ function buildArenasHtml(state) {
         btn = '<button type="button" class="btn-secondary" disabled>Verrouillé</button>';
       }
       const ico = g.champion ? icon('trophy') : badgeIconSvg(g.type, owned || gate.ok);
-      return `<article class="arena-card ${owned ? 'done' : gate.ok ? 'ready' : 'locked'} ${g.champion ? 'champ' : ''}">
-          <div class="arena-badge-ico">${ico}</div>
+      const art = g.image
+        ? `<div class="arena-art" style="background-image:url('${g.image}')" role="img" aria-hidden="true"></div>`
+        : `<div class="arena-badge-ico">${ico}</div>`;
+      return `<article class="arena-card ${owned ? 'done' : gate.ok ? 'ready' : 'locked'} ${g.champion ? 'champ' : ''}${g.image ? ' has-art' : ''}">
+          ${art}
           <div class="arena-body">
-            <strong>${g.name}</strong>
+            <div class="arena-title-row">${ico}<strong>${g.name}</strong></div>
             <p>${g.champion ? 'Kage' : 'Examinateur'} <em>${g.leaderName}</em> · ${TYPE_FR[g.type] || g.type} · Saga ${g.gen}</p>
             <p class="muted arena-team">${teamPreview}</p>
             <p class="muted">${g.badgeName} · ${g.rewardMoney.toLocaleString('fr-FR')} 両</p>

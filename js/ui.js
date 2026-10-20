@@ -27,15 +27,23 @@ import { icon } from './icons.js';
 import { renderEventBanner } from './events.js';
 
 const REGION_FR = {
+  konoha: 'Konoha',
+  suna: 'Suna',
+  kiri: 'Kiri',
+  kumo: 'Kumo',
+  ame: 'Ame',
+  oto: 'Oto',
+  yugakure: 'Yugakure',
+  yuki: 'Yuki',
+  myoboku: 'Myôboku',
+  iron: 'Pays du Fer',
+  alliance: 'Alliance',
+  kara: 'Kara',
+  otsutsuki: 'Ôtsutsuki',
+  // legacy fallbacks
   kanto: 'Konoha',
-  johto: 'Johto',
-  hoenn: 'Hoenn',
-  sinnoh: 'Sinnoh',
-  unova: 'Unys',
-  kalos: 'Kalos',
-  alola: 'Alola',
-  galar: 'Galar',
-  paldea: 'Paldea',
+  johto: 'Suna',
+  hoenn: 'Kiri',
 };
 
 function battleZoneTone(zone) {
@@ -156,9 +164,10 @@ export function renderBattle(state, battle) {
   const next = battle.nextActor;
   const actingAlly = !battle.over && next === 'player';
   const actingEnemy = !battle.over && next === 'wild';
-  const regionKey = (zone?.region || 'kanto').toLowerCase();
+  const regionKey = (zone?.region || 'konoha').toLowerCase();
   const regionLabel = REGION_FR[regionKey] || zone?.region || '';
   const zoneTone = battleZoneTone(zone);
+  const zoneImg = zone?.image || '';
   const labelKind =
     battle.lastAttack?.typeMult === 0
       ? 'immune'
@@ -178,7 +187,7 @@ export function renderBattle(state, battle) {
       : `${pokeName(wild)} attaque`;
 
   return `
-    <div class="battle-arena duel bg-region bg-region-${regionKey} ${zoneTone}" style="--zone-bg:${zone?.bg || '#1a1a2e'}">
+    <div class="battle-arena duel bg-region bg-region-${regionKey} ${zoneTone}${zoneImg ? ' has-zone-art' : ''}" style="--zone-bg:${zone?.bg || '#1a1a2e'};${zoneImg ? `--zone-art:url('${zoneImg}')` : ''}">
       <div class="battle-bg-overlay" aria-hidden="true"></div>
       <div class="battle-zone-label">${zone?.name || ''}${regionLabel ? ` · ${regionLabel}` : ''} · Saga ${zone?.gen || '?'} · 1v1</div>
       ${renderEventBanner()}
@@ -705,7 +714,9 @@ export function renderZones(state) {
         const canBuy = genOpen && !unlocked;
         return `
       <button class="zone-card ${unlocked ? 'unlocked' : 'locked'} ${active ? 'active' : ''} ${genOpen ? '' : 'gen-locked'}" data-zone="${z.id}" type="button" ${genOpen || unlocked ? '' : 'disabled'}>
-        <div class="zone-preview" style="background:${z.bg}"></div>
+        <div class="zone-preview" style="background-image:${z.image ? `url('${z.image}')` : 'none'};background-color:#1a0c06;background-size:cover;background-position:center;">
+          ${z.image ? '' : `<span class="zone-preview-fallback" style="background:${z.bg}"></span>`}
+        </div>
         <div class="zone-meta">
           <strong>${z.name}</strong>
           <span>${z.desc}</span>

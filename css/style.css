@@ -1702,13 +1702,22 @@ select {
   min-height: 76px;
   position: relative;
   overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.zone-preview-fallback {
+  position: absolute;
+  inset: 0;
 }
 
 .zone-preview::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 50%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(10, 7, 5, 0.45));
+  pointer-events: none;
 }
 
 .zone-meta {
@@ -3342,6 +3351,33 @@ body.hub-open #side-nav-host {
   grid-template-columns: auto 1fr auto;
   padding: 0.85rem 1rem;
   margin-bottom: 1rem;
+  gap: 0.75rem;
+  align-items: center;
+}
+.arena-card.has-art {
+  grid-template-columns: 112px 1fr auto;
+  padding: 0.55rem 0.85rem 0.55rem 0.55rem;
+}
+.arena-art {
+  width: 112px;
+  height: 84px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+.arena-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+.arena-title-row .gym-badge-svg,
+.arena-title-row .ico {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 .mg-card .ico { width: 28px; height: 28px; color: #fb923c; flex-shrink: 0; }
 .mg-card p { margin: 0.25rem 0 0; }
@@ -3737,7 +3773,9 @@ body.hub-open #side-nav-host {
 .arena-status.locked { color: #8b9bb8; }
 .arena-actions { display: flex; }
 @media (max-width: 560px) {
-  .arena-card { grid-template-columns: auto 1fr; }
+  .arena-card,
+  .arena-card.has-art { grid-template-columns: 1fr; }
+  .arena-art { width: 100%; height: 110px; }
   .arena-actions { grid-column: 1 / -1; }
   .arena-actions button { width: 100%; }
 }

@@ -11,6 +11,10 @@ export const REGION_LABELS = {
   alliance: 'Alliance',
 };
 
+const EXAM = './assets/arenas/arena-exam-hall.jpg';
+const OFFICE = './assets/arenas/arena-kage-office.jpg';
+const z = (id) => `./assets/zones/zone-${id}.jpg`;
+
 export const GYMS = [
   {
     id: 'konoha-iruka',
@@ -24,6 +28,7 @@ export const GYMS = [
     badgeId: 'genin',
     badgeName: 'Brevet Genin',
     order: 1,
+    image: z('konoha-academy'),
     pokemon: [{ speciesId: 14, level: 8 }, { speciesId: 23, level: 9 }],
   },
   {
@@ -38,6 +43,7 @@ export const GYMS = [
     badgeId: 'bells',
     badgeName: 'Clochettes',
     order: 2,
+    image: z('training-ground-7'),
     pokemon: [{ speciesId: 6, level: 14 }, { speciesId: 5, level: 12 }],
   },
   {
@@ -52,6 +58,7 @@ export const GYMS = [
     badgeId: 'chunin',
     badgeName: 'Grade Chûnin',
     order: 3,
+    image: EXAM,
     pokemon: [{ speciesId: 29, level: 18 }, { speciesId: 14, level: 19 }, { speciesId: 23, level: 17 }],
   },
   {
@@ -66,6 +73,7 @@ export const GYMS = [
     badgeId: 'hokage1',
     badgeName: 'Titre Konoha I',
     order: 4,
+    image: OFFICE,
     pokemon: [{ speciesId: 14, level: 26 }, { speciesId: 29, level: 27 }, { speciesId: 6, level: 28 }],
   },
   {
@@ -81,6 +89,7 @@ export const GYMS = [
     badgeName: 'Fin Partie I',
     order: 5,
     champion: true,
+    image: z('valley-end'),
     pokemon: [
       { speciesId: 30, level: 34 },
       { speciesId: 14, level: 35 },
@@ -100,6 +109,7 @@ export const GYMS = [
     badgeId: 'kazekage',
     badgeName: 'Sable du Kazekage',
     order: 1,
+    image: z('suna-desert'),
     pokemon: [{ speciesId: 15, level: 24 }, { speciesId: 24, level: 22 }],
   },
   {
@@ -114,6 +124,7 @@ export const GYMS = [
     badgeId: 'akatsuki',
     badgeName: 'Anneau Akatsuki',
     order: 2,
+    image: z('akatsuki-hunt'),
     pokemon: [{ speciesId: 32, level: 32 }, { speciesId: 31, level: 30 }],
   },
   {
@@ -128,6 +139,7 @@ export const GYMS = [
     badgeId: 'pain',
     badgeName: 'Rinnegan',
     order: 3,
+    image: z('ame-village'),
     pokemon: [{ speciesId: 17, level: 38 }, { speciesId: 16, level: 36 }, { speciesId: 25, level: 35 }],
   },
   {
@@ -143,6 +155,7 @@ export const GYMS = [
     badgeName: 'Fin Shippuden',
     order: 4,
     champion: true,
+    image: z('pain-invasion'),
     pokemon: [
       { speciesId: 18, level: 44 },
       { speciesId: 32, level: 43 },
@@ -162,6 +175,7 @@ export const GYMS = [
     badgeId: 'war-obito',
     badgeName: 'Masque brisé',
     order: 1,
+    image: z('kamui-dimension'),
     pokemon: [{ speciesId: 568, level: 40 }, { speciesId: 569, level: 42 }],
   },
   {
@@ -176,6 +190,7 @@ export const GYMS = [
     badgeId: 'madara',
     badgeName: 'Éventail Gunbai',
     order: 2,
+    image: z('war-front'),
     pokemon: [{ speciesId: 308, level: 48 }, { speciesId: 309, level: 50 }, { speciesId: 19, level: 47 }],
   },
   {
@@ -191,6 +206,7 @@ export const GYMS = [
     badgeName: 'Fin de la Guerre',
     order: 3,
     champion: true,
+    image: z('six-paths'),
     pokemon: [
       { speciesId: 238, level: 58 },
       { speciesId: 20, level: 56 },
@@ -211,6 +227,7 @@ export const GYMS = [
     badgeId: 'boruto-genin',
     badgeName: 'Genin Nouvelle ère',
     order: 1,
+    image: z('boruto-village'),
     pokemon: [{ speciesId: 2, level: 22 }, { speciesId: 27, level: 21 }, { speciesId: 12, level: 21 }],
   },
   {
@@ -225,6 +242,7 @@ export const GYMS = [
     badgeId: 'karma',
     badgeName: 'Marque Karma',
     order: 2,
+    image: z('karma-lab'),
     pokemon: [{ speciesId: 3, level: 34 }, { speciesId: 28, level: 32 }],
   },
   {
@@ -240,6 +258,7 @@ export const GYMS = [
     badgeName: 'Titre Nouvelle ère',
     order: 3,
     champion: true,
+    image: z('otsutsuki-palace'),
     pokemon: [
       { speciesId: 4, level: 50 },
       { speciesId: 22, level: 48 },
