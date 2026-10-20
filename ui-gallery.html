@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>UI Gallery</title>
+<style>
+  html,body{margin:0;background:#0b0f1a;color:#fff;font-family:system-ui}
+  iframe{width:1280px;height:900px;border:0;background:#0b0f1a}
+</style>
+</head>
+<body>
+<iframe id="f" src="/?demo=1"></iframe>
+<script>
+const f = document.getElementById('f');
+const tab = new URLSearchParams(location.search).get('tab') || 'battle';
+f.onload = () => {
+  try {
+    const w = f.contentWindow;
+    const d = f.contentDocument;
+    const click = (sel) => d.querySelector(sel)?.click();
+    setTimeout(() => {
+      if (tab === 'title') {
+        // navigate to clean title
+        w.location = '/';
+        return;
+      }
+      const map = {
+        battle: '[data-tab="battle"]',
+        team: '[data-tab="team"]',
+        box: '[data-tab="box"]',
+        zones: '[data-tab="zones"]',
+        shop: '[data-tab="shop"]',
+        dex: '[data-tab="dex"]',
+        settings: '[data-tab="settings"]',
+      };
+      click(map[tab] || map.battle);
+    }, 2500);
+  } catch (e) { console.error(e); }
+};
+</script>
+</body></html>

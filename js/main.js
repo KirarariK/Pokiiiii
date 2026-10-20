@@ -19,8 +19,16 @@ import {
   autoEvolveAll,
   applyOfflineProgress,
   BALLS,
+  BRAND,
 } from './game.js';
+import {
+  claimQuest,
+  claimPassTier,
+  syncQuestProgress,
+  initDailyBaselines,
+} from './quests.js';
 import * as UI from './ui.js';
+import * as Shell from './shell-ui.js';
 
 let state = null;
 let battle = null;
@@ -30,17 +38,21 @@ let tab = 'battle';
 let starterGen = 1;
 let dexGen = 0;
 let dexQuery = '';
+let hubOpen = false;
 
 const TICK_BASE_MS = 750;
 
 async function boot() {
-  UI.$('#app').innerHTML = `<div class="loading">Chargement des ${'Pokémon'} (toutes générations)…</div>`;
+  UI.$('#app').innerHTML = `<div class="loading"><div class="loading-orb"></div><span>Chargement ${BRAND.name}…</span></div>`;
   await loadSpecies();
-  UI.$('#app').innerHTML = `<div class="loading">${speciesCount()} Pokémon chargés…</div>`;
 
   const params = new URLSearchParams(location.search);
-  if (params.get('demo') === '1') {
+  const demo = params.get('demo');
+  if (demo === '1' || demo === 'hub' || demo === 'pass' || demo === 'quests') {
     startNew(4);
+    if (demo === 'hub') setTimeout(() => openHub(), 50);
+    if (demo === 'pass') setTimeout(() => setTab('pass'), 50);
+    if (demo === 'quests') setTimeout(() => setTab('quests'), 50);
     return;
   }
 
@@ -80,12 +92,11 @@ function startNew(starterId) {
 
 function startExisting(s) {
   state = s;
+  initDailyBaselines(state);
   const offline = applyOfflineProgress(state);
   enterGame();
   if (offline) {
-    UI.toast(
-      `Hors-ligne : ${offline.battles} combats · +${offline.xpGain} XP · +${offline.moneyGain}₽`
-    );
+    UI.toast(`Hors-ligne : ${offline.battles} combats · +${offline.xpGain} XP · +${offline.moneyGain}₽`);
   }
 }
 
@@ -93,42 +104,17 @@ function enterGame() {
   renderShell();
   battle = createBattle(state);
   bindShell();
-  refreshAll();
+  setTab('battle');
   startLoop();
   saveTimer = setInterval(() => saveGame(state), 8000);
 }
 
 function renderShell() {
   UI.$('#app').innerHTML = `
-    <div class="game-shell">
-      <header class="topbar">
-        <div class="brand">
-          <span class="logo">⚡</span>
-          <div>
-            <strong>PokéIdle</strong>
-            <small>Fan idle · ${speciesCount()} Pokémon · 1v1</small>
-          </div>
-        </div>
-        <div class="hud">
-          <div class="hud-item"><span id="money">0 ₽</span></div>
-          <div class="hud-item">👥 <span id="team-count">0/6</span></div>
-          <div class="hud-item">📕 <span id="dex-count">0/0</span></div>
-          <div class="hud-item">📍 <span id="zone-name">—</span></div>
-        </div>
-      </header>
-
-      <nav class="tabs">
-        <button data-tab="battle" class="active">Combat 1v1</button>
-        <button data-tab="team">Équipe</button>
-        <button data-tab="box">PC</button>
-        <button data-tab="zones">Zones</button>
-        <button data-tab="shop">Boutique</button>
-        <button data-tab="dex">Pokédex</button>
-        <button data-tab="settings">Options</button>
-      </nav>
-
-      <main class="content">
-        <section id="panel-battle" class="panel active">
+    <div class="game-shell pi-shell">
+      ${Shell.renderTopbar(state)}
+      <main class="content pi-content">
+        <section id="panel-battle" class="panel">
           <div id="battle-view"></div>
           <div class="battle-controls">
             <div id="catch-btns" class="catch-row"></div>
@@ -149,7 +135,7 @@ function renderShell() {
                   <option value="5">5×</option>
                 </select>
               </label>
-              <button id="btn-heal" class="btn-secondary">Centre Pokémon</button>
+              <button id="btn-heal" class="btn-secondary" type="button">Centre Pokémon</button>
             </div>
           </div>
           <div class="log-panel">
@@ -158,21 +144,19 @@ function renderShell() {
           </div>
         </section>
 
-        <section id="panel-team" class="panel">
+        <section id="panel-pokemon" class="panel">
           <div class="panel-head">
-            <h2>Équipe <small class="muted">(le 1er est le lead du 1v1)</small></h2>
-            <button id="btn-evolve-all" class="btn-secondary">Tout évoluer</button>
+            <h2>Pokémon</h2>
+            <button id="btn-evolve-all" class="btn-secondary" type="button">Tout évoluer</button>
           </div>
+          <h3 class="subhead">Équipe <small class="muted">(lead = combat 1v1)</small></h3>
           <div id="team-grid" class="card-grid"></div>
-        </section>
-
-        <section id="panel-box" class="panel">
-          <div class="panel-head"><h2>Boîte PC</h2></div>
+          <h3 class="subhead">Boîte PC</h3>
           <div id="box-grid" class="card-grid"></div>
         </section>
 
         <section id="panel-zones" class="panel">
-          <div class="panel-head"><h2>Zones — toutes les régions</h2></div>
+          <div class="panel-head"><h2>Zones</h2></div>
           <div id="zones-list"></div>
         </section>
 
@@ -181,21 +165,42 @@ function renderShell() {
           <div id="shop-list" class="shop-list"></div>
         </section>
 
+        <section id="panel-pass" class="panel">
+          <div id="pass-view"></div>
+        </section>
+
+        <section id="panel-quests" class="panel">
+          <div id="quests-view"></div>
+        </section>
+
         <section id="panel-dex" class="panel">
           <div class="panel-head"><h2>Pokédex National</h2></div>
           <div id="dex-view"></div>
         </section>
 
+        <section id="panel-profile" class="panel">
+          <div id="profile-view"></div>
+        </section>
+
+        <section id="panel-bonus" class="panel">
+          <div id="bonus-view"></div>
+        </section>
+
         <section id="panel-settings" class="panel">
           <div class="panel-head"><h2>Options</h2></div>
           <div class="settings">
-            <p>Sauvegarde automatique (localStorage). Données : ${speciesCount()} espèces Gen I–IX.</p>
-            <button id="btn-save" class="btn-primary">Sauvegarder maintenant</button>
-            <button id="btn-reset" class="btn-danger">Réinitialiser la partie</button>
+            <p>Sauvegarde auto · ${speciesCount()} espèces Gen I–IX · ${BRAND.name}</p>
+            <label class="field">Nom du dresseur
+              <input id="player-name" type="text" maxlength="16" value="${state.playerName || 'Dresseur'}" />
+            </label>
+            <button id="btn-save" class="btn-primary" type="button">Sauvegarder</button>
+            <button id="btn-reset" class="btn-danger" type="button">Réinitialiser la partie</button>
             <p class="muted disclaimer">Fan-game non officiel. Sprites © Pokémon / Nintendo / Creatures / Game Freak — via PokéAPI.</p>
           </div>
         </section>
       </main>
+      <div id="bottom-nav-host">${Shell.renderBottomNav(tab, state)}</div>
+      ${Shell.renderHub(state)}
     </div>
     <div id="toasts"></div>
     <div id="modal-overlay" hidden><div class="modal" id="modal-body"></div></div>
@@ -203,15 +208,6 @@ function renderShell() {
 }
 
 function bindShell() {
-  UI.$$('.tabs [data-tab]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      tab = btn.dataset.tab;
-      UI.$$('.tabs [data-tab]').forEach((b) => b.classList.toggle('active', b === btn));
-      UI.$$('.panel').forEach((p) => p.classList.toggle('active', p.id === `panel-${tab}`));
-      refreshAll();
-    });
-  });
-
   UI.$('#auto-catch').checked = !!state.autoCatch;
   UI.$('#auto-catch').addEventListener('change', (e) => {
     state.autoCatch = e.target.checked;
@@ -226,10 +222,10 @@ function bindShell() {
     startLoop();
   });
 
-  UI.$('#btn-heal').addEventListener('click', () => {
+  UI.$('#btn-heal')?.addEventListener('click', () => {
     healTeam(state);
     refreshAll();
-    UI.toast('Équipe soignée !');
+    UI.toast('Équipe soignée');
   });
 
   UI.$('#btn-evolve-all')?.addEventListener('click', () => {
@@ -238,12 +234,15 @@ function bindShell() {
     refreshAll();
   });
 
-  UI.$('#btn-save').addEventListener('click', () => {
+  UI.$('#btn-save')?.addEventListener('click', () => {
+    const name = UI.$('#player-name')?.value?.trim();
+    if (name) state.playerName = name.slice(0, 16);
     saveGame(state);
     UI.toast('Partie sauvegardée');
+    refreshChrome();
   });
 
-  UI.$('#btn-reset').addEventListener('click', () => {
+  UI.$('#btn-reset')?.addEventListener('click', () => {
     if (confirm('Supprimer la sauvegarde et recommencer ?')) {
       clearInterval(tickTimer);
       clearInterval(saveTimer);
@@ -252,12 +251,73 @@ function bindShell() {
     }
   });
 
-  UI.$('#modal-overlay').addEventListener('click', (e) => {
+  UI.$('#modal-overlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-overlay') UI.hideModal();
   });
 
   UI.$('#app').addEventListener('click', onClick);
   UI.$('#app').addEventListener('input', onInput);
+}
+
+function setTab(id) {
+  tab = id;
+  hubOpen = false;
+  const hub = UI.$('#hub-overlay');
+  if (hub) hub.hidden = true;
+
+  const map = {
+    battle: 'battle',
+    pokemon: 'pokemon',
+    team: 'pokemon',
+    box: 'pokemon',
+    zones: 'zones',
+    shop: 'shop',
+    pass: 'pass',
+    quests: 'quests',
+    dex: 'dex',
+    profile: 'profile',
+    bonus: 'bonus',
+    settings: 'settings',
+    heal: 'battle',
+  };
+  const panelId = map[id] || 'battle';
+  tab = panelId === 'battle' ? 'battle' : id === 'hub' ? tab : panelId;
+
+  UI.$$('.panel').forEach((p) => {
+    p.classList.toggle('active', p.id === `panel-${panelId}`);
+  });
+
+  refreshAll();
+}
+
+function openHub() {
+  hubOpen = true;
+  const hub = UI.$('#hub-overlay');
+  if (hub) {
+    // re-render hub content for badges
+    hub.outerHTML = Shell.renderHub(state);
+    UI.$('#hub-overlay').hidden = false;
+  }
+  UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav('hub', state);
+}
+
+function closeHub() {
+  hubOpen = false;
+  const hub = UI.$('#hub-overlay');
+  if (hub) hub.hidden = true;
+  UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav(tab, state);
+}
+
+function refreshChrome() {
+  const top = UI.$('.pi-topbar');
+  if (top) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = Shell.renderTopbar(state);
+    top.replaceWith(tmp.firstElementChild);
+  }
+  if (!hubOpen) {
+    UI.$('#bottom-nav-host').innerHTML = Shell.renderBottomNav(tab, state);
+  }
 }
 
 function onInput(e) {
@@ -268,6 +328,54 @@ function onInput(e) {
 }
 
 function onClick(e) {
+  const nav = e.target.closest('[data-nav]');
+  if (nav) {
+    const id = nav.dataset.nav;
+    if (id === 'hub') {
+      if (hubOpen) closeHub();
+      else openHub();
+    } else {
+      setTab(id);
+    }
+    return;
+  }
+
+  if (e.target.closest('[data-hub-close]')) {
+    closeHub();
+    return;
+  }
+
+  const hubTile = e.target.closest('[data-hub]');
+  if (hubTile) {
+    const id = hubTile.dataset.hub;
+    if (id === 'heal') {
+      healTeam(state);
+      closeHub();
+      setTab('battle');
+      UI.toast('Équipe soignée');
+      return;
+    }
+    closeHub();
+    setTab(id);
+    return;
+  }
+
+  const claimQ = e.target.closest('[data-claim-quest]');
+  if (claimQ) {
+    const res = claimQuest(state, claimQ.dataset.claimQuest);
+    UI.toast(res.ok ? 'Récompense de quête récupérée' : 'Quête non disponible');
+    refreshAll();
+    return;
+  }
+
+  const claimP = e.target.closest('[data-claim-pass]');
+  if (claimP) {
+    const res = claimPassTier(state, Number(claimP.dataset.claimPass));
+    UI.toast(res.ok ? 'Palier du pass récupéré' : 'Palier verrouillé');
+    refreshAll();
+    return;
+  }
+
   const genChip = e.target.closest('[data-dex-gen]');
   if (genChip) {
     dexGen = Number(genChip.dataset.dexGen);
@@ -278,12 +386,12 @@ function onClick(e) {
   const catchBtn = e.target.closest('[data-catch]');
   if (catchBtn) {
     const res = attemptCatch(state, battle, catchBtn.dataset.catch);
-    if (!res.ok) UI.toast(res.reason === 'no-ball' ? 'Plus de Balls !' : 'Capture impossible');
+    if (!res.ok) UI.toast(res.reason === 'no-ball' ? 'Plus de Balls' : 'Capture impossible');
     else if (res.success) {
-      UI.toast(`Capturé ${pokeName(res.pokemon)} !`);
+      UI.toast(`Capturé ${pokeName(res.pokemon)}`);
       showCatchModal(res.pokemon);
       battle = createBattle(state);
-    } else UI.toast(`${res.ball.name} a échoué…`);
+    } else UI.toast(`${res.ball.name} a échoué`);
     refreshAll();
     return;
   }
@@ -305,7 +413,7 @@ function onClick(e) {
       UI.toast('Nouvelle zone');
     } else {
       const ok = unlockZone(state, id);
-      UI.toast(ok ? 'Zone débloquée !' : 'Fonds insuffisants');
+      UI.toast(ok ? 'Zone débloquée' : 'Fonds insuffisants');
       if (ok) {
         setZone(state, id);
         battle = createBattle(state);
@@ -320,7 +428,7 @@ function onClick(e) {
     const { act: a, uid, i } = act.dataset;
     if (a === 'evolve') {
       const neu = tryEvolvePokemon(state, uid);
-      if (neu) UI.toast(`Évolution en ${neu.nameFr} !`);
+      if (neu) UI.toast(`Évolution en ${neu.nameFr}`);
     } else if (a === 'box') moveToBox(state, uid);
     else if (a === 'team') {
       if (!moveToTeam(state, uid)) UI.toast('Équipe pleine (6 max)');
@@ -333,10 +441,10 @@ function showCatchModal(poke) {
   const sp = getSpecies(poke.speciesId);
   UI.showModal(`
     <div class="catch-modal">
-      <h2>${displayName(sp)} capturé !</h2>
+      <h2>${displayName(sp)} capturé</h2>
       <img src="${artUrl(poke.speciesId)}" alt="" />
-      <p><strong>N.${poke.level}</strong> · Gen ${sp.generation}${poke.shiny ? ' · ✨ Chromatique !' : ''}</p>
-      <button class="btn-primary" id="close-modal">Super !</button>
+      <p><strong>N.${poke.level}</strong> · Gen ${sp.generation}${poke.shiny ? ' · Chromatique' : ''}</p>
+      <button class="btn-primary" id="close-modal" type="button">Continuer</button>
     </div>
   `);
   UI.$('#close-modal').onclick = () => UI.hideModal();
@@ -344,15 +452,22 @@ function showCatchModal(poke) {
 
 function refreshAll() {
   if (!state) return;
+  syncQuestProgress(state);
   UI.updateHud(state);
-  UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
-  UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
-  UI.$('#log').innerHTML = UI.renderLog(state);
-  UI.$('#team-grid').innerHTML = UI.renderTeam(state);
-  UI.$('#box-grid').innerHTML = UI.renderBox(state);
-  UI.$('#zones-list').innerHTML = UI.renderZones(state);
-  UI.$('#shop-list').innerHTML = UI.renderShop(state);
-  if (tab === 'dex') {
+  refreshChrome();
+
+  if (UI.$('#battle-view')) UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
+  if (UI.$('#catch-btns')) UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
+  if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state);
+  if (UI.$('#team-grid')) UI.$('#team-grid').innerHTML = UI.renderTeam(state);
+  if (UI.$('#box-grid')) UI.$('#box-grid').innerHTML = UI.renderBox(state);
+  if (UI.$('#zones-list')) UI.$('#zones-list').innerHTML = UI.renderZones(state);
+  if (UI.$('#shop-list')) UI.$('#shop-list').innerHTML = UI.renderShop(state);
+  if (UI.$('#pass-view')) UI.$('#pass-view').innerHTML = Shell.renderPassPanel(state);
+  if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
+  if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
+  if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  if (tab === 'dex' && UI.$('#dex-view')) {
     UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
   }
 }
@@ -393,17 +508,6 @@ function gameTick() {
   if (events.length) {
     refreshAll();
     if (typeof UI.applyBattleFx === 'function') UI.applyBattleFx(events);
-    else {
-      const hit = events.find((e) => e.type === 'attack');
-      if (hit) {
-        const sel = hit.who === 'player' ? '.enemy-sprite' : '.ally-sprite';
-        const el = UI.$(sel);
-        if (el) {
-          el.classList.add('hit');
-          setTimeout(() => el.classList.remove('hit'), 180);
-        }
-      }
-    }
   }
 }
 

@@ -17,21 +17,29 @@ import {
   speciesCount,
   allSpecies,
 } from './pokemon.js';
+import { addLog } from './game-log.js';
+import { ensureDaily, initDailyBaselines } from './quests.js';
 
-const SAVE_KEY = 'pokeidle_fan_save_v2';
-const SAVE_KEY_LEGACY = 'pokeidle_fan_save_v1';
+const SAVE_KEY = 'pokiiiii_save_v3';
+const SAVE_KEY_LEGACY = ['pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
 
 export const BALLS = {
-  pokeball: { id: 'pokeball', name: 'Poké Ball', bonus: 1, price: 200, emoji: '🔴' },
-  greatball: { id: 'greatball', name: 'Super Ball', bonus: 1.5, price: 600, emoji: '🔵' },
-  ultraball: { id: 'ultraball', name: 'Hyper Ball', bonus: 2, price: 1200, emoji: '🟡' },
-  masterball: { id: 'masterball', name: 'Master Ball', bonus: 100, price: 75000, emoji: '🟣' },
+  pokeball: { id: 'pokeball', name: 'Poké Ball', bonus: 1, price: 200, icon: 'ball' },
+  greatball: { id: 'greatball', name: 'Super Ball', bonus: 1.5, price: 600, icon: 'greatball' },
+  ultraball: { id: 'ultraball', name: 'Hyper Ball', bonus: 2, price: 1200, icon: 'ultraball' },
+  masterball: { id: 'masterball', name: 'Master Ball', bonus: 100, price: 75000, icon: 'masterball' },
+};
+
+export const BRAND = {
+  name: 'Pokiiiii',
+  tagline: 'Idle national · 1v1 · Gen I–IX',
 };
 
 export function createNewGame(starterId) {
   const starter = createPokemon(starterId, 5);
-  return {
-    version: 2,
+  const state = {
+    version: 3,
+    playerName: 'Dresseur',
     money: 800,
     balls: { pokeball: 15, greatball: 2, ultraball: 0, masterball: 0 },
     team: [starter],
@@ -47,7 +55,11 @@ export function createNewGame(starterId) {
     lastTick: Date.now(),
     startedAt: Date.now(),
     log: [],
+    daily: null,
+    dailyBaselines: null,
   };
+  initDailyBaselines(state);
+  return state;
 }
 
 export function getZone(id) {
@@ -56,26 +68,30 @@ export function getZone(id) {
 
 export function saveGame(state) {
   state.lastTick = Date.now();
-  state.version = 2;
+  state.version = 3;
   localStorage.setItem(SAVE_KEY, JSON.stringify(state));
 }
 
 export function loadGame() {
   try {
     let raw = localStorage.getItem(SAVE_KEY);
-    let fromLegacy = false;
     if (!raw) {
-      raw = localStorage.getItem(SAVE_KEY_LEGACY);
-      fromLegacy = !!raw;
+      for (const k of SAVE_KEY_LEGACY) {
+        raw = localStorage.getItem(k);
+        if (raw) break;
+      }
     }
     if (!raw) return null;
     const state = JSON.parse(raw);
-    state.version = 2;
+    state.version = 3;
+    if (!state.playerName) state.playerName = 'Dresseur';
     if (!state.balls) state.balls = { pokeball: 10, greatball: 0, ultraball: 0, masterball: 0 };
     if (!state.balls.masterball) state.balls.masterball = 0;
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
+    initDailyBaselines(state);
+    ensureDaily(state);
     // Ensure current zone still exists
     if (!getZone(state.currentZone)) {
       state.currentZone = ZONES[0].id;
@@ -92,7 +108,7 @@ export function loadGame() {
     if (!state.team.length) {
       state.team = [createPokemon(STARTERS[0], 5)];
     }
-    if (fromLegacy) saveGame(state);
+    saveGame(state);
     return state;
   } catch {
     return null;
@@ -100,18 +116,16 @@ export function loadGame() {
 }
 
 export function hasSave() {
-  return !!(localStorage.getItem(SAVE_KEY) || localStorage.getItem(SAVE_KEY_LEGACY));
+  if (localStorage.getItem(SAVE_KEY)) return true;
+  return SAVE_KEY_LEGACY.some((k) => !!localStorage.getItem(k));
 }
 
 export function clearSave() {
   localStorage.removeItem(SAVE_KEY);
-  localStorage.removeItem(SAVE_KEY_LEGACY);
+  for (const k of SAVE_KEY_LEGACY) localStorage.removeItem(k);
 }
 
-export function addLog(state, msg, type = 'info') {
-  state.log.unshift({ msg, type, t: Date.now() });
-  if (state.log.length > 100) state.log.length = 100;
-}
+export { addLog };
 
 function randomFrom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];

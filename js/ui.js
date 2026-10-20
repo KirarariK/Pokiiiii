@@ -10,8 +10,9 @@ import {
   speciesCount,
   allSpecies,
 } from './pokemon.js';
-import { BALLS, ZONES } from './game.js';
+import { BALLS, ZONES, BRAND } from './game.js';
 import { STARTERS_BY_GEN, GEN_META } from './data/starters.js';
+import { icon } from './icons.js';
 
 const REGION_FR = {
   kanto: 'Kanto',
@@ -445,7 +446,7 @@ export function renderShop(state) {
     .map(
       (b) => `
     <div class="shop-item">
-      <div class="shop-icon">${b.emoji}</div>
+      <div class="shop-icon ico-wrap">${icon(b.icon || 'ball')}</div>
       <div>
         <strong>${b.name}</strong>
         <div class="muted">Bonus ×${b.bonus} · Stock: ${state.balls[b.id] || 0}</div>
@@ -472,9 +473,9 @@ export function renderCatchButtons(state, battle) {
     .map((b) => {
       const n = state.balls[b.id] || 0;
       return `<button class="ball-btn" data-catch="${b.id}" ${!wildAlive || n <= 0 ? 'disabled' : ''}>
-        <span class="ball-emoji">${b.emoji}</span>
+        <span class="ball-ico">${icon(b.icon || 'ball')}</span>
         <span class="ball-label">${b.name}</span>
-        <span class="ball-stock">(${n})</span>
+        <span class="ball-stock">${n}</span>
       </button>`;
     })
     .join('');
@@ -559,15 +560,16 @@ export function renderStarterSelect(selectedGen = 1) {
     .join('');
 
   const hasSave =
+    localStorage.getItem('pokiiiii_save_v3') ||
     localStorage.getItem('pokeidle_fan_save_v2') ||
     localStorage.getItem('pokeidle_fan_save_v1');
 
   return `
     <div class="starter-screen">
       <div class="starter-hero">
-        <p class="brand-mark">PokéIdle</p>
+        <p class="brand-mark">${icon('logo')} ${BRAND.name}</p>
         <h1>Choisissez votre starter</h1>
-        <p class="subtitle">Tout le Pokédex · ${speciesCount()} Pokémon · Duels 1v1 idle</p>
+        <p class="subtitle">${BRAND.tagline} · ${speciesCount()} Pokémon</p>
       </div>
       <div class="chip-row starter-gens">${tabs}</div>
       <p class="starter-region">Région · ${meta.name}</p>

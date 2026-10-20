@@ -1923,3 +1923,423 @@ select {
   font-weight: 500;
   font-size: 0.8rem;
 }
+
+/* ===== Pokiiiii shell: topbar, bottom nav, hub ===== */
+.pi-shell {
+  padding-bottom: 5.5rem;
+  max-width: 720px;
+}
+
+.pi-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(12, 18, 32, 0.92);
+  border: 1px solid #2a3a55;
+  border-radius: 16px;
+  position: sticky;
+  top: 0.5rem;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+}
+
+.pi-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pi-logo {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1e3a5f, #0f1b2e);
+  border: 1px solid #3b82f6;
+  color: #93c5fd;
+}
+
+.pi-logo .ico { width: 22px; height: 22px; }
+
+.pi-title {
+  font-family: var(--font-display, Oxanium, sans-serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: #f5c518;
+}
+
+.pi-brand small {
+  display: block;
+  color: #8b9bb8;
+  font-size: 0.75rem;
+}
+
+.pi-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.pi-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #152033;
+  border: 1px solid #2a3a55;
+  font-size: 0.82rem;
+  color: #e8eefc;
+}
+
+.pi-pill .ico { width: 14px; height: 14px; color: #60a5fa; }
+.pi-pill.gold .ico { color: #f5c518; }
+
+.pi-content {
+  padding: 0.75rem 0 1rem;
+}
+
+.pi-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(720px, 100%);
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0;
+  background: #0c1220;
+  border-top: 1px solid #243049;
+  padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
+  z-index: 40;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.35rem 0.2rem;
+  color: #7f92b3;
+  font-size: 0.68rem;
+}
+
+.nav-item .ico { width: 22px; height: 22px; }
+
+.nav-item.active {
+  color: #f5c518;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: #e11d48;
+  border-radius: 2px;
+}
+
+.nav-ico { position: relative; display: grid; place-items: center; }
+
+.nav-badge, .hub-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e11d48;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+/* Hub overlay */
+.hub-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(4, 8, 18, 0.72);
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 0;
+}
+
+.hub-overlay[hidden] { display: none !important; }
+
+.hub-sheet {
+  width: min(520px, 100%);
+  max-height: min(92vh, 820px);
+  overflow: auto;
+  background: #10182a;
+  border: 1px solid #2a3a55;
+  border-radius: 22px 22px 0 0;
+  padding: 0 1rem 1.25rem;
+  box-shadow: 0 -20px 60px rgba(0,0,0,.45);
+}
+
+.hub-accent {
+  height: 4px;
+  margin: 0 -1rem 0.85rem;
+  background: linear-gradient(90deg, #2563eb, #f8fafc, #e11d48);
+}
+
+.hub-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.hub-head h2 {
+  margin: 0;
+  font-family: var(--font-display, Oxanium, sans-serif);
+  letter-spacing: 0.12em;
+}
+
+.hub-head p {
+  margin: 0.2rem 0 0;
+  color: #8b9bb8;
+  font-size: 0.85rem;
+}
+
+.hub-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #93c5fd;
+  background: #152033;
+}
+
+.hub-close .ico { width: 18px; height: 18px; }
+
+.hub-section { margin-bottom: 1.1rem; }
+
+.hub-section h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7f92b3;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.55rem;
+}
+
+.hub-tile {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: #152033;
+  border: 1px solid #2f4a72;
+  border-radius: 16px;
+  color: #dbe7ff;
+  padding: 0.4rem;
+}
+
+.hub-tile-ico {
+  color: #60a5fa;
+  display: grid;
+  place-items: center;
+}
+
+.hub-tile-ico .ico { width: 26px; height: 26px; }
+
+.hub-tile-label {
+  font-size: 0.72rem;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.hub-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.hub-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  background: #152033;
+  border: 1px solid #2f4a72;
+  color: #c7d7f5;
+  font-size: 0.8rem;
+}
+
+.hub-chip .ico { width: 16px; height: 16px; color: #60a5fa; }
+
+/* Quests / Pass */
+.quest-list, .pass-track { display: grid; gap: 0.65rem; }
+
+.quest-card, .pass-tier, .bonus-card, .profile-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  background: #152033;
+  border: 1px solid #2a3a55;
+  border-radius: 14px;
+  padding: 0.85rem;
+}
+
+.quest-card.ready, .pass-tier.ready { border-color: #f5c518; }
+.quest-card.done, .pass-tier.claimed { opacity: 0.65; }
+
+.quest-ico, .bonus-ico, .profile-avatar, .pass-hero-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #0f1a2c;
+  border: 1px solid #2f4a72;
+  color: #60a5fa;
+}
+
+.quest-ico .ico, .bonus-ico .ico, .profile-avatar .ico, .pass-hero-ico .ico {
+  width: 22px; height: 22px;
+}
+
+.quest-body p { margin: 0.15rem 0 0.4rem; color: #8b9bb8; font-size: 0.85rem; }
+
+.quest-bar, .pass-bar {
+  height: 6px;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.quest-bar > div, .pass-bar > div {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #f5c518);
+}
+
+.quest-prog { font-size: 0.72rem; color: #93c5fd; }
+
+.btn-claim {
+  white-space: nowrap;
+  background: #1d4ed8;
+  border-color: #3b82f6;
+  font-size: 0.78rem;
+}
+
+.pass-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  background: linear-gradient(135deg, #152033, #1a1040);
+  border: 1px solid #2f4a72;
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.pass-tier {
+  grid-template-columns: 36px 1fr auto;
+  text-align: left;
+  width: 100%;
+}
+
+.pass-num {
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  background: #0f1a2c;
+  border: 1px solid #3b82f6;
+  color: #93c5fd;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.pass-need { display: block; font-size: 0.72rem; color: #8b9bb8; }
+.pass-reward { display: block; font-size: 0.85rem; }
+.pass-state { font-size: 0.72rem; color: #f5c518; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.stat-box {
+  background: #152033;
+  border: 1px solid #2a3a55;
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+.stat-box span { display: block; color: #8b9bb8; font-size: 0.75rem; }
+.stat-box strong { font-size: 1.05rem; }
+
+.subhead {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.95rem;
+  color: #c4b5fd;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 280px;
+}
+
+.field input {
+  background: #152033;
+  border: 1px solid #2a3a55;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+}
+
+.ball-ico { display: inline-flex; color: #93c5fd; }
+.ball-ico .ico { width: 18px; height: 18px; vertical-align: middle; }
+.shop-icon.ico-wrap { color: #60a5fa; }
+.shop-icon .ico { width: 28px; height: 28px; }
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #f5c518;
+  font-family: var(--font-display, Oxanium, sans-serif);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.brand-mark .ico { width: 22px; height: 22px; color: #60a5fa; }
+
+@media (max-width: 560px) {
+  .hub-grid { grid-template-columns: repeat(3, 1fr); }
+  .nav-label { font-size: 0.62rem; }
+  .quest-card { grid-template-columns: auto 1fr; }
+  .quest-card .btn-claim { grid-column: 1 / -1; }
+}
