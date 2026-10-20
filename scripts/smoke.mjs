@@ -1,5 +1,5 @@
 /**
- * Node ESM smoke tests for Shinobiiii (no browser).
+ * Node ESM smoke tests for Nindō (no browser).
  * Polyfills: fetch (JSON from disk), localStorage, minimal location.
  */
 import { readFile, readdir } from 'node:fs/promises';

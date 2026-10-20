@@ -380,10 +380,11 @@ function renderShell() {
           <div class="panel-head"><h2>${icon('settings')} Options</h2></div>
           <div class="settings settings-board">
             <div class="settings-hero">
-              <span class="settings-hero-ico">${icon('logo')}</span>
+              <img class="settings-hero-logo" src="${BRAND.logo}" alt="" width="48" height="48" />
               <div>
                 <strong>${BRAND.name}</strong>
-                <p>Sauvegarde auto · ${speciesCount()} shinobi Sagas I–IV</p>
+                <p>${BRAND.tagline}</p>
+                <p class="muted tiny">Sauvegarde auto · ${speciesCount()} shinobi Sagas I–IV</p>
               </div>
             </div>
 
