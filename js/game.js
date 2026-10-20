@@ -19,9 +19,9 @@ import {
 } from './pokemon.js';
 import { addLog } from './game-log.js';
 import { ensureDaily, initDailyBaselines } from './quests.js';
-import { ensureArena } from './arena.js';
 import { ensureExpeditions, expeditionBusyUids } from './expedition.js';
 import { ensureDaycare, daycareBusyUids } from './daycare.js';
+import { ensureArena } from './arena.js';
 
 const SAVE_KEY = 'pokiiiii_save_v3';
 const SAVE_KEY_LEGACY = ['pokeidle_fan_save_v2', 'pokeidle_fan_save_v1'];
@@ -60,10 +60,10 @@ export function createNewGame(starterId) {
     log: [],
     daily: null,
     dailyBaselines: null,
-    badges: {},
-    arenaWins: 0,
     expeditions: [],
     daycare: [],
+    badges: {},
+    arenaWins: 0,
   };
   initDailyBaselines(state);
   ensureArena(state);
@@ -108,9 +108,9 @@ export function loadGame() {
     if (!state.box) state.box = [];
     if (!state.stats) state.stats = { battles: 0, catches: 0, moneyEarned: 0, playTime: 0 };
     if (!state.log) state.log = [];
-    ensureArena(state);
     ensureExpeditions(state);
     ensureDaycare(state);
+    ensureArena(state);
     initDailyBaselines(state);
     ensureDaily(state);
     // Ensure current zone still exists

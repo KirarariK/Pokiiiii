@@ -41,6 +41,30 @@ import {
   daycareBusyUids,
 } from './daycare.js';
 
+
+function handleGymChallenge(gymId) {
+  ensureArena(state);
+  const res = challengeGym(state, gymId);
+  if (!res.ok) {
+    const msg =
+      res.reason === 'already'
+        ? 'Badge déjà obtenu'
+        : res.reason === 'locked'
+          ? res.needLeader
+            ? `Battre ${res.needLeader} ou N.${res.need}`
+            : `Niveau N.${res.need} requis`
+          : 'Défi impossible';
+    UI.toast(msg);
+  } else if (res.win) {
+    const label = res.badgeName || res.badgeId || res.badge || 'Badge';
+    UI.toast(`Victoire ! ${label} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
+  } else {
+    UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
+  }
+  saveGame(state);
+  refreshAll();
+}
+
 let state = null;
 let battle = null;
 let tickTimer = null;
@@ -224,12 +248,12 @@ function renderShell() {
           <div id="pension-view"></div>
         </section>
 
-        <section id="panel-bonus" class="panel">
-          <div id="bonus-view"></div>
-        </section>
-
         <section id="panel-arenas" class="panel">
           <div id="arenas-view"></div>
+        </section>
+
+        <section id="panel-bonus" class="panel">
+          <div id="bonus-view"></div>
         </section>
 
         <section id="panel-settings" class="panel">
@@ -323,10 +347,10 @@ function setTab(id) {
     dex: 'dex',
     profile: 'profile',
     bonus: 'bonus',
-    expeditions: 'expeditions',
-    pension: 'pension',
     arenas: 'arenas',
     arena: 'arenas',
+    expeditions: 'expeditions',
+    pension: 'pension',
     settings: 'settings',
     heal: 'battle',
   };
@@ -378,20 +402,6 @@ function onInput(e) {
 }
 
 function onClick(e) {
-  const challenge = e.target.closest('[data-challenge-gym]');
-  if (challenge) {
-    ensureArena(state);
-    const res = challengeGym(state, challenge.dataset.challengeGym);
-    if (!res.ok) {
-      UI.toast(res.reason === 'already' ? 'Badge déjà obtenu' : res.reason === 'locked' ? (res.needLeader ? `Battre ${res.needLeader} ou N.${res.need}` : `Niveau N.${res.need} requis`) : 'Défi impossible');
-    } else if (res.win) {
-      UI.toast(`Victoire ! Badge ${res.badgeId || res.badge} · +${(res.money || res.reward || 0).toLocaleString('fr-FR')} ₽`);
-    } else {
-      UI.toast(`Défaite contre ${res.gym?.leaderName || 'le champion'}…`);
-    }
-    refreshAll();
-    return;
-  }
   const nav = e.target.closest('[data-nav]');
   if (nav) {
     const id = nav.dataset.nav;
@@ -577,7 +587,6 @@ function showCatchModal(poke) {
 
 function refreshAll() {
   if (!state) return;
-  if (UI.$('#arenas-view')) UI.$('#arenas-view').innerHTML = renderArenasPanel(state);
   syncQuestProgress(state);
   refreshChrome();
   UI.updateHud(state);
@@ -593,6 +602,10 @@ function refreshAll() {
   if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
   if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
   if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  const arenasRoot = UI.$('#arenas-view');
+  if (arenasRoot && (tab === 'arenas' || tab === 'arena')) {
+    renderArenasPanel(arenasRoot, state, { onChallenge: handleGymChallenge });
+  }
   if (UI.$('#expeditions-view')) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
   if (UI.$('#pension-view')) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
   if (tab === 'dex' && UI.$('#dex-view')) {

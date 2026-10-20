@@ -99,7 +99,7 @@ export function renderHub(state) {
           <h3>Aventure</h3>
           <div class="hub-grid">
             ${tile('zones', 'Zones', 'map')}
-            ${tile('arenas', 'Arènes', 'arena')}
+            ${tile('arenas', 'Arènes', 'arena', arenaN)}
             ${tile('battle', 'Combat', 'swords')}
             ${tile('pokemon', 'Équipe / PC', 'cube')}
           </div>
@@ -218,6 +218,7 @@ export function renderProfile(state) {
       <div class="stat-box"><span>Pokédex</span><strong>${caught}/${speciesCount()}</strong></div>
       <div class="stat-box"><span>Zone</span><strong>${zone?.name || '—'}</strong></div>
       <div class="stat-box"><span>Temps</span><strong>${Math.floor(state.stats.playTime / 60)} min</strong></div>
+      <div class="stat-box"><span>Badges</span><strong>${ownedBadgeCount(state)}</strong></div>
     </div>`;
 }
 

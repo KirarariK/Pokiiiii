@@ -2432,3 +2432,10 @@ select {
   .arena-actions { grid-column: 1 / -1; }
   .arena-actions button { width: 100%; }
 }
+
+.arena-progress{display:grid;gap:.35rem;margin-bottom:.85rem}
+.arena-progress-row{display:grid;grid-template-columns:4.5rem 1fr 2.2rem;gap:.45rem;align-items:center;font-size:.72rem;color:var(--muted)}
+.arena-progress-bar{height:6px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.arena-progress-bar>div{height:100%;background:linear-gradient(90deg,#f5c518,#60a5fa);border-radius:inherit}
+.arena-progress-row strong{text-align:right;color:var(--text);font-size:.7rem}
+.arena-badge-ico .ico{width:36px;height:36px;color:#60a5fa}

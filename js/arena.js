@@ -145,14 +145,20 @@ export function challengeGym(state, gymId) {
   state.stats.moneyEarned = (state.stats.moneyEarned || 0) + gym.rewardMoney;
   state.stats.battles = (state.stats.battles || 0) + gymTeam.length;
   state.badges[gym.badgeId] = {
-    gymId: gym.id, badge: gym.badgeId, at: Date.now(),
-    leader: gym.leaderName, region: gym.region, type: gym.type,
+    gymId: gym.id,
+    badge: gym.badgeId,
+    badgeName: gym.badgeName,
+    at: Date.now(),
+    leader: gym.leaderName,
+    region: gym.region,
+    type: gym.type,
+    champion: !!gym.champion,
   };
   state.arenaWins = (state.arenaWins || 0) + 1;
-  const kind = gym.champion ? 'Titre de Champion' : 'Badge';
+  const kind = gym.champion ? 'Titre de Champion' : (gym.badgeName || 'Badge');
   addLog(state, `${kind} remporté : ${gym.leaderName} (${REGION_LABELS[gym.region] || gym.region}) — +${gym.rewardMoney}₽`, 'unlock');
   healTeamSilent(state);
-  return { ok: true, win: true, gym, duels: duelLogs, playerFaints, money: gym.rewardMoney, reward: gym.rewardMoney, badgeId: gym.badgeId, badge: gym.badgeId };
+  return { ok: true, win: true, gym, duels: duelLogs, playerFaints, money: gym.rewardMoney, reward: gym.rewardMoney, badgeId: gym.badgeId, badge: gym.badgeId, badgeName: gym.badgeName };
 }
 
 export function ownedBadgeIds(state) {
@@ -164,12 +170,19 @@ export function badgeCount(state) {
   return ownedBadgeIds(state).length;
 }
 
+/** Arènes actuellement défiables (compteur Hub) */
+export function readyGymCount(state) {
+  ensureArena(state);
+  return GYMS.filter((g) => canChallengeGym(state, g).ok).length;
+}
+
 export function arenaSummary(state) {
   ensureArena(state);
   return {
     owned: ownedBadgeIds(state).length,
     total: GYMS.length,
     wins: state.arenaWins || 0,
+    ready: readyGymCount(state),
     byRegion: REGION_ORDER.map((r) => {
       const list = gymsByRegion(r);
       return { region: r, label: REGION_LABELS[r], got: list.filter((g) => hasBadge(state, g.badgeId)).length, total: list.length };
@@ -187,19 +200,25 @@ export function badgeIconSvg(type, owned = true) {
   </svg>`;
 }
 
-export function renderArenasPanel(state) {
-  return renderArenaPanel(state);
-}
-
-export function renderArenaPanel(state) {
+function buildArenasHtml(state) {
   ensureArena(state);
   const summary = arenaSummary(state);
   const lvl = teamMaxLevel(state);
   const showcase = GYMS.map((g) => {
     const owned = hasBadge(state, g.badgeId);
-    return `<div class="badge-slot ${owned ? 'owned' : 'empty'}" title="${g.leaderName} — ${TYPE_FR[g.type] || g.type}">
+    const label = owned ? (g.champion ? 'Champ.' : 'Badge') : '—';
+    return `<div class="badge-slot ${owned ? 'owned' : 'empty'}" title="${g.badgeName || g.leaderName} — ${TYPE_FR[g.type] || g.type}">
       ${badgeIconSvg(g.type, owned)}
-      <span>${owned ? (g.champion ? 'Champ.' : 'Badge') : '—'}</span>
+      <span>${label}</span>
+    </div>`;
+  }).join('');
+
+  const progressBars = summary.byRegion.map((r) => {
+    const pct = r.total ? Math.round((r.got / r.total) * 100) : 0;
+    return `<div class="arena-progress-row" title="${r.label}">
+      <span>${r.label}</span>
+      <div class="arena-progress-bar"><div style="width:${pct}%"></div></div>
+      <strong>${r.got}/${r.total}</strong>
     </div>`;
   }).join('');
 
@@ -214,8 +233,8 @@ export function renderArenaPanel(state) {
       }).join(', ');
       let status, btn;
       if (owned) {
-        status = '<span class="arena-status won">Vaincu</span>';
-        btn = '<button type="button" class="btn-secondary" disabled>Badge obtenu</button>';
+        status = `<span class="arena-status won">${g.badgeName || 'Badge'} obtenu</span>`;
+        btn = '<button type="button" class="btn-secondary" disabled>Obtenu</button>';
       } else if (gate.ok) {
         status = `<span class="arena-status ready">Disponible · N.${g.minTeamLevel}+</span>`;
         btn = `<button type="button" class="btn-primary" data-challenge-gym="${g.id}">Défier</button>`;
@@ -226,13 +245,14 @@ export function renderArenaPanel(state) {
         status = `<span class="arena-status locked">${tip}</span>`;
         btn = '<button type="button" class="btn-secondary" disabled>Verrouillé</button>';
       }
+      const ico = g.champion ? icon('trophy') : badgeIconSvg(g.type, owned || gate.ok);
       return `<article class="arena-card ${owned ? 'done' : gate.ok ? 'ready' : 'locked'} ${g.champion ? 'champ' : ''}">
-          <div class="arena-badge-ico">${badgeIconSvg(g.type, owned || gate.ok)}</div>
+          <div class="arena-badge-ico">${ico}</div>
           <div class="arena-body">
             <strong>${g.name}</strong>
             <p>${g.champion ? 'Champion' : 'Champion d’arène'} <em>${g.leaderName}</em> · ${TYPE_FR[g.type] || g.type} · Gen ${g.gen}</p>
             <p class="muted arena-team">${teamPreview}</p>
-            <p class="muted">Récompense : ${g.rewardMoney.toLocaleString('fr-FR')} ₽</p>
+            <p class="muted">${g.badgeName} · ${g.rewardMoney.toLocaleString('fr-FR')} ₽</p>
             ${status}
           </div>
           <div class="arena-actions">${btn}</div>
@@ -247,7 +267,7 @@ export function renderArenaPanel(state) {
 
   return `
     <div class="panel-head">
-      <h2>Arènes</h2>
+      <h2>${icon('arena')} Arènes</h2>
       <span class="muted">${summary.owned}/${summary.total} badges · ${summary.wins} victoire(s) · Équipe N.${lvl}</span>
     </div>
     <div class="badge-showcase">
@@ -258,9 +278,29 @@ export function renderArenaPanel(state) {
           <p class="muted">Défie les champions d’arène région par région.</p>
         </div>
       </div>
+      <div class="arena-progress">${progressBars}</div>
       <div class="badge-grid">${showcase}</div>
     </div>
     ${regions}`;
+}
+
+/**
+ * Monte le panneau Arènes dans `root` et branche les défis via handlers.onChallenge(gymId).
+ */
+export function renderArenasPanel(root, state, handlers = {}) {
+  if (!root) return;
+  ensureArena(state);
+  root.innerHTML = buildArenasHtml(state);
+  root.querySelectorAll('[data-challenge-gym]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      handlers.onChallenge?.(btn.dataset.challengeGym);
+    });
+  });
+}
+
+/** HTML brut (tests / aperçu) */
+export function renderArenaPanelHtml(state) {
+  return buildArenasHtml(state);
 }
 
 export { GYMS, getGym, gymsByRegion, REGION_ORDER, REGION_LABELS, previousGym };
