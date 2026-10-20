@@ -264,6 +264,7 @@ export function loadGame() {
     if (!state.team.length) {
       state.team = [createPokemon(STARTERS[0], 5)];
     }
+    // Toujours réécrire sous nindo_save_v1 (migration auto)
     saveGame(state);
     return state;
   } catch {
