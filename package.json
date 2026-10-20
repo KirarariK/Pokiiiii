@@ -1,0 +1,11 @@
+{
+  "name": "pokeidle-fan",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PokéIdle-like fan idle game (Kanto) — navigateur",
+  "scripts": {
+    "start": "python3 -m http.server 4173 --bind 0.0.0.0",
+    "serve": "python3 -m http.server 4173 --bind 0.0.0.0"
+  }
+}
