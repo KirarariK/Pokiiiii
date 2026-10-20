@@ -196,9 +196,10 @@ export function renderBattle(state, battle) {
           </div>
           <div class="sprite-wrap ally-wrap">
             <img class="battle-sprite ally-sprite ${fighter.hp <= 0 ? 'faint' : ''} ${fighter.shiny ? 'shiny-sparkle' : ''}"
+              data-sid="${fighter.speciesId}" data-uid="${fighter.uid || ''}"
               src="${artUrl(fighter.speciesId)}" alt="${pokeName(fighter)}"
               onerror="this.onerror=null;this.src='${spriteUrl(fighter.speciesId)}'" />
-            <div class="dmg-layer">${floatHtml(float, 'ally')}</div>
+            <div class="dmg-layer" data-dmg="ally">${floatHtml(float, 'ally')}</div>
             <div class="battle-platform ally-platform" aria-hidden="true"></div>
           </div>
         </div>
@@ -206,16 +207,17 @@ export function renderBattle(state, battle) {
         <div class="battle-vs">
           <span class="vs-badge">VS</span>
           <div class="turn-badge">Tour ${battle.turn || 0} · ${turnHint}</div>
-          ${label ? `<div class="eff-banner ${labelKind}">${label}</div>` : ''}
+          <div class="eff-slot">${label ? `<div class="eff-banner ${labelKind}">${label}</div>` : ''}</div>
         </div>
 
         <div class="battle-side enemy ${actingEnemy ? 'acting' : ''}" data-side="enemy">
           <div class="sprite-wrap enemy-wrap">
             ${wild.shiny ? '<div class="shiny-burst" aria-hidden="true"></div>' : ''}
             <img class="battle-sprite enemy-sprite ${wild.hp <= 0 ? 'faint' : ''} ${wild.shiny ? 'shiny-glow shiny-sparkle' : ''}"
+              data-sid="${wild.speciesId}"
               src="${artUrl(wild.speciesId)}" alt="${pokeName(wild)}"
               onerror="this.onerror=null;this.src='${spriteUrl(wild.speciesId)}'" />
-            <div class="dmg-layer">${floatHtml(float, 'enemy')}</div>
+            <div class="dmg-layer" data-dmg="enemy">${floatHtml(float, 'enemy')}</div>
             <div class="battle-platform enemy-platform" aria-hidden="true"></div>
           </div>
           <div class="battle-info">
@@ -275,6 +277,111 @@ export function applyBattleFx(events = []) {
       flashHit(ev.who === 'player' ? 'enemy' : 'ally');
     }
   }
+}
+
+function patchHpRow(sideRoot, hp, maxHp) {
+  if (!sideRoot) return;
+  const pct = Math.max(0, Math.min(100, (hp / Math.max(1, maxHp)) * 100));
+  let color = '#4ade80';
+  if (pct <= 50) color = '#facc15';
+  if (pct <= 20) color = '#f87171';
+  const fill = sideRoot.querySelector('.hp-fill');
+  const label = sideRoot.querySelector('.hp-text');
+  const bar = sideRoot.querySelector('.hp-bar');
+  if (fill) {
+    fill.style.width = `${pct}%`;
+    fill.style.background = color;
+  }
+  if (label) label.textContent = `${Math.max(0, Math.ceil(hp))}/${maxHp}`;
+  if (bar) bar.title = `${Math.ceil(hp)}/${maxHp}`;
+}
+
+/**
+ * Met à jour PV / tour / floats sans recréer les <img> (évite le flicker).
+ * @returns {boolean} false si un re-render complet est nécessaire
+ */
+export function patchBattle(state, battle) {
+  const root = $('#battle-view');
+  const arena = root?.querySelector('.battle-arena');
+  if (!arena || !battle?.wild) return false;
+
+  const fighter = state.team.find((p) => p.hp > 0) || state.team[0];
+  const wild = battle.wild;
+  if (!fighter) return false;
+
+  const allyImg = arena.querySelector('.ally-sprite');
+  const enemyImg = arena.querySelector('.enemy-sprite');
+  if (!allyImg || !enemyImg) return false;
+  if (Number(allyImg.dataset.sid) !== Number(fighter.speciesId)) return false;
+  if (Number(enemyImg.dataset.sid) !== Number(wild.speciesId)) return false;
+
+  const allySide = arena.querySelector('.battle-side.ally');
+  const enemySide = arena.querySelector('.battle-side.enemy');
+  patchHpRow(allySide, fighter.hp, fighter.maxHp);
+  patchHpRow(enemySide, wild.hp, wild.maxHp);
+
+  allyImg.classList.toggle('faint', fighter.hp <= 0);
+  enemyImg.classList.toggle('faint', wild.hp <= 0);
+
+  const next = battle.nextActor;
+  allySide?.classList.toggle('acting', !battle.over && next === 'player');
+  enemySide?.classList.toggle('acting', !battle.over && next === 'wild');
+
+  const turnHint = battle.over
+    ? battle.result === 'win'
+      ? 'Victoire'
+      : battle.result === 'catch'
+        ? 'Capturé'
+        : 'Défaite'
+    : next === 'player'
+      ? `${pokeName(fighter)} attaque`
+      : `${pokeName(wild)} attaque`;
+  const turnBadge = arena.querySelector('.turn-badge');
+  if (turnBadge) turnBadge.textContent = `Tour ${battle.turn || 0} · ${turnHint}`;
+
+  const float = battle.lastFloat;
+  const allyDmg = arena.querySelector('[data-dmg="ally"]');
+  const enemyDmg = arena.querySelector('[data-dmg="enemy"]');
+  if (allyDmg) allyDmg.innerHTML = floatHtml(float, 'ally');
+  if (enemyDmg) enemyDmg.innerHTML = floatHtml(float, 'enemy');
+
+  const label = battle.lastLabel;
+  const labelKind =
+    battle.lastAttack?.typeMult === 0
+      ? 'immune'
+      : (battle.lastAttack?.typeMult ?? 1) >= 2
+        ? 'super'
+        : (battle.lastAttack?.typeMult ?? 1) < 1
+          ? 'resist'
+          : '';
+  const effSlot = arena.querySelector('.eff-slot');
+  if (effSlot) {
+    effSlot.innerHTML = label ? `<div class="eff-banner ${labelKind}">${label}</div>` : '';
+  }
+
+  return true;
+}
+
+/** Met à jour les stocks Ball sans recréer les boutons si possible. */
+export function patchCatchButtons(state, battle) {
+  const host = $('#catch-btns');
+  if (!host) return false;
+  const btns = host.querySelectorAll('[data-catch]');
+  if (!btns.length) return false;
+  const wildAlive = battle && !battle.over && battle.wild.hp > 0;
+  let ok = true;
+  btns.forEach((btn) => {
+    const id = btn.dataset.catch;
+    const n = state.balls[id] || 0;
+    const stock = btn.querySelector('.ball-stock');
+    if (!stock) {
+      ok = false;
+      return;
+    }
+    stock.textContent = String(n);
+    btn.disabled = !wildAlive || n <= 0;
+  });
+  return ok;
 }
 
 export function renderTeam(state) {

@@ -262,15 +262,26 @@ function renderShell() {
           <div id="battle-view"></div>
           <div class="battle-controls">
             <div id="catch-btns" class="catch-row"></div>
-            <div class="control-row">
-              <label class="chk"><input type="checkbox" id="auto-catch" /> Auto-capture</label>
-              <select id="auto-ball">
-                ${Object.values(BALLS)
-                  .map((b) => `<option value="${b.id}">${b.name}</option>`)
-                  .join('')}
-              </select>
-              <label class="speed">Vitesse
-                <select id="battle-speed">
+            <div class="control-dock">
+              <label class="pi-toggle" title="Capture auto sous 40% PV">
+                <input type="checkbox" id="auto-catch" />
+                <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
+                <span class="pi-toggle-copy">
+                  <strong>Auto-capture</strong>
+                  <small>sous 40% PV</small>
+                </span>
+              </label>
+              <label class="pi-field">
+                <span class="pi-field-label">${icon('ball')} Ball</span>
+                <select id="auto-ball" class="pi-select">
+                  ${Object.values(BALLS)
+                    .map((b) => `<option value="${b.id}">${b.name}</option>`)
+                    .join('')}
+                </select>
+              </label>
+              <label class="pi-field">
+                <span class="pi-field-label">${icon('bolt')} Vitesse</span>
+                <select id="battle-speed" class="pi-select">
                   <option value="0.75">0.75×</option>
                   <option value="1" selected>1×</option>
                   <option value="1.5">1.5×</option>
@@ -279,7 +290,7 @@ function renderShell() {
                   <option value="5">5×</option>
                 </select>
               </label>
-              <button id="btn-heal" class="btn-secondary" type="button">Centre Pokémon</button>
+              <button id="btn-heal" class="btn-heal" type="button">${icon('heal')} Centre</button>
             </div>
           </div>
           <div class="log-panel">
@@ -362,46 +373,81 @@ function renderShell() {
         </section>
 
         <section id="panel-settings" class="panel">
-          <div class="panel-head"><h2>Options</h2></div>
-          <div class="settings">
-            <p>Sauvegarde auto · ${speciesCount()} espèces Gen I–IX · ${BRAND.name}</p>
-            <label class="field">Nom du dresseur
-              <input id="player-name" type="text" maxlength="16" value="${state.playerName || 'Dresseur'}" />
-            </label>
-            <label class="chk settings-mute">
-              <input id="opt-mute" type="checkbox" ${state.settings?.mute ? 'checked' : ''} />
-              ${icon(state.settings?.mute ? 'mute' : 'volume')} Couper le son
-            </label>
-            <p class="muted tiny settings-keys">Raccourcis : <kbd>1</kbd>–<kbd>6</kbd> catégories · <kbd>H</kbd> Hub · <kbd>M</kbd> mute · menu compact / Hub pour le reste</p>
-            <label class="chk">
-              <input id="opt-auto-catch" type="checkbox" ${state.autoCatch ? 'checked' : ''} />
-              Auto-capture
-            </label>
-            <label class="field">Ball auto-capture
-              <select id="opt-auto-ball">
-                ${Object.values(BALLS)
-                  .map(
-                    (b) =>
-                      `<option value="${b.id}" ${state.autoCatchBall === b.id ? 'selected' : ''}>${b.name}</option>`,
-                  )
-                  .join('')}
-              </select>
-            </label>
-            <label class="field">Vitesse de combat
-              <select id="opt-battle-speed">
-                ${[0.75, 1, 1.5, 2, 3, 5]
-                  .map(
-                    (v) =>
-                      `<option value="${v}" ${Number(state.battleSpeed || 1) === v ? 'selected' : ''}>${v}×</option>`,
-                  )
-                  .join('')}
-              </select>
-            </label>
-            <div class="settings-row">
-              <button id="btn-save" class="btn-primary" type="button">Sauvegarder</button>
-              <button id="btn-replay-tutorial" class="btn-secondary" type="button">${icon('help')} Revoir le tutoriel</button>
+          <div class="panel-head"><h2>${icon('settings')} Options</h2></div>
+          <div class="settings settings-board">
+            <div class="settings-hero">
+              <span class="settings-hero-ico">${icon('logo')}</span>
+              <div>
+                <strong>${BRAND.name}</strong>
+                <p>Sauvegarde auto · ${speciesCount()} espèces Gen I–IX</p>
+              </div>
             </div>
-            <button id="btn-reset" class="btn-danger" type="button">Réinitialiser la partie</button>
+
+            <div class="settings-card">
+              <h3 class="settings-card-title">Dresseur</h3>
+              <label class="pi-field block">
+                <span class="pi-field-label">${icon('profile')} Nom</span>
+                <input id="player-name" class="pi-input" type="text" maxlength="16" value="${state.playerName || 'Dresseur'}" />
+              </label>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="settings-card-title">Audio & capture</h3>
+              <label class="pi-toggle settings-mute" title="Couper le son">
+                <input type="checkbox" id="opt-mute" ${state.settings?.mute ? 'checked' : ''} />
+                <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
+                <span class="pi-toggle-copy">
+                  <strong>${icon(state.settings?.mute ? 'mute' : 'volume')} Son</strong>
+                  <small>${state.settings?.mute ? 'Coupé' : 'Activé'}</small>
+                </span>
+              </label>
+              <label class="pi-toggle" title="Capture auto sous 40% PV">
+                <input type="checkbox" id="opt-auto-catch" ${state.autoCatch ? 'checked' : ''} />
+                <span class="pi-toggle-track"><span class="pi-toggle-knob"></span></span>
+                <span class="pi-toggle-copy">
+                  <strong>Auto-capture</strong>
+                  <small>sous 40% PV sauvage</small>
+                </span>
+              </label>
+              <div class="settings-grid-2">
+                <label class="pi-field">
+                  <span class="pi-field-label">${icon('ball')} Ball auto</span>
+                  <select id="opt-auto-ball" class="pi-select">
+                    ${Object.values(BALLS)
+                      .map(
+                        (b) =>
+                          `<option value="${b.id}" ${state.autoCatchBall === b.id ? 'selected' : ''}>${b.name}</option>`,
+                      )
+                      .join('')}
+                  </select>
+                </label>
+                <label class="pi-field">
+                  <span class="pi-field-label">${icon('bolt')} Vitesse</span>
+                  <select id="opt-battle-speed" class="pi-select">
+                    ${[0.75, 1, 1.5, 2, 3, 5]
+                      .map(
+                        (v) =>
+                          `<option value="${v}" ${Number(state.battleSpeed || 1) === v ? 'selected' : ''}>${v}×</option>`,
+                      )
+                      .join('')}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="settings-card-title">Raccourcis</h3>
+              <p class="settings-keys-row">
+                <kbd>1</kbd>–<kbd>6</kbd> catégories · <kbd>H</kbd> Hub · <kbd>M</kbd> mute
+              </p>
+              <p class="muted tiny">Menu compact : le reste via le Hub, ou « Tout afficher ».</p>
+            </div>
+
+            <div class="settings-actions">
+              <button id="btn-save" class="btn-primary" type="button">${icon('check')} Sauvegarder</button>
+              <button id="btn-replay-tutorial" class="btn-ghost" type="button">${icon('help')} Tutoriel</button>
+              <button id="btn-reset" class="btn-danger" type="button">${icon('close')} Réinitialiser</button>
+            </div>
             <p class="muted disclaimer">Fan-game non officiel. Sprites © Pokémon / Nintendo / Creatures / Game Freak — via PokéAPI.</p>
           </div>
         </section>
@@ -473,15 +519,13 @@ function bindShell() {
   });
 
   UI.$('#opt-mute')?.addEventListener('change', (e) => {
-    if (!state.settings) state.settings = { mute: false };
+    if (!state.settings) state.settings = { mute: false, navExpanded: !!state.settings?.navExpanded };
     state.settings.mute = !!e.target.checked;
     Audio.syncMuteFromState(state);
     saveGame(state);
-    const ico = UI.$('.settings-mute .ico');
-    if (ico) {
-      const wrap = document.createElement('span');
-      wrap.innerHTML = icon(state.settings.mute ? 'mute' : 'volume');
-      ico.replaceWith(wrap.firstElementChild);
+    const copy = UI.$('.settings-mute .pi-toggle-copy');
+    if (copy) {
+      copy.innerHTML = `<strong>${icon(state.settings.mute ? 'mute' : 'volume')} Son</strong><small>${state.settings.mute ? 'Coupé' : 'Activé'}</small>`;
     }
     if (!state.settings.mute) Audio.play('ui');
   });
@@ -522,17 +566,15 @@ function bindShell() {
 }
 
 function toggleMute() {
-  if (!state.settings) state.settings = { mute: false };
+  if (!state.settings) state.settings = { mute: false, navExpanded: false };
   state.settings.mute = !state.settings.mute;
   Audio.syncMuteFromState(state);
   saveGame(state);
   const cb = UI.$('#opt-mute');
   if (cb) cb.checked = state.settings.mute;
-  const ico = UI.$('.settings-mute .ico');
-  if (ico) {
-    const wrap = document.createElement('span');
-    wrap.innerHTML = icon(state.settings.mute ? 'mute' : 'volume');
-    ico.replaceWith(wrap.firstElementChild);
+  const copy = UI.$('.settings-mute .pi-toggle-copy');
+  if (copy) {
+    copy.innerHTML = `<strong>${icon(state.settings.mute ? 'mute' : 'volume')} Son</strong><small>${state.settings.mute ? 'Coupé' : 'Activé'}</small>`;
   }
   UI.toast(state.settings.mute ? 'Son coupé' : 'Son activé');
   if (!state.settings.mute) Audio.play('ui');
@@ -1007,38 +1049,74 @@ function showCatchModal(poke) {
   UI.$('#close-modal').onclick = () => UI.hideModal();
 }
 
-function refreshAll() {
+/** Mise à jour légère combat (pas de rebuild Hub / nav / autres panneaux). */
+function refreshBattleLive({ syncQuests = false, hard = false } = {}) {
   if (!state) return;
-  syncQuestProgress(state);
-  refreshChrome();
+  if (syncQuests) syncQuestProgress(state);
   UI.updateHud(state);
 
-  if (UI.$('#battle-view')) UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
-  if (UI.$('#catch-btns')) UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
-  if (UI.$('#log-toolbar')) UI.$('#log-toolbar').innerHTML = UI.renderLogToolbar(logFilter);
+  const canPatch = !hard && typeof UI.patchBattle === 'function' && UI.patchBattle(state, battle);
+  if (!canPatch && UI.$('#battle-view')) {
+    UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
+  }
+
+  const catchPatched = !hard && typeof UI.patchCatchButtons === 'function' && UI.patchCatchButtons(state, battle);
+  if (!catchPatched && UI.$('#catch-btns')) {
+    UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
+  }
+
   if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
-  if (UI.$('#team-grid')) UI.$('#team-grid').innerHTML = UI.renderTeam(state);
-  if (UI.$('#box-grid')) UI.$('#box-grid').innerHTML = UI.renderBox(state);
-  if (UI.$('#zones-list')) UI.$('#zones-list').innerHTML = UI.renderZones(state);
-  if (UI.$('#shop-list')) UI.$('#shop-list').innerHTML = UI.renderShop(state);
-  if (UI.$('#pass-view')) UI.$('#pass-view').innerHTML = Shell.renderPassPanel(state);
-  if (UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
-  if (UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
-  if (UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
-  if (UI.$('#summon-view')) UI.$('#summon-view').innerHTML = Shell.renderSummonPanel(state);
-  if (UI.$('#expeditions-view') && Shell.renderExpeditionsPanel) UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
-  if (UI.$('#pension-view') && Shell.renderPensionPanel) UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
-  if (UI.$('#ascension-view')) UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
-  const arenasRoot = UI.$('#arenas-view');
-  if (arenasRoot && (tab === 'arenas' || tab === 'arena')) {
-    renderArenasPanel(arenasRoot, state, { onChallenge: handleGymChallenge });
+}
+
+/** Ne rafraîchit que le panneau de l’onglet actif. */
+function refreshActivePanel() {
+  if (!state) return;
+  const t = tab === 'arena' ? 'arenas' : tab === 'team' || tab === 'box' ? 'pokemon' : tab;
+
+  if (t === 'battle') {
+    if (UI.$('#battle-view')) UI.$('#battle-view').innerHTML = UI.renderBattle(state, battle);
+    if (UI.$('#catch-btns')) UI.$('#catch-btns').innerHTML = UI.renderCatchButtons(state, battle);
+    if (UI.$('#log-toolbar')) UI.$('#log-toolbar').innerHTML = UI.renderLogToolbar(logFilter);
+    if (UI.$('#log')) UI.$('#log').innerHTML = UI.renderLog(state, logFilter);
+    syncBattleControlsFromState();
+    return;
+  }
+  if (t === 'pokemon') {
+    if (UI.$('#team-grid')) UI.$('#team-grid').innerHTML = UI.renderTeam(state);
+    if (UI.$('#box-grid')) UI.$('#box-grid').innerHTML = UI.renderBox(state);
+    return;
+  }
+  if (t === 'zones' && UI.$('#zones-list')) UI.$('#zones-list').innerHTML = UI.renderZones(state);
+  if (t === 'shop' && UI.$('#shop-list')) UI.$('#shop-list').innerHTML = UI.renderShop(state);
+  if (t === 'pass' && UI.$('#pass-view')) UI.$('#pass-view').innerHTML = Shell.renderPassPanel(state);
+  if (t === 'quests' && UI.$('#quests-view')) UI.$('#quests-view').innerHTML = Shell.renderQuestsPanel(state);
+  if (t === 'profile' && UI.$('#profile-view')) UI.$('#profile-view').innerHTML = Shell.renderProfile(state);
+  if (t === 'bonus' && UI.$('#bonus-view')) UI.$('#bonus-view').innerHTML = Shell.renderBonus(state);
+  if (t === 'summon' && UI.$('#summon-view')) UI.$('#summon-view').innerHTML = Shell.renderSummonPanel(state);
+  if (t === 'expeditions' && UI.$('#expeditions-view') && Shell.renderExpeditionsPanel) {
+    UI.$('#expeditions-view').innerHTML = Shell.renderExpeditionsPanel(state);
+  }
+  if (t === 'pension' && UI.$('#pension-view') && Shell.renderPensionPanel) {
+    UI.$('#pension-view').innerHTML = Shell.renderPensionPanel(state);
+  }
+  if (t === 'ascension' && UI.$('#ascension-view')) {
+    UI.$('#ascension-view').innerHTML = renderAscensionPanel(state);
+  }
+  if (t === 'arenas') {
+    const arenasRoot = UI.$('#arenas-view');
+    if (arenasRoot) renderArenasPanel(arenasRoot, state, { onChallenge: handleGymChallenge });
+  }
+  if (t === 'dex' && UI.$('#dex-view')) {
+    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
+  }
+  if (t === 'leaderboard' && UI.$('#leaderboard-view')) {
+    UI.$('#leaderboard-view').innerHTML = renderLeaderboardPanel(state);
   }
 
   const mgView = UI.$('#minigame-view');
   if (mgView) {
     ensureMinigame(state);
-    if (tab === 'minigame') {
-      // Évite de réinitialiser le curseur pendant un combat en arrière-plan
+    if (t === 'minigame') {
       if (mgView.dataset.live !== '1') {
         mgView.innerHTML = renderMinigamePanel(state);
         bindMinigameHandlers(mgView, state, (res) => {
@@ -1048,7 +1126,6 @@ function refreshAll() {
             UI.toast(
               `Score ${res.score} · +${res.money}₽${res.balls ? ` · +${res.balls} Ball` : ''}${res.xp ? ` · +${res.xp} XP` : ''}`,
             );
-            refreshChrome();
             UI.updateHud(state);
           }
         });
@@ -1058,16 +1135,14 @@ function refreshAll() {
       mgView.dataset.live = '';
     }
   }
+}
 
-  if (UI.$('#leaderboard-view')) {
-    if (tab === 'leaderboard') {
-      UI.$('#leaderboard-view').innerHTML = renderLeaderboardPanel(state);
-    }
-  }
-
-  if (tab === 'dex' && UI.$('#dex-view')) {
-    UI.$('#dex-view').innerHTML = UI.renderPokedex(state, { gen: dexGen, query: dexQuery });
-  }
+function refreshAll({ chrome = true } = {}) {
+  if (!state) return;
+  syncQuestProgress(state);
+  if (chrome) refreshChrome();
+  UI.updateHud(state);
+  refreshActivePanel();
 }
 
 function startLoop() {
@@ -1082,7 +1157,7 @@ function gameTick() {
 
   if (battle.over) {
     battle = createBattle(state);
-    refreshAll();
+    refreshBattleLive({ syncQuests: true, hard: true });
     return;
   }
 
@@ -1096,7 +1171,7 @@ function gameTick() {
           Audio.play('catch');
           UI.toast(`Auto-capture : ${pokeName(res.pokemon)}`);
           battle = createBattle(state);
-          refreshAll();
+          refreshBattleLive({ syncQuests: true, hard: true });
           return;
         }
       }
@@ -1106,7 +1181,10 @@ function gameTick() {
   const events = battleTick(state, battle);
   if (events.length) {
     Audio.playFromEvents(events);
-    refreshAll();
+    const major = events.some((ev) =>
+      ['win', 'lose', 'catch', 'levelup', 'faint'].includes(ev.type),
+    );
+    refreshBattleLive({ syncQuests: major, hard: major });
     if (typeof UI.applyBattleFx === 'function') UI.applyBattleFx(events);
   }
 }
