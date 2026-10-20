@@ -1,5 +1,5 @@
-/** Shell PWA — JS/CSS toujours en network-first pour éviter les vieux builds en cache. */
-const CACHE = 'pokiiiii-shell-v3';
+/** Shell PWA — network-first, sans modifier les Request (sinon les modules ES bloquent). */
+const CACHE = 'pokiiiii-shell-v4';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
@@ -18,33 +18,32 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
+  if (e.request.method !== 'GET') return;
 
-  const path = url.pathname;
-  const isCode =
-    path.endsWith('.js') ||
-    path.endsWith('.mjs') ||
-    path.endsWith('.css') ||
-    path.includes('/js/') ||
-    path.includes('/css/');
-
-  // Code : toujours le réseau d’abord (sinon l’ancien main.js reste éternellement)
-  if (isCode) {
-    e.respondWith(
-      fetch(e.request, { cache: 'no-store' })
-        .then((res) => res)
-        .catch(() => caches.match(e.request)),
-    );
+  // Scripts / CSS / data JSON : réseau pur, Request intacte (critique pour type=module)
+  const p = url.pathname;
+  if (
+    p.endsWith('.js') ||
+    p.endsWith('.mjs') ||
+    p.endsWith('.css') ||
+    p.endsWith('.json') ||
+    p.includes('/js/') ||
+    p.includes('/css/')
+  ) {
+    e.respondWith(fetch(e.request));
     return;
   }
 
-  // Shell : network puis fallback cache
+  // HTML / shell : réseau puis cache
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        if (res && res.ok && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        }
         return res;
       })
-      .catch(() => caches.match(e.request)),
+      .catch(() => caches.match(e.request).then((c) => c || caches.match('./index.html'))),
   );
 });

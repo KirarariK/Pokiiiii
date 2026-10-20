@@ -26,29 +26,77 @@
   </head>
   <body>
     <div id="app">
-      <div class="loading">
+      <div class="loading" id="boot-loading">
         <div class="loading-orb" aria-hidden="true"></div>
         <span>Chargement Pokiiiii…</span>
       </div>
     </div>
-    <script type="module" src="./js/main.js?v=2de65cc"></script>
+    <script type="module" src="./js/main.js?v=ec9129d"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker
-            .register('./sw.js?v=3')
-            .then((reg) => {
-              reg.update().catch(() => {});
-              // Purge les vieux caches shell (v1/v2 gelaient main.js)
-              if (navigator.serviceWorker.controller) {
-                caches.keys().then((keys) =>
-                  Promise.all(keys.filter((k) => k.startsWith('pokiiiii-shell-') && k !== 'pokiiiii-shell-v3').map((k) => caches.delete(k))),
-                );
-              }
-            })
-            .catch(() => {});
+      (function () {
+        // Si le SW bloque les modules, on se débloque tout seul
+        const BOOT_MS = 10000;
+        function showRescue(msg) {
+          const app = document.getElementById('app');
+          if (!app) return;
+          if (app.querySelector('.pi-shell, .starter-screen, #title-root')) return;
+          app.innerHTML =
+            '<div class="loading" style="gap:1rem;padding:1.5rem;text-align:center">' +
+            '<div class="loading-orb" aria-hidden="true"></div>' +
+            '<strong style="color:#f5c518">Chargement bloqué</strong>' +
+            '<p style="color:#8b9bb8;max-width:22rem;margin:0 auto;font-size:.9rem">' +
+            (msg || 'Le cache du navigateur empêche le démarrage.') +
+            '</p>' +
+            '<button type="button" id="boot-rescue" class="btn-primary" style="margin-top:.5rem">Vider le cache &amp; recharger</button>' +
+            '</div>';
+          document.getElementById('boot-rescue')?.addEventListener('click', async () => {
+            try {
+              const regs = await navigator.serviceWorker?.getRegistrations?.();
+              if (regs) await Promise.all(regs.map((r) => r.unregister()));
+              const keys = await caches.keys();
+              await Promise.all(keys.map((k) => caches.delete(k)));
+            } catch (_) {}
+            location.reload();
+          });
+        }
+
+        window.addEventListener('error', (e) => {
+          if (String(e?.filename || '').includes('main.js') || String(e?.message || '').includes('Failed to fetch')) {
+            showRescue('Erreur de script — vide le cache puis recharge.');
+          }
         });
-      }
+        window.addEventListener('unhandledrejection', () => {
+          /* ignore — boot() gère déjà */
+        });
+
+        setTimeout(() => {
+          const app = document.getElementById('app');
+          const stuck =
+            app &&
+            !app.querySelector('.pi-shell, .starter-screen, #title-root') &&
+            /Chargement/i.test(app.innerText || '');
+          if (stuck) showRescue('Toujours sur « Chargement… » — le service worker a probablement bloqué les fichiers.');
+        }, BOOT_MS);
+
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            // Purge anciennes versions puis enregistre v4
+            caches
+              .keys()
+              .then((keys) =>
+                Promise.all(
+                  keys
+                    .filter((k) => k.startsWith('pokiiiii-shell-') && k !== 'pokiiiii-shell-v4')
+                    .map((k) => caches.delete(k)),
+                ),
+              )
+              .catch(() => {})
+              .finally(() => {
+                navigator.serviceWorker.register('./sw.js?v=4').then((reg) => reg.update()).catch(() => {});
+              });
+          });
+        }
+      })();
     </script>
   </body>
 </html>

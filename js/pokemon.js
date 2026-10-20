@@ -14,7 +14,10 @@ export async function loadSpecies() {
   let lastErr;
   for (const url of sources) {
     try {
-      const res = await fetch(url);
+      const ctrl = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+        ? AbortSignal.timeout(12000)
+        : undefined;
+      const res = await fetch(url, ctrl ? { signal: ctrl } : undefined);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) {
