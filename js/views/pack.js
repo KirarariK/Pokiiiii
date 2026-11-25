@@ -24,7 +24,7 @@ function dropRow(d) {
     <td><span class="drop"><span class="drop__img">${cardImage(d.card)}</span><span><strong>${esc(d.card.name)}</strong><small>${esc(cardRef(d.card))} · ${esc(d.card.set)}</small></span></span></td>
     <td>${rarityBadge(d.rarity)}</td>
     <td class="num">${eur(d.card.value)}</td>
-    <td class="num">×${d.copies}</td>
+    <td class="num">${d.copies === 1 ? '<span class="tag tag--last">dernier</span>' : `×${d.copies}`}</td>
     <td class="num"><strong>${pctFine(d.p)}</strong></td>
     <td class="num muted">${num(d.from)} – ${num(d.to - 1)}</td>
   </tr>`;

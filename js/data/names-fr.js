@@ -155,16 +155,51 @@ Morpeko Zacian Zamazenta Zarude Regieleki Regidrago
 Arboliva Farigiraf Koraidon Miraidon Poltchageist Ogerpon Terapagos
 `;
 
-const SPECIES = new Map([['Ho-oh', 'Ho-Oh']]);
-DIFFERENT.split(';').forEach((pair) => {
+/** Complément pour le catalogue complet : espèces des générations 3 à 8 absentes du fonds de démonstration. */
+const MORE = `
+Wurmple=Chenipotte;Silcoon=Armulys;Beautifly=Charmillon;Cascoon=Blindalys;Dustox=Papinox;Surskit=Arakdo;Masquerain=Maskadra;
+Kricketot=Crikzik;Kricketune=Mélokrik;Burmy=Cheniti;Wormadam=Cheniselle;Mothim=Papilord;Chingling=Korillon;Mime Jr.=Mime Jr.;
+Carnivine=Vortente;Probopass=Tarinorme;Froslass=Momartik;Drapion=Drascore;Mamoswine=Mammochon;Rhyperior=Rhinastoc;
+Hippowdon=Hippodocus;Gliscor=Scorvol;Dusknoir=Noctunoir;Lickilicky=Coudlangue;Weavile=Dimoret;Electivire=Élekable;
+Toxicroak=Coatox;Gallade=Gallame;
+Patrat=Ratentif;Watchog=Miradar;Lillipup=Ponchiot;Herdier=Ponchien;Stoutland=Mastouffe;Purrloin=Chacripan;Liepard=Léopardus;
+Pidove=Poichigeon;Tranquill=Colombeau;Blitzle=Zébibron;Zebstrika=Zéblitz;Roggenrola=Nodulithe;Boldore=Géolithe;
+Gigalith=Gigalithe;Woobat=Chovsourir;Swoobat=Rhinolove;Drilbur=Rototaupe;Timburr=Charpenti;Gurdurr=Ouvrifier;
+Tympole=Tritonde;Palpitoad=Batracné;Throh=Judokrak;Sawk=Karaclée;Sewaddle=Larveyette;Swadloon=Couverdure;
+Leavanny=Manternel;Venipede=Venipatte;Whirlipede=Scobolide;Cottonee=Doudouvet;Sandile=Mascaïman;Krokorok=Escroco;
+Maractus=Maracachi;Scraggy=Baggiguane;Yamask=Tutafeh;Cofagrigus=Tutankafer;Tirtouga=Carapagos;Carracosta=Mégapagos;
+Archen=Arkéapti;Trubbish=Miamiasme;Solosis=Nucléos;Duosion=Méios;Vanillish=Sorboul;Vanilluxe=Sorbouboul;
+Karrablast=Carabing;Foongus=Trompignon;Frillish=Viskuse;Joltik=Statitik;Ferroseed=Grindur;Klink=Tic;Klang=Clic;
+Tynamo=Anchwatt;Eelektrik=Lampéroie;Shelmet=Escargaume;Musharna=Mushana;Hydreigon=Trioxhydre;
+Bunnelby=Sapereau;Diggersby=Excavarenne;Fletchinder=Braisillon;Scatterbug=Lépidonille;Spewpa=Pérégrain;Litleo=Hélionceau;
+Skiddo=Cabriolaine;Gogoat=Chevroum;Furfrou=Couafarel;Espurr=Psystigri;Spritzee=Fluvetin;Swirlix=Sucroquin;Inkay=Sepiatop;
+Binacle=Opermine;Barbaracle=Golgopathe;Skrelp=Venalgue;Clauncher=Flingouste;Helioptile=Galvaran;Tyrunt=Ptyranidur;
+Amaura=Amagara;Bergmite=Grelaçon;
+Pikipek=Picassaut;Trumbeak=Piclairon;Yungoos=Manglouton;Grubbin=Larvibule;Charjabug=Chrysapile;Crabrawler=Crabagarre;
+Cutiefly=Bombydou;Mareanie=Vorastérie;Mudbray=Tiboudet;Dewpider=Araqua;Fomantis=Mimantis;Morelull=Spododo;
+Shiinotic=Lampignon;Stufful=Nounourson;Bounsweet=Croquine;Steenee=Candine;Wimpod=Sovkipou;Sandygast=Bacabouh;
+Type: Null=Type:0;Blipbug=Larvadar
+`;
+
+/** Espèces de ce complément dont le nom ne change pas. */
+const MORE_SAME = 'Munna Flabébé Floette Nidoran Bastiodon';
+
+const SPECIES = new Map([['Ho-oh', 'Ho-Oh'], ['Nidoran ♂', 'Nidoran♂'], ['Nidoran ♀', 'Nidoran♀'], ['Nidoran♀', 'Nidoran♀'], ['Nidoran♂', 'Nidoran♂']]);
+`${DIFFERENT};${MORE}`.split(';').forEach((pair) => {
   const [en, fr] = pair.trim().split('=');
   if (en && fr) SPECIES.set(en, fr);
 });
-SAME.split(/\s+/).filter(Boolean).forEach((n) => SPECIES.set(n, n));
+`${SAME} ${MORE_SAME}`.split(/\s+/).filter(Boolean).forEach((n) => SPECIES.set(n, n));
 
 /** Possessifs : « Cynthia's X » -> « X de Cynthia ». */
 const OWNERS = [
   ["Team Rocket's", 'de la Team Rocket'],
+  ["Team Aqua's", 'de la Team Aqua'],
+  ["Team Magma's", 'de la Team Magma'],
+  ["Rocket's", 'de Rocket'],
+  ["Holon's", 'de Holon'],
+  ["Ash's", 'de Sacha'],
+  ["Lance's", 'de Peter'],
   ["Rocket's", 'de Rocket'],
   ["Ethan's", 'de Luth'],
   ["Cynthia's", 'de Cynthia'],
@@ -202,6 +237,12 @@ const FORMS = [
   [/^Surfing (.+)$/, (m, sp) => `${sp(m[1])} Surfeur`],
   [/^Special Delivery (.+)$/, (m, sp) => `${sp(m[1])} Livraison Spéciale`],
   [/^Detective (.+)$/, (m, sp) => `Détective ${sp(m[1])}`],
+  [/^Primal (.+)$/, (m, sp) => `Primo-${sp(m[1])}`],
+  [/^(Heat|Wash|Frost|Fan|Mow) Rotom$/, (m) => `Motisma ${{ Heat: 'Chaleur', Wash: 'Lavage', Frost: 'Froid', Fan: 'Hélice', Mow: 'Tonte' }[m[1]]}`],
+  [/^Deoxys (Normal|Attack|Defense|Speed) Forme$/, (m) => `Deoxys Forme ${{ Normal: 'Normale', Attack: 'Attaque', Defense: 'Défense', Speed: 'Vitesse' }[m[1]]}`],
+  [/^(Burmy|Wormadam) (Plant|Sandy|Trash) Cloak$/, (m, sp) => `${sp(m[1])} Cape ${{ Plant: 'Plante', Sandy: 'Sable', Trash: 'Déchet' }[m[2]]}`],
+  [/^(Shellos|Gastrodon) (East|West) Sea$/, (m, sp) => `${sp(m[1])} Mer ${m[2] === 'East' ? 'Orient' : 'Occident'}`],
+  [/^Armored (Mewtwo)$/, (m, sp) => `${sp(m[1])} Armure`],
   [/^Ultra (Necrozma)$/, (m, sp) => `Ultra-${sp(m[1])}`],
   [/^Dusk Mane (Necrozma)$/, (m, sp) => `${sp(m[1])} Crinière du Couchant`],
   [/^Dawn Wings (Necrozma)$/, (m, sp) => `${sp(m[1])} Ailes de l'Aurore`],
@@ -219,7 +260,7 @@ const FORMS = [
   [/^(.+) \[([A-Z?!])\]$/, (m, sp) => `${sp(m[1])} [${m[2]}]`],
 ];
 
-const SUFFIX = /^(.*?)(-GX|-EX| ex| EX| GX| V-UNION| VMAX| VSTAR| V| BREAK| LV\.X| ★| δ)$/;
+const SUFFIX = /^(.*?)(-GX|-EX| ex| EX| GX| V-UNION| VMAX| VSTAR| V| BREAK| LV\.X| ★| δ| ◇| E4| GL| FB| G| C| 4| LEGEND)$/;
 
 /** Découpe un nom anglais et traduit ; `known` passe à false si une espèce manque. */
 function translate(en) {
@@ -232,8 +273,13 @@ function translate(en) {
   let base = String(en);
   let suffix = '';
   let owner = '';
-  const withSuffix = base.match(SUFFIX);
-  if (withSuffix) [, base, suffix] = withSuffix;
+  // Un nom peut porter plusieurs suffixes (« Charizard ★ δ ») : on les retire un à un.
+  for (let i = 0; i < 3; i++) {
+    const withSuffix = base.match(SUFFIX);
+    if (!withSuffix || !withSuffix[1]) break;
+    base = withSuffix[1];
+    suffix = withSuffix[2] + suffix;
+  }
   for (const [prefix, fr] of OWNERS) {
     if (base.startsWith(`${prefix} `)) {
       base = base.slice(prefix.length + 1);

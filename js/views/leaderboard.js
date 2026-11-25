@@ -11,7 +11,7 @@ import { esc, eur, eurShort, initials, num, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { getState, isLoggedIn, monthlyPoints } from '../store.js';
 import { pageHead, sectionHead } from '../ui/blocks.js';
-import { countdownBlocks } from '../ui/countdown.js';
+import { countdownInline } from '../ui/countdown.js';
 
 const ui = { tab: 'monthly' };
 
@@ -75,7 +75,7 @@ function rewards() {
   ];
   return `<section class="panel panel--pad">
     ${sectionHead('Dotation du mois', { iconName: 'gift', note: 'Estimation' })}
-    <p class="muted">Les dix premiers se partagent <strong>${pct(RULES.leaderboardShare * 100)} de la marge du mois</strong>, versés en crédits. À ce jour, cela représente environ <strong>${eurShort(Math.round(pool / 100) * 100)}</strong> ; le montant grossit avec l'activité jusqu'à la fin du mois.</p>
+    <p class="muted">Environ <strong>${eurShort(Math.round(pool / 100) * 100)}</strong> à ce jour, versés en crédits. Viser le classement coûte toujours plus que ce qu'il rapporte.</p>
     <div class="grid-4">
       ${tiers
         .map(
@@ -103,22 +103,11 @@ export default {
     return `
     ${pageHead({ icon: 'trophy', title: 'Classement des collectionneurs' })}
 
-    <div class="panel panel--pad gw-clock">
-      ${icon('clock', { size: 22 })}
-      <div><span class="muted small">Remise à zéro dans :</span>${countdownBlocks(nextMonthStart())}</div>
-    </div>
-
-    <div class="panel panel--pad rules">
-      <span class="rules__ico">${icon('info', { size: 20 })}</span>
-      <div>
-        <h2>Comment gagner des points ?</h2>
-        <ul>
-          <li><strong>1 € dépensé = 1 point</strong> lors de tes achats de packs</li>
-          <li>Les reventes et l'Évolution ne donnent pas de points</li>
-        </ul>
-        <p class="muted small">Viser le classement coûte toujours plus que ce qu'il rapporte : la dotation ne représente qu'une petite part de ce que les joueurs classés ont dépensé. Fixe-toi une <a href="#/parametres">limite</a>.</p>
-      </div>
-    </div>
+    <p class="rule-line">
+      <span>${icon('package', { size: 16 })}<strong>1 € de packs = 1 point</strong></span>
+      <span>${icon('clock', { size: 16 })}Remise à zéro dans ${countdownInline(nextMonthStart(), 'long')}</span>
+      <span>${icon('gift', { size: 16 })}Dotation : ${pct(RULES.leaderboardShare * 100)} de la marge du mois</span>
+    </p>
 
     <div class="tabs tabs--full" role="tablist" aria-label="Classements">
       ${tabs.map(([key, label]) => `<button class="tab ${ui.tab === key ? 'is-active' : ''}" type="button" role="tab" aria-selected="${ui.tab === key}" data-tab="${key}">${label}</button>`).join('')}

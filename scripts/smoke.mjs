@@ -33,6 +33,22 @@ check(CARDS.every((c) => /^https:\/\/images\.pokemontcg\.io\/[a-z0-9]+\/[A-Za-z0
 const untranslated = [...new Set(CARDS.filter((c) => !isTranslated(c.nameEn)).map((c) => c.nameEn))];
 check(untranslated.length === 0, `noms français (${untranslated.length} manquant${untranslated.length > 1 ? 's' : ''}${untranslated.length ? ` : ${untranslated.slice(0, 5).join(', ')}` : ''})`);
 
+console.log('\nCatalogue complet');
+{
+  const raw = JSON.parse(fs.readFileSync(new URL('../assets/data/catalogue.json', import.meta.url), 'utf8'));
+  const ids = raw.cards.map((r) => r[8] || `${raw.sets[r[0]][0]}-${r[1]}`);
+  check(raw.cards.length >= 18_000 && raw.sets.length >= 170, `${raw.cards.length} cartes dans ${raw.sets.length} extensions (cotes du ${raw.date})`);
+  check(new Set(ids).size === ids.length, 'identifiants uniques');
+  const known = new Set(ids);
+  const absent = CARDS.filter((c) => !known.has(c.id));
+  check(absent.length === 0, `chaque carte du fonds de démonstration figure au catalogue (${absent.length} absente${absent.length > 1 ? 's' : ''})`);
+  const priced = raw.cards.filter((r) => r[6] > 0).length;
+  check(priced / raw.cards.length > 0.9, `${Math.round((priced / raw.cards.length) * 100)} % des cartes ont une cote`);
+  const pokemon = raw.cards.filter((r) => r[3] === 0);
+  const french = pokemon.filter((r) => isTranslated(r[2])).length;
+  check(french / pokemon.length > 0.97, `noms français : ${french} cartes Pokémon sur ${pokemon.length}`);
+}
+
 console.log('\nÉquité (comparaison avec les fonctions de hachage de Node)');
 const samples = ['', 'abc', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'é€😀'.repeat(40), 'x'.repeat(1000)];
 check(samples.every((s) => sha256Hex(s) === crypto.createHash('sha256').update(s).digest('hex')), 'SHA-256 conforme');

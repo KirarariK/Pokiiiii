@@ -1419,3 +1419,8 @@ button.tile, a.tile { text-align: left; font: inherit; color: var(--text) !impor
 .bet__chip:hover { border-color: var(--muted); color: var(--text); }
 .bet__chip.is-active { background: color-mix(in srgb, var(--primary) 20%, var(--surface-2)); border-color: var(--primary); color: var(--text); }
 .bet__chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rule-line { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+.rule-line span { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text-2); font-size: 0.9rem; font-weight: 700; }
+.rule-line .ico { color: var(--primary-text); }
+.rule-line strong { color: var(--text); }
+.tag--last { margin: 0; background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary-text); }
