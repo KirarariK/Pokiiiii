@@ -97,12 +97,12 @@ function simulation() {
   const m = expectedMonth(h);
   const sim = simulateMonths(h, { runs });
   const tile = (label, value, hint = '', cls = '') => `<div class="stat"><span class="stat__label">${label}</span><strong class="stat__value ${cls}">${value}</strong>${hint ? `<span class="stat__hint">${hint}</span>` : ''}</div>`;
-  const breakEven = Number.isFinite(m.breakEven) ? `${num(m.breakEven)} packs` : 'hors d’atteinte';
+  const reachable = Number.isFinite(m.breakEven);
   return `
     <div class="stats stats--4">
       ${tile('Ventes de packs', euros(m.revenue), 'par mois')}
       ${tile('Résultat du mois', euros(m.result), `${percent(m.rate)} des ventes, après frais fixes`, m.result >= 0 ? 'pos' : 'neg')}
-      ${tile('Seuil de rentabilité', breakEven, Number.isFinite(m.breakEven) ? 'par mois, pour couvrir les frais fixes' : 'chaque pack vendu coûte plus qu’il ne rapporte', Number.isFinite(m.breakEven) && m.breakEven <= h.packs ? '' : 'neg')}
+      ${tile('Seuil de rentabilité', reachable ? num(m.breakEven) : 'aucun', reachable ? 'packs par mois, pour couvrir les frais fixes' : 'chaque pack vendu coûte plus qu’il ne rapporte', reachable && m.breakEven <= h.packs ? '' : 'neg')}
       ${tile('Risque de mois déficitaire', percent(sim.lossRisk, 1), `1 mois sur 20 finit sous ${euros(sim.low)}`, sim.lossRisk > 0.05 ? 'neg' : '')}
     </div>
     ${statement(m)}

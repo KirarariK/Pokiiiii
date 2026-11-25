@@ -60,7 +60,7 @@ export default {
 
     <div class="stats stats--4">
       ${statTile({ iconName: 'landmark', label: 'Retirable', value: eur(withdrawable()), hint: bonus.active ? 'ton argent, hors bonus en jeu' : 'tout ton solde' })}
-      ${statTile({ iconName: 'gift', label: 'Bonus en jeu', value: eur(bonus.balance), hint: bonus.active ? `encore ${eur(bonus.wagerLeft)} de mises (${Math.floor(bonus.progress * 100)} % fait)` : 'aucun bonus en cours' })}
+      ${statTile({ iconName: 'gift', label: 'Bonus en jeu', value: eur(bonus.balance), hint: bonus.active ? `encore ${eur(bonus.wagerLeft)} de mises (${Math.floor(bonus.progress * 100)}\u00a0% fait)` : 'aucun bonus en cours' })}
       ${statTile({ iconName: 'calendar', label: "Dépensé aujourd'hui", value: eur(today), hint: limits.daily != null ? `limite : ${eur(limits.daily)}` : 'aucune limite fixée' })}
       ${statTile({ iconName: 'shield', label: 'Limite quotidienne', value: limits.daily != null ? eur(limits.daily) : '—', hint: '<a href="#/parametres">Régler ma limite</a>' })}
     </div>
