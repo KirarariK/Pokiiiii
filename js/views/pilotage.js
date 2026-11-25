@@ -1,9 +1,9 @@
 // Pilotage : la vue du gérant. Compte de résultat d'un mois selon les hypothèses,
 // leviers, résultat par pack, coût de chaque fonctionnalité, et le compte vu du site.
-// En production, cette page relève du back-office : elle n'est pas publique.
+// Affichée dans l'espace admin (js/views/admin.js).
 
 import { RULES } from '../config.js';
-import { packReturn } from '../catalog.js';
+import { packAvailable, packReturn } from '../catalog.js';
 import { BADGES } from '../data/badges.js';
 import { listGiveaways } from '../data/giveaways.js';
 import { PACKS } from '../data/packs.js';
@@ -11,7 +11,6 @@ import { AVERAGE_FIRST_DEPOSIT, DEFAULTS, SALES_MIX, averageBonus, blendedEdge, 
 import { esc, eur, eurShort, num, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { houseLedger, isLoggedIn } from '../store.js';
-import { note, pageHead } from '../ui/blocks.js';
 
 const percent = (x, digits = 1) => `${x < 0 ? '−' : ''}${(Math.abs(x) * 100).toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits })} %`;
 /** Montant arrondi à l'euro, avec un vrai signe moins. */
@@ -129,6 +128,7 @@ function packTable() {
     <thead><tr><th>Pack</th><th class="num">Prix</th><th class="num">Part des ventes</th><th class="num">Retour affiché</th><th class="num">Marge de jeu</th><th class="num">Résultat par pack</th></tr></thead>
     <tbody>
       ${PACKS.map((pack) => {
+        if (!packAvailable(pack)) return `<tr><th scope="row" class="nowrap"><a href="#/packs/${pack.slug}">${esc(pack.name)}</a></th><td class="num">${eur(pack.price)}</td><td class="muted" colspan="4">En rupture : le coffre ne permet pas de le composer</td></tr>`;
         const e = packEconomics(pack, h);
         return `<tr>
           <th scope="row" class="nowrap"><a href="#/packs/${pack.slug}">${esc(pack.name)}</a></th>
@@ -169,9 +169,6 @@ export default {
     const edge = blendedEdge();
     const { from, rate } = RULES.shippingInsurance;
     return `
-    ${pageHead({ icon: 'trending-up', title: 'Pilotage', lead: 'La vue du gérant : le compte de résultat d’un mois selon tes hypothèses, les leviers qui pèsent le plus, et ce que chaque fonctionnalité rapporte ou coûte.' })}
-    ${note("Outil interne. En production, cette page relève du back-office et n'est pas publique ; ici, elle sert à régler le modèle.", 'demo')}
-
     <section class="panel panel--pad">
       <div class="section__head"><h2>${icon('sliders-horizontal', { size: 22 })}<span>Hypothèses</span></h2><button class="btn btn--ghost btn--sm" type="button" data-reset-sim>${icon('rotate-ccw', { size: 15 })}Valeurs par défaut</button></div>
       ${controls()}

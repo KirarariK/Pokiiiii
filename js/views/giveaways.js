@@ -50,7 +50,7 @@ export default {
       .filter((g) => isActive(g, now) === active)
       .sort((a, b) => (ui.sort === 'value' ? b.total - a.total : a.end - b.end));
     return `
-    ${pageHead({ icon: 'gift', title: 'Giveaways', lead: 'Les tirages au sort en cours et passés.' })}
+    ${pageHead({ icon: 'gift', title: 'Giveaways' })}
     <div class="toolbar">
       <div class="tabs" role="tablist" aria-label="Giveaways">
         <button class="tab ${active ? 'is-active' : ''}" type="button" role="tab" aria-selected="${active}" data-tab="actifs">Actifs</button>

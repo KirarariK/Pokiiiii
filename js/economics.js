@@ -15,7 +15,7 @@
 // L'Évolution n'y figure pas non plus : elle ne déplace pas d'argent, seulement des cartes.
 
 import { RULES } from './config.js';
-import { dropTable, expectedValue, packEdge, packReturn, resolveTicket } from './catalog.js';
+import { dropTable, expectedValue, packAvailable, packEdge, packReturn, resolveTicket, tableVersion } from './catalog.js';
 import { giveawayById } from './data/giveaways.js';
 import { PACKS } from './data/packs.js';
 import { TICKETS } from './fair.js';
@@ -69,7 +69,7 @@ const shortfalls = new Map();
  * cote : en moyenne, max(0, prix − rachat). Calcul exact sur la table de tirage.
  */
 function shortfall(pack, rate) {
-  const key = `${pack.slug}:${rate.toFixed(6)}`;
+  const key = `${pack.slug}:${tableVersion(pack)}:${rate.toFixed(6)}`;
   if (!shortfalls.has(key)) shortfalls.set(key, dropTable(pack).reduce((sum, d) => sum + d.p * Math.max(0, pack.price - rate * d.card.value), 0));
   return shortfalls.get(key);
 }
@@ -80,11 +80,14 @@ function depositPerPack(pack, h) {
   return kept(h) * pack.price + h.instant * shortfall(pack, RULES.buybackRate * scale) + h.later * shortfall(pack, RULES.buybackLaterRate * scale);
 }
 
-/** Marge moyenne des packs, pondérée par les ventes (hypothèse SALES_MIX). */
+/** Packs que le coffre permet de vendre en ce moment. */
+export const sellablePacks = () => PACKS.filter(packAvailable);
+
+/** Marge moyenne des packs en vente, pondérée par les ventes (hypothèse SALES_MIX). */
 export function blendedEdge() {
   let revenue = 0;
   let theo = 0;
-  for (const pack of PACKS) {
+  for (const pack of sellablePacks()) {
     const sales = (SALES_MIX[pack.slug] || 0) * pack.price;
     revenue += sales;
     theo += sales * packEdge(pack);
@@ -120,7 +123,7 @@ export function packEconomics(pack, h) {
 /** Compte de résultat attendu d'un mois, par le calcul (sans tirage). */
 export function expectedMonth(h) {
   const sum = { revenue: 0, cards: 0, gross: 0, cashback: 0, leaderboard: 0, giveaway: 0, fees: 0 };
-  for (const pack of PACKS) {
+  for (const pack of sellablePacks()) {
     const sold = h.packs * (SALES_MIX[pack.slug] || 0);
     const e = packEconomics(pack, h);
     sum.revenue += sold * e.price;
@@ -177,12 +180,13 @@ export function simulateMonths(h, { runs = 200, seed = 'pilotage' } = {}) {
   const next = seeded(`${seed}:${h.packs}:${h.instant}:${h.later}`);
   const mix = [];
   let cumulative = 0;
-  for (const pack of PACKS) {
+  for (const pack of sellablePacks()) {
     cumulative += SALES_MIX[pack.slug] || 0;
     const e = packEconomics(pack, h);
     mix.push({ pack, upTo: cumulative, scale: valueScale(pack, h), fixed: e.cashback + e.leaderboard + e.giveaway });
   }
   const total = cumulative;
+  if (!mix.length) return { runs, revenue: 0, mean: -h.fixed, low: -h.fixed, median: -h.fixed, high: -h.fixed, lossRisk: 1, results: new Array(runs).fill(-h.fixed) };
   const sold = h.instant + h.later;
   const bonus = firstDepositBonus(h);
   const results = [];

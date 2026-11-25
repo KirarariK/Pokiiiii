@@ -22,6 +22,7 @@ const NAV_MAIN = [
   { key: 'home', href: '#/', label: 'Accueil', icon: 'house' },
   { key: 'packs', href: '#/packs', label: 'Packs mystère', icon: 'package' },
   { key: 'evolution', href: '#/evolution', label: 'Évolution', icon: 'chevrons-up' },
+  { key: 'cartes', href: '#/cartes', label: 'Cartes', icon: 'library' },
   { key: 'collection', href: '#/collection', label: 'Collection', icon: 'archive' },
   { key: 'giveaways', href: '#/giveaways', label: 'Giveaways', icon: 'gift' },
   { key: 'recompenses', href: '#/recompenses', label: 'Récompenses', icon: 'hand-coins', dot: true },
@@ -67,6 +68,10 @@ export function renderShell() {
       <header class="topbar">
         <button class="btn btn--icon btn--ghost topbar__menu" type="button" data-action="nav-open" aria-label="Ouvrir le menu" aria-controls="sidebar">${icon('menu')}</button>
         ${logo('logo--topbar')}
+        <form class="topbar__search" role="search" data-search>
+          ${icon('search', { size: 17 })}
+          <input type="search" name="q" placeholder="Rechercher une carte" aria-label="Rechercher une carte" autocomplete="off">
+        </form>
         <span class="topbar__spacer"></span>
         <div class="topbar__account" id="topbar-account"></div>
       </header>
@@ -93,6 +98,7 @@ function renderFooter() {
         <h3 class="footer__title">Jouer</h3>
         <a href="#/packs">Packs mystère</a>
         <a href="#/evolution">Évolution</a>
+        <a href="#/cartes">Cartes</a>
         <a href="#/giveaways">Giveaways</a>
         <a href="#/recompenses">Cashback et badges</a>
         <a href="#/classement">Classement</a>
@@ -103,7 +109,7 @@ function renderFooter() {
         <a href="#/transparence">Transparence et jeu responsable</a>
         <a href="#/faq">FAQ</a>
         <a href="#/contact">Contact</a>
-        <a href="#/pilotage">Pilotage (vue gérant)</a>
+        <a href="#/admin">Espace admin</a>
       </div>
       <div>
         <h3 class="footer__title">Légal</h3>

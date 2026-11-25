@@ -1,6 +1,6 @@
 // Équité prouvable : explication, graines du joueur, vérificateur et journal des tirages.
 
-import { cardById, resolveTicket } from '../catalog.js';
+import { cardById, packAvailable, resolveTicket } from '../catalog.js';
 import { PACKS, packBySlug } from '../data/packs.js';
 import { TICKETS, isValidClientSeed, sha256Hex, ticketFor } from '../fair.js';
 import { dateTimeFr, esc, eur, num } from '../format.js';
@@ -18,8 +18,9 @@ function describe(game, ticket) {
   if (game.startsWith('pack:')) {
     const pack = packBySlug(game.slice(5));
     if (!pack) return '';
+    if (!packAvailable(pack)) return 'Pack en rupture : aucune table en cours';
     const drop = resolveTicket(pack, ticket);
-    return `${esc(drop.card.name)} (${eur(drop.card.value)}), plage ${num(drop.from)} – ${num(drop.to - 1)}`;
+    return `Sur la table du moment : ${esc(drop.card.name)} (${eur(drop.card.value)}), plage ${num(drop.from)} – ${num(drop.to - 1)}`;
   }
   if (game === 'evolution') return 'Réussite si le ticket est inférieur au seuil affiché lors de la tentative';
   return 'Multiplicateur lu dans le barème de la roue du cashback';
@@ -27,7 +28,7 @@ function describe(game, ticket) {
 
 function outcome(roll) {
   const o = roll.outcome || {};
-  if (o.cardId) return esc(cardById(o.cardId)?.name || o.cardId);
+  if (o.cardId) return `${esc(cardById(o.cardId)?.name || o.cardId)}${'from' in o ? ` <span class="muted small">· plage ${num(o.from)} – ${num(o.to - 1)} · table ${esc(o.table || '')}</span>` : ''}`;
   if ('win' in o) return `${o.win ? 'Réussite' : 'Échec'} (seuil ${num(o.winBelow)})`;
   if ('amount' in o) return `+${eur(o.amount)}`;
   return '';
@@ -37,7 +38,11 @@ function outcome(roll) {
 function status(roll) {
   const seed = revealedSeed(roll.hash);
   if (!seed) return `<span class="muted">${icon('lock', { size: 14 })} Graine en cours</span>`;
-  const ok = ticketFor(seed, roll.clientSeed, roll.nonce, roll.game) === roll.ticket;
+  // Le ticket se recalcule à partir des graines ; pour un pack, il doit aussi tomber dans la plage
+  // de tickets que la carte occupait sur la table du moment (la table change avec le coffre).
+  const o = roll.outcome || {};
+  const inRange = !('from' in o) || (roll.ticket >= o.from && roll.ticket < o.to);
+  const ok = ticketFor(seed, roll.clientSeed, roll.nonce, roll.game) === roll.ticket && inRange;
   return ok
     ? `<span class="pos">${icon('circle-check', { size: 15 })} Conforme</span> <button class="btn btn--ghost btn--sm" type="button" data-fill="${roll.id}">Détail</button>`
     : `<span class="neg">${icon('circle-alert', { size: 15 })} Écart</span>`;
@@ -132,7 +137,7 @@ export default {
   title: 'Équité prouvable',
   render() {
     return `
-    ${pageHead({ icon: 'shield-check', title: 'Équité prouvable', lead: "Chaque tirage est fixé avant que tu joues, et tu peux le recalculer toi-même après coup. Personne, pas même nous, ne peut le modifier en cours de route." })}
+    ${pageHead({ icon: 'shield-check', title: 'Équité prouvable', lead: 'Chaque tirage est fixé avant que tu joues, et tu peux le recalculer après coup.' })}
 
     <section class="panel panel--pad prose">
       <h2>${icon('dices', { size: 22 })}Le principe</h2>

@@ -10,7 +10,7 @@ export default {
   title: 'Contact',
   render() {
     return `
-    ${pageHead({ icon: 'mail', title: 'Contact', lead: 'Une question, un problème, une idée ? Écris-nous.' })}
+    ${pageHead({ icon: 'mail', title: 'Contact' })}
     <div class="grid-2 grid-2--wide">
       <section class="panel panel--pad">
         <h2>Formulaire de contact</h2>

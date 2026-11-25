@@ -1,14 +1,14 @@
 // Page d'un pack : visuel, répartitions, achat, plus grosses cartes, dernières ouvertures.
 
 import { RULES } from '../config.js';
-import { cardRef, dropTable, expectedValue, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
+import { cardRef, dropTable, expectedValue, packAvailable, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
 import { recentOpenings } from '../data/community.js';
 import { giveawayById, isActive } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
 import { esc, eur, num, pctFine, plural } from '../format.js';
 import { icon } from '../icons.js';
-import { buyPacks, getState, giveawayEntry, isLoggedIn } from '../store.js';
-import { emptyState, note, oddsGrid, openingItem, sectionHead } from '../ui/blocks.js';
+import { buyPacks, getState, giveawayEntry, isLoggedIn, setSetting } from '../store.js';
+import { emptyState, oddsGrid, openingItem, packRange, sectionHead } from '../ui/blocks.js';
 import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
 import { countdownInline } from '../ui/countdown.js';
 import { attachTilt, sfx } from '../ui/effects.js';
@@ -24,6 +24,7 @@ function dropRow(d) {
     <td><span class="drop"><span class="drop__img">${cardImage(d.card)}</span><span><strong>${esc(d.card.name)}</strong><small>${esc(cardRef(d.card))} · ${esc(d.card.set)}</small></span></span></td>
     <td>${rarityBadge(d.rarity)}</td>
     <td class="num">${eur(d.card.value)}</td>
+    <td class="num">×${d.copies}</td>
     <td class="num"><strong>${pctFine(d.p)}</strong></td>
     <td class="num muted">${num(d.from)} – ${num(d.to - 1)}</td>
   </tr>`;
@@ -47,6 +48,35 @@ function giveawayBox(pack) {
   </div>`;
 }
 
+const QUANTITIES = [1, 2, 3, 5, 10].filter((n) => n <= RULES.maxPacksPerOrder);
+
+/** Panneau de jeu d'un pack en vente : ce qu'il rend, combien on en ouvre, un bouton. */
+function buyPanel(pack, qty) {
+  return `
+        <div class="bet__facts">
+          <div><small>Retour</small><strong>${pctFine(packReturn(pack))}</strong></div>
+          <div><small>Cote moyenne</small><strong>${eur(expectedValue(pack))}</strong></div>
+          <div><small>Carte ≥ prix</small><strong>${pctFine(profitChance(pack))}</strong></div>
+        </div>
+        ${oddsGrid(pack)}
+        <div class="bet__qty" role="radiogroup" aria-label="Nombre de packs">
+          ${QUANTITIES.map((n) => `<button class="bet__chip ${n === qty ? 'is-active' : ''}" type="button" role="radio" aria-checked="${n === qty}" data-qty="${n}">×${n}</button>`).join('')}
+        </div>
+        <button class="btn btn--primary btn--lg btn--block buy__cta" type="button" data-buy>
+          ${icon('package-open', { size: 20 })}<span data-buy-label></span>
+        </button>
+        <p class="small muted center">${isLoggedIn() ? `Solde <strong>${eur(getState().balance)}</strong> · ` : ''}Rachat ${Math.round(RULES.buybackRate * 100)} % pendant ${RULES.buybackLockMinutes} min, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite · <a href="#/equite">tirage vérifiable</a></p>`;
+}
+
+/** Panneau d'un pack que le coffre ne permet pas de composer. */
+function outPanel() {
+  return `<div class="buy__out">
+    <strong>${icon('archive', { size: 18 })}En rupture</strong>
+    <p class="muted">Le coffre ne contient pas assez de cartes pour composer ce pack en ce moment.</p>
+    <a class="btn btn--secondary btn--block" href="#/packs">Voir les autres packs</a>
+  </div>`;
+}
+
 export default {
   nav: 'packs',
   title: (ctx) => packBySlug(ctx.params.slug)?.name || 'Pack introuvable',
@@ -55,7 +85,10 @@ export default {
     if (!pack) {
       return emptyState({ title: 'Pack introuvable', text: "Ce pack n'existe pas ou n'est plus proposé.", action: '<a class="btn btn--primary" href="#/packs">Voir les packs</a>' });
     }
-    const qty = Math.min(RULES.maxPacksPerOrder, Math.max(1, Number.parseInt(query.qty, 10) || 1));
+    const asked = Math.min(RULES.maxPacksPerOrder, Math.max(1, Number.parseInt(query.qty, 10) || 1));
+    // La quantité se choisit parmi les jetons proposés : on retient le plus proche par défaut.
+    const qty = QUANTITIES.reduce((best, n) => (Math.abs(n - asked) < Math.abs(best - asked) ? n : best), QUANTITIES[0]);
+    const open = packAvailable(pack);
     const others = PACKS.filter((p) => p.slug !== pack.slug);
     const hits = topHits(pack, 10);
     const drops = dropTable(pack);
@@ -66,7 +99,7 @@ export default {
     <div class="pack-page" style="--glow:${themeGlow(pack.theme)}">
       <div class="pack-page__left">
         <div class="pack-stage">
-          <span class="badge badge--stock">${icon('check', { size: 13 })}En stock</span>
+          ${open ? `<span class="badge badge--stock">${icon('check', { size: 13 })}En stock</span>` : `<span class="badge badge--out">Rupture</span>`}
           ${pack.event ? `<span class="badge badge--event">${icon('flame', { size: 13 })}Événement</span>` : ''}
           <span class="pack-stage__glow"></span>
           <span class="pack-stage__art" data-tilt>${packArt(pack)}</span>
@@ -89,36 +122,13 @@ export default {
         <p class="eyebrow">${esc(pack.tagline)}</p>
         <h1 id="pack-title">${esc(pack.name)}</h1>
         ${giveawayBox(pack)}
-        <p class="buy__desc">${esc(pack.desc)}</p>
+        <p class="muted">Cartes de ${packRange(pack)}${open ? ` · ${num(drops.length)} au coffre` : ''}</p>
 
-        <h2 class="buy__sub">Répartitions</h2>
-        ${oddsGrid(pack)}
-        <div class="facts">
-          <div class="fact"><span>Retour théorique</span><strong>${pctFine(packReturn(pack))}</strong><small>en revente immédiate</small></div>
-          <div class="fact"><span>Cote moyenne</span><strong>${eur(expectedValue(pack))}</strong><small>par carte tirée</small></div>
-          <div class="fact"><span>Carte ≥ prix du pack</span><strong>${pctFine(profitChance(pack))}</strong><small>des tirages</small></div>
-        </div>
-        <p class="small muted">${icon('shield-check', { size: 14 })} Tirage vérifiable : chaque carte occupe une plage de tickets publiée plus bas. <a href="#/equite">Comment ça marche</a></p>
-        <p class="small muted">${icon('hand-coins', { size: 14 })} Rachat : ${Math.round(RULES.buybackRate * 100)} % de la cote pendant ${RULES.buybackLockMinutes} minutes après l'ouverture, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite.</p>
-
-        <div class="buy__qty">
-          <span id="qty-label">Quantité de packs</span>
-          <div class="stepper" role="group" aria-labelledby="qty-label">
-            <button class="btn btn--icon btn--secondary" type="button" data-step="-1" aria-label="Un pack de moins">${icon('minus', { size: 18 })}</button>
-            <output class="stepper__value" data-qty aria-live="polite">${qty}</output>
-            <button class="btn btn--icon btn--secondary" type="button" data-step="1" aria-label="Un pack de plus">${icon('plus', { size: 18 })}</button>
-          </div>
-          <span class="small muted">Maximum ${RULES.maxPacksPerOrder} packs par achat</span>
-        </div>
-
-        <button class="btn btn--primary btn--lg btn--block buy__cta" type="button" data-buy>
-          ${icon('package-open', { size: 20 })}<span data-buy-label></span>
-        </button>
-        ${isLoggedIn() ? `<p class="small muted center">Solde : <strong>${eur(getState().balance)}</strong></p>` : `<p class="small muted center">Un compte démo est nécessaire pour ouvrir un pack.</p>`}
+        ${open ? buyPanel(pack, qty) : outPanel()}
       </section>
     </div>
 
-    <section class="section panel panel--pad">
+    ${open ? `<section class="section panel panel--pad">
       ${sectionHead('Les plus gros hits', { iconName: 'star' })}
       <div class="tile-grid tile-grid--5">
         ${hits.map(({ card, rarity }) => cardTile(card, { rarity })).join('')}
@@ -127,13 +137,13 @@ export default {
 
     <section class="section panel panel--pad">
       ${sectionHead(`Contenu du pack · ${num(drops.length)} cartes`, { iconName: 'list' })}
-      <p class="muted small">Toutes les cartes qui peuvent sortir, de la plus rare à la plus fréquente, avec leur probabilité exacte et leur plage de tickets (sur 1 000 000). Version de la table : <code>${tableVersion(pack)}</code></p>
+      <p class="muted small">Table du coffre en direct : elle change à chaque carte qui entre ou sort. Version <code>${tableVersion(pack)}</code></p>
       <div class="table-wrap"><table class="table table--drops">
-        <thead><tr><th>Carte</th><th>Rareté</th><th class="num">Cote</th><th class="num">Probabilité</th><th class="num">Tickets</th></tr></thead>
+        <thead><tr><th>Carte</th><th>Rareté</th><th class="num">Cote</th><th class="num">Au coffre</th><th class="num">Probabilité</th><th class="num">Tickets</th></tr></thead>
         <tbody data-drops>${drops.slice(0, PREVIEW_ROWS).map(dropRow).join('')}</tbody>
       </table></div>
       ${drops.length > PREVIEW_ROWS ? `<button class="btn btn--secondary" type="button" data-drops-more>${icon('chevron-down', { size: 16 })}Afficher les ${num(drops.length)} cartes</button>` : ''}
-    </section>
+    </section>` : ''}
 
     <section class="section panel panel--pad">
       ${sectionHead('Les dernières ouvertures', { iconName: 'zap', note: 'Flux simulé' })}
@@ -141,22 +151,24 @@ export default {
         ${pulls.length ? pulls.map((p) => openingItem(p)).join('') : '<p class="muted">Aucune ouverture récente.</p>'}
       </div>
     </section>
-
-    ${note("Démonstration : les cartes tirées ne sont pas adossées à un stock réel et aucune n'est expédiée. Les cotes sont indicatives.", 'demo')}`;
+`;
   },
 
   mount(root, { params, navigate, rerender }) {
     const pack = packBySlug(params.slug);
     if (!pack) return null;
 
-    const out = root.querySelector('[data-qty]');
     const label = root.querySelector('[data-buy-label]');
-    let qty = Number(out.textContent) || 1;
+    // Pack en rupture : pas de panneau de jeu, seul le visuel reste animé.
+    if (!label) return attachTilt(root.querySelector('[data-tilt]'), 16);
+    let qty = Number(root.querySelector('.bet__chip.is-active')?.dataset.qty) || 1;
     const paint = () => {
-      out.textContent = String(qty);
-      label.textContent = `Acheter ${plural(qty, 'pack', 'packs')} — ${eur(pack.price * qty)}`;
-      root.querySelector('[data-step="-1"]').disabled = qty <= 1;
-      root.querySelector('[data-step="1"]').disabled = qty >= RULES.maxPacksPerOrder;
+      label.textContent = `Ouvrir ${qty > 1 ? `${qty} packs` : ''} · ${eur(pack.price * qty)}`.replace('  ', ' ');
+      root.querySelectorAll('.bet__chip').forEach((chip) => {
+        const on = Number(chip.dataset.qty) === qty;
+        chip.classList.toggle('is-active', on);
+        chip.setAttribute('aria-checked', String(on));
+      });
     };
     paint();
 
@@ -171,26 +183,31 @@ export default {
         openTopup({ need: total - balance, onDone: rerender });
         return;
       }
-      const ok = await confirmDialog({
-        title: "Confirmer l'achat",
-        confirm: 'Acheter et ouvrir',
-        body: `<p><strong>${plural(qty, 'pack', 'packs')} ${esc(pack.name)}</strong> pour <strong>${eur(total)}</strong>.</p>
-               <p class="muted small">Solde après achat : ${eur(balance - total)} (crédits fictifs). En confirmant, tu demandes l'ouverture immédiate : la carte est tirée tout de suite et l'achat est définitif, sans droit de rétractation.</p>`,
-      });
-      if (!ok) return;
+      // Premier achat : on recueille l'accord pour une ouverture immédiate. Ensuite, un clic suffit.
+      if (!getState().settings.instant) {
+        const ok = await confirmDialog({
+          title: 'Ouverture immédiate',
+          confirm: 'Ouvrir',
+          body: `<p><strong>${plural(qty, 'pack', 'packs')} ${esc(pack.name)}</strong> pour <strong>${eur(total)}</strong>.</p>
+                 <p class="muted small">La carte est tirée tout de suite : l'achat est définitif, sans droit de rétractation. Cet accord vaut pour tes prochains achats.</p>`,
+        });
+        if (!ok) return;
+        setSetting('instant', true);
+      }
       const res = buyPacks(pack.slug, qty);
       if (!res.ok) {
         toast(res.message, 'error');
         return;
       }
       sfx.tap();
+      if (res.short) toast(`Le coffre n'a permis d'ouvrir que ${plural(res.pulls.length, 'pack', 'packs')} : tu n'as payé que ceux-là.`, 'info');
       navigate('/ouverture');
     };
 
     const onClick = (e) => {
-      const step = e.target.closest('[data-step]');
-      if (step) {
-        qty = Math.min(RULES.maxPacksPerOrder, Math.max(1, qty + Number(step.dataset.step)));
+      const chip = e.target.closest('.bet__chip');
+      if (chip) {
+        qty = Number(chip.dataset.qty);
         paint();
         return;
       }

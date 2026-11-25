@@ -95,10 +95,10 @@ export default {
   title: 'Récompenses',
   render() {
     return `
-    ${pageHead({ icon: 'hand-coins', title: 'Récompenses', lead: 'Une part de la marge du site sur tes mises te revient, et grossit avec tes badges.' })}
+    ${pageHead({ icon: 'hand-coins', title: 'Récompenses' })}
     ${cashbackPanel()}
     ${badgesPanel()}
-    ${note("Le cashback rend une partie de ce que le jeu coûte en moyenne : il ne rend jamais le jeu gagnant. Démonstration : les crédits sont fictifs.", 'demo')}`;
+    ${note('Le cashback rend une partie de ce que le jeu coûte en moyenne : il ne rend jamais le jeu gagnant.', 'info')}`;
   },
   mount(root, { rerender }) {
     if (lastClaim && !lastClaim.shown) {

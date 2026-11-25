@@ -17,26 +17,28 @@ c'est là que le joueur compare.
 
 | Pack | Prix | Cotes | Cartes | Cote moyenne | Retour théorique | Marge affichée | Carte ≥ prix |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Booster Starter | 9,95 € | 4 à 300 € | 771 | 9,76 € | 88,3 % | 11,7 % | 21,6 % |
-| Pack Évoli | 19,90 € | 5 à 650 € | 88 | 19,61 € | 88,7 % | 11,3 % | 20,5 % |
-| Booster Pro | 24,95 € | 10 à 500 € | 624 | 25,12 € | 90,6 % | 9,4 % | 20,4 % |
-| Pack Rétro | 29,90 € | 10 à 650 € | 203 | 29,63 € | 89,2 % | 10,8 % | 20,4 % |
-| Pack Brasier | 39,90 € | 16 à 650 € | 68 | 38,07 € | 85,9 % | 14,1 % | 20,5 % |
-| Booster Master | 49,95 € | 20 à 650 € | 512 | 49,98 € | 90,1 % | 9,9 % | 23,7 % |
-| Booster Expert | 99,95 € | 40 à 1050 € | 319 | 101,03 € | 91,0 % | 9,0 % | 29,0 % |
-| Booster Légende | 249,00 € | 100 à 1600 € | 129 | 254,24 € | 91,9 % | 8,1 % | 30,4 % |
+| Booster Starter | 9,95 € | 4 à 293 € | 771 | 9,73 € | 88,0 % | 12,0 % | 22,1 % |
+| Pack Évoli | 19,90 € | 5 à 627 € | 88 | 19,68 € | 89,0 % | 11,0 % | 20,7 % |
+| Booster Pro | 24,95 € | 10 à 453 € | 624 | 24,95 € | 90,0 % | 10,0 % | 20,4 % |
+| Pack Rétro | 29,90 € | 10 à 627 € | 203 | 29,57 € | 89,0 % | 11,0 % | 20,6 % |
+| Pack Brasier | 39,90 € | 18 à 544 € | 68 | 38,13 € | 86,0 % | 14,0 % | 22,1 % |
+| Booster Master | 49,95 € | 20 à 635 € | 512 | 49,95 € | 90,0 % | 10,0 % | 24,0 % |
+| Booster Expert | 99,95 € | 40 à 779 € | 319 | 101,06 € | 91,0 % | 9,0 % | 29,1 % |
+| Booster Légende | 249,00 € | 100 à 1538 € | 129 | 254,53 € | 92,0 % | 8,0 % | 30,5 % |
 
-Comment c'est obtenu :
+Comment c'est obtenu, à chaque mouvement du coffre (`packTable()` dans `js/catalog.js`) :
 
-- six paliers de cote par pack, de « Commune » à « Mythique » ;
-- des probabilités en progression géométrique d'un palier au suivant, réglées
-  par `scripts/design-packs.mjs` pour que le retour tombe sur la cible du pack
-  (`target` dans `js/data/packs.js`) ;
-- à l'intérieur d'un palier, une probabilité inversement proportionnelle à la
-  cote (les petites cartes sortent plus souvent, comme dans un stock réel).
+- six paliers de cote par pack, de « Commune » à « Mythique » ; chacun reçoit
+  les cartes au coffre dont la cote tombe dans sa fourchette ;
+- des probabilités en progression géométrique d'un palier au suivant, dont la
+  raison est réglée pour que le retour tombe sur la cible du pack (`target`
+  dans `js/data/packs.js`) ;
+- à l'intérieur d'un palier, un poids proportionnel au nombre d'exemplaires et
+  inversement proportionnel à la cote.
 
-`npm run smoke` échoue si un pack s'écarte de sa cible de plus d'un point. Le
-catalogue ou un prix change ? On relance `npm run design` et on recopie.
+Un pack dont le coffre ne garnit pas trois paliers, ou qui ne peut pas
+atteindre sa cible à un point près, passe en rupture. `npm run smoke` vérifie
+qu'avec le stock de départ tous les packs sont en vente et sur leur cible.
 
 Trois packs sont thématiques (Évoli et ses évolutions, séries 1999-2002, type
 Feu) : même mécanique, sélection restreinte. Le Pack Brasier affiche le retour
@@ -50,11 +52,27 @@ marché. La marge réelle dépend surtout du prix auquel les cartes sont acheté
 et de la part des joueurs qui gardent leurs cartes plutôt que de les revendre :
 `GERANT.md` et la page Pilotage le chiffrent.
 
+## 1 bis. Un coffre réel
+
+Le site ne vend que ce qu'il possède. Le catalogue complet (toutes les cartes
+de la base, plus de 20 000) est chargé à la demande ; l'espace admin dit pour
+chacune si elle est au coffre, et en combien d'exemplaires (`js/stock.js`).
+
+- Une carte gagnée quitte le coffre, une carte rachetée y revient, et la table
+  du pack est recalculée aussitôt.
+- La page **Cartes** montre le coffre en direct et, pour chaque carte, les packs
+  d'où elle peut sortir avec sa probabilité exacte : on peut viser une carte.
+- Les lots d'un giveaway en cours sont mis de côté.
+
+Limite de la démonstration : l'inventaire vit dans le navigateur. En
+production il est tenu côté serveur et partagé par tous les joueurs.
+
 ## 2. Un tirage que le joueur peut vérifier
 
-Chaque pack publie sa **table de tirage complète** : 1 000 000 de tickets
+Chaque pack publie sa **table de tirage** du moment : 1 000 000 de tickets
 répartis entre ses cartes, avec la probabilité exacte et la plage de tickets de
-chacune. Le tirage ne fait que désigner un ticket.
+chacune. Le tirage ne fait que désigner un ticket. Comme la table change avec
+le coffre, chaque tirage note sa version et la plage de la carte gagnée.
 
 Ce ticket est calculé de façon vérifiable (`js/fair.js`) :
 

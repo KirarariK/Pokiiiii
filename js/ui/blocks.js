@@ -1,9 +1,10 @@
 // Blocs réutilisés par plusieurs pages.
 
-import { cardRef, topHits } from '../catalog.js';
+import { CARDS, cardRef, packAvailable, packTiers, topHits } from '../catalog.js';
 import { ago, esc, eur, eurShort, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { PACKS, RARITIES } from '../data/packs.js';
+import { stockVersion } from '../stock.js';
 import { cardImage, rarityBadge } from './card.js';
 import { packArt, themeGlow } from './pack-art.js';
 
@@ -29,31 +30,41 @@ export function sectionHead(title, { iconName = '', link = '', note = '' } = {})
 }
 
 /** Étendue des cotes d'un pack : « 4 à 275 € ». */
-export const packRange = (pack) => `${pack.tiers[0].min} à ${eurShort(pack.tiers[pack.tiers.length - 1].max * 100)}`;
+/** Fourchette de cotes d'un pack : celle des cartes qui peuvent en sortir en ce moment. */
+export function packRange(pack) {
+  const drops = topHits(pack, Infinity);
+  if (!drops.length) return `${pack.tiers[0].min} à ${eurShort(pack.tiers[pack.tiers.length - 1].max * 100)}`;
+  return `${Math.floor(drops[drops.length - 1].card.value / 100)} à ${eurShort(Math.floor(drops[0].card.value / 100) * 100)}`;
+}
 
 /** Vignette d'un pack (listes et accueil). */
 let peeks = null;
+let peeksVersion = -1;
 /**
  * Carte qui dépasse derrière le booster d'une tuile : une des plus grosses
  * cartes du pack, différente d'un pack à l'autre pour que les tuiles se distinguent.
  */
 function peekCard(pack) {
-  if (!peeks) {
+  if (!peeks || peeksVersion !== stockVersion()) {
+    peeksVersion = stockVersion();
     peeks = new Map();
     const taken = new Set();
     for (const p of PACKS) {
       const hits = topHits(p, 8).map((d) => d.card);
       const card = hits.find((c) => !taken.has(c.nameEn)) || hits[0];
+      if (!card) continue;
       taken.add(card.nameEn);
       peeks.set(p.slug, card);
     }
   }
-  return peeks.get(pack.slug) || topHits(pack, 1)[0].card;
+  // Pack en rupture : pas de table, on garde l'habillage avec une carte du fonds.
+  return peeks.get(pack.slug) || topHits(pack, 1)[0]?.card || CARDS[0];
 }
 
 export function packTile(pack) {
-  return `<a class="pack-tile" href="#/packs/${pack.slug}" style="--glow:${themeGlow(pack.theme)}">
-    ${pack.event ? `<span class="badge badge--event">${icon('flame', { size: 13 })}Événement</span>` : ''}
+  const open = packAvailable(pack);
+  return `<a class="pack-tile ${open ? '' : 'is-out'}" href="#/packs/${pack.slug}" style="--glow:${themeGlow(pack.theme)}">
+    ${!open ? `<span class="badge badge--out">Rupture</span>` : pack.event ? `<span class="badge badge--event">${icon('flame', { size: 13 })}Événement</span>` : ''}
     <span class="pack-tile__stage">
       <span class="pack-tile__peek" aria-hidden="true">${cardImage(peekCard(pack))}</span>
       ${packArt(pack)}
@@ -69,11 +80,11 @@ export function packTile(pack) {
 /** Grille des répartitions d'un pack. */
 export function oddsGrid(pack) {
   return `<div class="odds">
-    ${pack.tiers
+    ${packTiers(pack)
       .map(
-        (t) => `<div class="odds__cell" data-rarity="${t.rarity}">
+        (t) => `<div class="odds__cell ${t.count ? '' : 'is-empty'}" data-rarity="${t.rarity}">
           <span class="odds__range">${t.min} € – ${t.max} €</span>
-          <strong class="odds__p">${pct(t.p)}</strong>
+          <strong class="odds__p">${t.count ? pct(t.p * 100) : '—'}</strong>
           <span class="odds__rarity">${RARITIES[t.rarity].label}</span>
         </div>`,
       )

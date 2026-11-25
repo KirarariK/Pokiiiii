@@ -32,6 +32,8 @@ export const RULES = {
 
   /* ---- Packs ---------------------------------------------------------- */
   maxPacksPerOrder: 10,
+  /** Un pack n'est en vente que si le coffre garnit au moins ce nombre de paliers. */
+  minTiers: 3,
   /** Écart toléré entre le retour d'un pack et sa cible (pack.target), en points. */
   returnTolerance: 0.01,
   /**
@@ -107,6 +109,9 @@ export const RULES = {
 };
 
 export const STORAGE_KEY = 'pokiiiii.demo.v1';
+/** Inventaire du coffre (voir js/stock.js) et accès administrateur (voir js/admin.js). */
+export const STOCK_KEY = 'pokiiiii.stock.v1';
+export const ADMIN_KEY = 'pokiiiii.admin.v1';
 
 /** Date de la dernière mise à jour des cotes embarquées (voir scripts/build-cards.mjs). */
 export { PRICES_DATE } from './data/cards.js';

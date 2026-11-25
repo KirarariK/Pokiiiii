@@ -10,7 +10,7 @@ import { blendedEdge } from '../economics.js';
 import { esc, eur, eurShort, initials, num, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { getState, isLoggedIn, monthlyPoints } from '../store.js';
-import { note, pageHead, sectionHead } from '../ui/blocks.js';
+import { pageHead, sectionHead } from '../ui/blocks.js';
 import { countdownBlocks } from '../ui/countdown.js';
 
 const ui = { tab: 'monthly' };
@@ -88,7 +88,6 @@ function rewards() {
         )
         .join('')}
     </div>
-    ${note('Démonstration : le classement et la dotation sont calculés sur des joueurs fictifs.', 'demo')}
   </section>`;
 }
 
@@ -102,7 +101,7 @@ export default {
       ['rewards', 'Dotation'],
     ];
     return `
-    ${pageHead({ icon: 'trophy', title: 'Classement des collectionneurs', lead: 'Grimpe au classement en ouvrant des packs. Les dix premiers du mois se partagent la dotation.' })}
+    ${pageHead({ icon: 'trophy', title: 'Classement des collectionneurs' })}
 
     <div class="panel panel--pad gw-clock">
       ${icon('clock', { size: 22 })}

@@ -5,8 +5,9 @@ le site gagne-t-il, où peut-il perdre, et qu'est-ce qui l'en empêche ?** Chaqu
 réglage cité se change dans `js/config.js` ou `js/data/packs.js`, et chaque
 garantie est vérifiée par `npm run smoke`.
 
-Les chiffres se recalculent en direct sur la page **Pilotage** (`#/pilotage`),
-dont les hypothèses se règlent au curseur.
+Les chiffres se recalculent en direct dans l'espace admin, onglet **Pilotage**
+(`#/admin/pilotage`), dont les hypothèses se règlent au curseur. Ceux de ce
+document sont relevés sur le stock de démonstration : ils bougent avec le coffre.
 
 ## En deux minutes
 
@@ -22,6 +23,9 @@ dont les hypothèses se règlent au curseur.
   fixe sorti de la caisse.
 - Aucun détour ne rend plus que la revente directe d'une carte, et un bonus ne
   peut pas ressortir sans avoir été joué. Les tests le vérifient.
+- **Le site ne vend que ce qu'il possède.** Une carte qui n'est pas au coffre
+  ne peut sortir d'aucun pack, et un pack que le coffre ne permet pas de
+  composer n'est pas en vente.
 - Rien de ce qui rapporte ici n'est caché : le retour, les probabilités, les
   conditions de bonus et les marges de l'Évolution sont affichés avant de jouer.
 
@@ -35,21 +39,21 @@ leur cote, 3 % de frais sur les dépôts, 4 nouveaux déposants pour 100 packs,
 | Poste | Montant | Part des ventes |
 | --- | ---: | ---: |
 | Ventes de packs | 151 854 € | 100 % |
-| Coût des cartes (rachats versés, cartes sorties du stock) | −129 615 € | 85,4 % |
-| **Marge de jeu** | **22 239 €** | **14,6 %** |
-| Cashback | −949 € | 0,6 % |
-| Dotation du classement | −791 € | 0,5 % |
+| Coût des cartes (rachats versés, cartes sorties du stock) | −129 478 € | 85,3 % |
+| **Marge de jeu** | **22 375 €** | **14,7 %** |
+| Cashback | −958 € | 0,6 % |
+| Dotation du classement | −798 € | 0,5 % |
 | Cagnotte des giveaways | −855 € | 0,6 % |
 | Bonus de premier dépôt | −1 200 € | 0,8 % |
-| **Marge après fidélité** | **18 444 €** | **12,1 %** |
-| Frais de paiement et fraude | −2 404 € | 1,6 % |
-| TVA sur la marge | −3 706 € | 2,4 % |
-| **Résultat avant frais fixes** | **12 333 €** | **8,1 %** |
+| **Marge après fidélité** | **18 564 €** | **12,2 %** |
+| Frais de paiement et fraude | −2 402 € | 1,6 % |
+| TVA sur la marge | −3 729 € | 2,5 % |
+| **Résultat avant frais fixes** | **12 433 €** | **8,2 %** |
 | Frais fixes (équipe, coffre, assurance, outils, publicité) | −6 000 € | 4,0 % |
-| **Résultat du mois** (avant impôt sur les sociétés) | **6 333 €** | **4,2 %** |
+| **Résultat du mois** (avant impôt sur les sociétés) | **6 433 €** | **4,2 %** |
 
-Seuil de rentabilité : **2 433 packs par mois**. Chaque pack vendu laisse
-2,47 € en moyenne avant frais fixes.
+Seuil de rentabilité : **2 413 packs par mois**. Chaque pack vendu laisse
+2,49 € en moyenne avant frais fixes.
 
 Ce que ce compte ne dit pas : les frais fixes sont une hypothèse à remplacer
 par les tiens, et la TVA suppose le régime de la marge (voir « Points à faire
@@ -59,24 +63,24 @@ valider »).
 
 | Scénario | Résultat avant frais fixes | Résultat du mois | Seuil |
 | --- | ---: | ---: | ---: |
-| Hypothèses par défaut | 12 333 € (8,1 %) | 6 333 € | 2 433 packs |
-| Cartes achetées à 60 % de la cote | 17 094 € (11,3 %) | 11 094 € | 1 755 packs |
-| Cartes achetées à 90 % de la cote | 7 572 € (5,0 %) | 1 572 € | 3 962 packs |
-| Cartes achetées à la cote | 4 398 € (2,9 %) | −1 602 € | 6 822 packs |
-| Toutes les cartes revendues aussitôt | 7 669 € (5,1 %) | 1 669 € | 3 912 packs |
-| Toutes les cartes gardées | 23 830 € (15,7 %) | 17 830 € | 1 259 packs |
-| Sans TVA sur la marge | 16 039 € (10,6 %) | 10 039 € | 1 871 packs |
+| Hypothèses par défaut | 12 434 € (8,2 %) | 6 434 € | 2 413 packs |
+| Cartes achetées à 60 % de la cote | 17 190 € (11,3 %) | 11 190 € | 1 746 packs |
+| Cartes achetées à 90 % de la cote | 7 678 € (5,1 %) | 1 678 € | 3 908 packs |
+| Cartes achetées à la cote | 4 507 € (3,0 %) | −1 493 € | 6 657 packs |
+| Toutes les cartes revendues aussitôt | 7 777 € (5,1 %) | 1 777 € | 3 858 packs |
+| Toutes les cartes gardées | 23 913 € (15,7 %) | 17 913 € | 1 255 packs |
+| Sans TVA sur la marge | 16 163 € (10,6 %) | 10 163 € | 1 857 packs |
 
 ### Les leviers, du plus rentable au moins rentable
 
 | Mouvement | Effet sur le résultat du mois |
 | --- | ---: |
-| Acheter les cartes 5 points moins cher | +1 587 € |
-| Vendre 10 % de packs en plus | +1 233 € |
+| Acheter les cartes 5 points moins cher | +1 585 € |
+| Vendre 10 % de packs en plus | +1 243 € |
 | Baisser d'un point le retour de tous les packs | +1 022 € |
-| 5 points de cartes gardées en plus, plutôt que revendues aussitôt | +808 € |
-| Un point de frais de paiement en moins | +801 € |
-| Un point de cashback moyen en moins | +158 € |
+| 5 points de cartes gardées en plus, plutôt que revendues aussitôt | +807 € |
+| Un point de frais de paiement en moins | +800 € |
+| Un point de cashback moyen en moins | +160 € |
 
 À lire ainsi : le retour et le cashback sont les leviers les plus faciles à
 actionner et les moins intéressants. Baisser le retour d'un point rapporte
@@ -90,17 +94,33 @@ le rouge même si le modèle est sain.
 
 | Packs par mois | Résultat moyen | Mauvais mois (1 sur 20) | Mois déficitaires |
 | ---: | ---: | ---: | ---: |
-| 1 000 | −3 512 € | −5 523 € | presque tous |
-| 2 000 | −1 101 € | −3 641 € | 3 sur 4 |
-| 3 000 | 1 376 € | −2 036 € | 1 sur 4 |
-| 5 000 | 6 186 € | 2 006 € | 1 sur 100 |
-| 10 000 | 18 461 € | 12 665 € | aucun |
+| 1 000 | −3 494 € | −5 505 € | presque tous |
+| 2 000 | −1 054 € | −3 556 € | 3 sur 4 |
+| 3 000 | 1 443 € | −1 920 € | 1 sur 4 |
+| 5 000 | 6 293 € | 2 047 € | 1 sur 100 |
+| 10 000 | 18 684 € | 12 872 € | aucun |
 
 Conséquence pratique : prévoir une réserve qui couvre plusieurs mauvais mois,
 et ne pas lancer le Booster Légende (lot de 1 600 €) avant d'avoir le volume
 qui l'absorbe.
 
 ## Fonctionnalité par fonctionnalité
+
+### Stock
+
+- **Fuite fermée : promettre une carte qu'on n'a pas.** Chaque carte du
+  catalogue (plus de 20 000) porte un état « au coffre ou non » et un nombre
+  d'exemplaires, tenus dans l'espace admin. Seules les cartes au coffre entrent
+  dans les tables de tirage, peuvent être visées en Évolution ou servir de lot.
+- Une carte gagnée retire un exemplaire ; une carte rachetée, ou misée en
+  Évolution, le remet. Les lots d'un giveaway en cours sont mis de côté : ils
+  ne peuvent plus sortir d'un pack.
+- Les probabilités sont recalculées à chaque mouvement pour que le retour reste
+  sur la cible du pack. Si le coffre ne garnit pas au moins trois paliers, ou
+  ne permet pas d'atteindre le retour annoncé, le pack passe en rupture : le
+  site préfère ne pas vendre plutôt que vendre à un autre retour que celui affiché.
+- L'admin peut retenir sa propre cote pour une carte (prix d'achat récent, état
+  particulier) : c'est elle qui sert au calcul.
 
 ### Packs
 
@@ -111,14 +131,14 @@ c'est là que le joueur regarde le retour.
 
 | Pack | Prix | Retour affiché | Marge de jeu | Résultat par pack | Si tout est revendu aussitôt |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Booster Starter | 9,95 € | 88,3 % | 15,9 % | 1,04 € (10,4 %) | 0,74 € (7,5 %) |
-| Pack Évoli | 19,90 € | 88,7 % | 15,5 % | 1,97 € (9,9 %) | 1,36 € (6,8 %) |
-| Booster Pro | 24,95 € | 90,6 % | 13,7 % | 2,18 € (8,7 %) | 1,41 € (5,7 %) |
-| Pack Rétro | 29,90 € | 89,2 % | 15,0 % | 2,87 € (9,6 %) | 1,95 € (6,5 %) |
-| Pack Brasier | 39,90 € | 85,9 % | 18,2 % | 3,08 € (7,7 %) | 1,84 € (4,6 %) |
-| Booster Master | 49,95 € | 90,1 % | 14,2 % | 4,58 € (9,2 %) | 3,05 € (6,1 %) |
-| Booster Expert | 99,95 € | 91,0 % | 13,3 % | 8,58 € (8,6 %) | 5,50 € (5,5 %) |
-| Booster Légende | 249,00 € | 91,9 % | 12,4 % | 19,95 € (8,0 %) | 12,24 € (4,9 %) |
+| Booster Starter | 9,95 € | 88,0 % | 16,1 % | 1,06 € (10,6 %) | 0,76 € (7,7 %) |
+| Pack Évoli | 19,90 € | 89,0 % | 15,2 % | 1,93 € (9,7 %) | 1,31 € (6,6 %) |
+| Booster Pro | 24,95 € | 90,0 % | 14,2 % | 2,29 € (9,2 %) | 1,52 € (6,1 %) |
+| Pack Rétro | 29,90 € | 89,0 % | 15,2 % | 2,91 € (9,7 %) | 1,99 € (6,7 %) |
+| Pack Brasier | 39,90 € | 86,0 % | 18,1 % | 3,04 € (7,6 %) | 1,80 € (4,5 %) |
+| Booster Master | 49,95 € | 90,0 % | 14,2 % | 4,59 € (9,2 %) | 3,06 € (6,1 %) |
+| Booster Expert | 99,95 € | 91,0 % | 13,3 % | 8,56 € (8,6 %) | 5,48 € (5,5 %) |
+| Booster Légende | 249,00 € | 92,0 % | 12,3 % | 19,77 € (7,9 %) | 12,05 € (4,8 %) |
 
 Le Pack Brasier affiche le retour le plus bas parce que 5 % de son prix
 financent son giveaway : lots compris, il rend autant que les autres.
@@ -127,11 +147,11 @@ financent son giveaway : lots compris, il rend autant que les autres.
 plus haut, cartes achetées à la cote, 6 % de frais), chaque pack reste
 bénéficiaire : 2,6 % au plus bas.
 
-**À surveiller en production.** Le retour est calculé sur les cotes du jour du
-calibrage. Si les cotes montent et que les tables ne sont pas recalculées, le
-retour réel dépasse la cible et la marge fond. Il faut recalibrer chaque jour,
-figer et dater chaque version (le numéro de version est déjà affiché sur la
-page du pack), et lever une alerte dès qu'un pack dérive de plus d'un point.
+**À surveiller en production.** Les tables se recalculent seules quand le
+stock bouge, mais sur les cotes enregistrées. Si le marché monte et que les
+cotes ne sont pas mises à jour, le site donne plus que ce qu'il affiche. Il
+faut rafraîchir les cotes chaque jour et archiver chaque version de table (son
+numéro est déjà noté avec chaque tirage).
 
 ### Rachat
 
@@ -250,9 +270,10 @@ montre qu'aucun n'est nécessaire.
 
 Ce sont eux qui évitent les pertes qu'aucune règle de jeu ne couvre.
 
-- **Tables** : recalibrage quotidien, version figée et datée, alerte de dérive.
-- **Stock** : une carte physique derrière chaque ligne de table ; une carte
-  sortie est remplacée ou retirée de la table avant le tirage suivant.
+- **Cotes** : mise à jour quotidienne, alerte sur les cartes dont la cote a
+  bougé de plus de quelques points.
+- **Stock** : inventaire tenu côté serveur et partagé par tous les joueurs,
+  rapproché du coffre physique à intervalle fixe ; chaque version de table archivée.
 - **Fraude au paiement** : authentification forte sur chaque dépôt, retrait
   vers le moyen de paiement d'origine, suivi du taux d'impayés.
 - **Comptes multiples** : un bonus par personne et par moyen de paiement,

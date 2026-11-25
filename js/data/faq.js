@@ -19,8 +19,8 @@ export const FAQ = [
   },
   {
     q: 'Comment les cartes sont-elles tirées ?',
-    a: `<p>Chaque pack publie sa <strong>table de tirage complète</strong> : toutes les cartes, avec leur probabilité exacte. Le tirage désigne un ticket parmi un million ; la table dit à quelle carte il correspond.</p>
-        <p>Ce ticket est <strong>vérifiable</strong> : il est calculé à partir d'une graine que nous fixons à l'avance, d'une graine que tu choisis et d'un compteur. Le détail est sur la page <a href="#/equite">Équité prouvable</a>.</p>`,
+    a: `<p>Un pack ne peut donner que des cartes <strong>réellement au coffre</strong>. Sa table de tirage, publiée sur sa page, liste chacune d'elles avec sa probabilité exacte et le nombre d'exemplaires. Le tirage désigne un ticket parmi un million ; la table dit à quelle carte il correspond.</p>
+        <p>Ce ticket est <strong>vérifiable</strong> : il est calculé à partir d'une graine que nous fixons à l'avance, d'une graine que tu choisis et d'un compteur. Le détail est sur la page <a href="#/equite">Équité prouvable</a>. Pour savoir d'où sort une carte précise, cherche-la dans <a href="#/cartes">Cartes</a>.</p>`,
   },
   {
     q: 'Combien rapporte un pack en moyenne ?',
@@ -78,7 +78,7 @@ export const FAQ = [
   {
     q: "Qu'est-ce qui est fictif dans cette démonstration ?",
     a: `<p>Le parcours est réel, le reste est simulé :</p>
-        <ul><li>le solde (crédits fictifs, aucun paiement) ;</li><li>le stock (les cartes tirées ne sont pas adossées à des cartes physiques) ;</li><li>les livraisons (rien n'est expédié) ;</li><li>la communauté (classement, dernières ouvertures et participants sont générés).</li></ul>
+        <ul><li>le solde (crédits fictifs, aucun paiement) ;</li><li>le coffre (un inventaire d'exemple, propre à ton navigateur) ;</li><li>les livraisons (rien n'est expédié) ;</li><li>la communauté (classement, dernières ouvertures et participants sont générés).</li></ul>
         <p>Les visuels et les cotes proviennent d'une base publique et sont indicatifs.</p>`,
   },
   {

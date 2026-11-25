@@ -6,7 +6,7 @@ import { RARITIES, packBySlug } from '../data/packs.js';
 import { dateFr, esc, eur, eurShort, num, pct, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { bonusStatus, buybackOf, buybackRate, canShip, getState, lockEnd, ownedByUid, requestShipment, sellCards, shippingFee, shippingInsurance, stats, withdrawable } from '../store.js';
-import { emptyState, note, pageHead, statTile } from '../ui/blocks.js';
+import { emptyState, pageHead, statTile } from '../ui/blocks.js';
 import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
 import { countdownInline, refreshCountdowns } from '../ui/countdown.js';
 import { attachTilt, sfx } from '../ui/effects.js';
@@ -171,7 +171,6 @@ function openShipping(uids, rerender) {
       </div>
       <p class="fee">${icon('truck', { size: 16 })}<span>Frais et délai : <strong data-fee>${feeLine(zones[0][0])}</strong></span></p>
       ${insurance ? `<p class="small muted">Dont ${eur(insurance)} d'assurance : ${pct(RULES.shippingInsurance.rate * 100)} de la cote expédiée au-delà de ${eurShort(RULES.shippingInsurance.from)}.</p>` : ''}
-      ${note("Démonstration : aucune carte n'est expédiée et l'adresse reste dans ton navigateur. Barème de livraison indicatif.", 'demo')}
       <p class="form__error" data-error role="alert" hidden></p>
     </form>`,
     footer: `<button class="btn btn--secondary" type="button" data-close>Annuler</button>
@@ -229,7 +228,6 @@ export default {
     const head = pageHead({
       icon: 'archive',
       title: 'Ma collection',
-      lead: 'Tes cartes sont rangées à ton nom dans le coffre. Garde-les, fais-les livrer ou revends-les quand tu veux.',
     });
 
     if (!state.cards.length) {

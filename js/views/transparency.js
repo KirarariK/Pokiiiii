@@ -2,7 +2,7 @@
 // une carte est tirée, limites de la démonstration et reste à faire.
 
 import { PRICES_DATE, RULES } from '../config.js';
-import { dropTable, expectedValue, packReturn, profitChance } from '../catalog.js';
+import { dropTable, expectedValue, packAvailable, packReturn, profitChance } from '../catalog.js';
 import { BADGES } from '../data/badges.js';
 import { listGiveaways } from '../data/giveaways.js';
 import { PACKS } from '../data/packs.js';
@@ -14,6 +14,7 @@ const percent = (x) => `${Math.round(x * 100)} %`;
 
 function packRows() {
   return PACKS.map((pack) => {
+    if (!packAvailable(pack)) return `<tr><th scope="row"><a href="#/packs/${pack.slug}">${esc(pack.name)}</a></th><td class="num">${eur(pack.price)}</td><td class="muted" colspan="4">En rupture</td></tr>`;
     const ev = expectedValue(pack);
     return `<tr>
       <th scope="row"><a href="#/packs/${pack.slug}">${esc(pack.name)}</a></th>
@@ -29,10 +30,10 @@ function packRows() {
 const TODO = [
   ['landmark', 'Société', 'Immatriculation, mentions légales, CGV et CGU rédigées par un juriste.'],
   ['scale', 'Qualification juridique', "Faire valider le modèle : vente d'un bien à contenu aléatoire, ou jeu d'argent soumis à autorisation. La réponse conditionne tout le reste."],
-  ['dices', 'Tirage certifié', "Graine serveur gardée côté serveur, tables de tirage figées et datées, générateur d'aléa audité par un laboratoire agréé, journal infalsifiable."],
+  ['dices', 'Tirage certifié', "Graine serveur gardée côté serveur, chaque version de table archivée et datée, générateur d'aléa audité par un laboratoire agréé, journal infalsifiable."],
   ['credit-card', 'Paiement', 'Prestataire de paiement agréé, lutte contre la fraude et les impayés.'],
   ['scan-face', 'Identité et majorité', "Vérification de l'âge à l'inscription et de l'identité (KYC) avant tout retrait."],
-  ['vault', 'Stock et logistique', 'Une carte physique par ligne de la table de tirage, coffre assuré, expédition suivie, gestion des retours.'],
+  ['vault', 'Stock et logistique', "Inventaire tenu côté serveur et partagé par tous les joueurs, coffre assuré, expédition suivie, gestion des retours."],
   ['shield', 'Protection des joueurs', 'Limites de dépenses, rappels de session, pauses et auto-exclusion appliqués côté serveur.'],
   ['lock', 'Données personnelles', 'Registre des traitements, politique de confidentialité, bandeau cookies conforme.'],
 ];
@@ -45,7 +46,7 @@ export default {
     const high = Math.max(...PACKS.map((p) => p.target));
     const fund = listGiveaways().find((g) => g.fundRate)?.fundRate ?? 0;
     return `
-    ${pageHead({ icon: 'scale', title: 'Transparence et jeu responsable', lead: 'Ce que vaut chaque jeu en moyenne, comment une carte est tirée, et ce que cette démonstration ne fait pas encore.' })}
+    ${pageHead({ icon: 'scale', title: 'Transparence et jeu responsable' })}
 
     <section class="panel panel--pad">
       <div class="section__head"><h2>${icon('percent', { size: 22 })}<span>Ce que vaut un pack en moyenne</span></h2></div>
@@ -73,7 +74,7 @@ export default {
     <section class="panel panel--pad prose">
       <h2>${icon('dices', { size: 22 })}Comment une carte est tirée</h2>
       <ol>
-        <li><strong>Chaque pack a une table de tirage publiée</strong> : ${num(1_000_000)} tickets répartis entre ses cartes. La probabilité d'une carte, c'est la taille de sa plage de tickets. La table complète, avec son numéro de version, est sur la page du pack.</li>
+        <li><strong>Seules les cartes au coffre peuvent sortir.</strong> La table d'un pack répartit ${num(1_000_000)} tickets entre les cartes que le site possède à cet instant : la probabilité d'une carte, c'est la taille de sa plage. Une carte gagnée quitte le coffre, une carte rachetée y revient, et la table est recalculée pour que le retour reste celui affiché.</li>
         <li><strong>Les paliers fixent les grandes masses</strong> (les « répartitions »). À l'intérieur d'un palier, ${RULES.tierSkew ? 'la probabilité d’une carte est inversement proportionnelle à sa cote : les moins chères sortent plus souvent, comme dans un stock réel.' : 'toutes les cartes ont la même probabilité.'}</li>
         <li><strong>Un ticket est tiré de façon vérifiable</strong> à partir de ta graine, de la nôtre et d'un compteur. Tu peux le recalculer après coup : voir <a href="#/equite">Équité prouvable</a>.</li>
       </ol>
@@ -85,7 +86,7 @@ export default {
       <h2>${icon('info', { size: 22 })}Ce que la démonstration ne fait pas</h2>
       <ul>
         <li><strong>Aucun paiement</strong> : le solde est fait de crédits fictifs, et aucun retrait n'est possible.</li>
-        <li><strong>Aucun stock</strong> : les cartes tirées ne sont pas adossées à des cartes physiques, une même carte peut sortir sans limite.</li>
+        <li><strong>Un coffre d'exemple</strong> : l'inventaire est un stock de démonstration, tenu dans ton navigateur. Il n'est pas partagé entre appareils.</li>
         <li><strong>Aucune expédition</strong> : les demandes de livraison restent locales.</li>
         <li><strong>Aucune communauté réelle</strong> : classement, dernières ouvertures, ventes et participants aux giveaways sont générés.</li>
         <li><strong>Aucun serveur</strong> : compte, tirages et graines vivent dans ton navigateur. La graine « serveur » y est donc lisible.</li>

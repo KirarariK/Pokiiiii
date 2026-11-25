@@ -6,11 +6,12 @@
 // serveur (en particulier la graine serveur, qui ne doit jamais être lisible).
 
 import { RULES, STORAGE_KEY } from './config.js';
-import { cardById, packEdge, resolveTicket, tableVersion } from './catalog.js';
+import { cardById, packEdge, packTable, resolveTicket, stockCard } from './catalog.js';
 import { progress } from './data/badges.js';
 import { PACKS, packBySlug, rarityByValue } from './data/packs.js';
 import { TICKETS, isValidClientSeed, newClientSeed, newServerSeed, sha256Hex, ticketFor } from './fair.js';
 import { uid } from './rng.js';
+import { adjustStock, drawableQty } from './stock.js';
 
 const VERSION = 4;
 const MAX_TX = 500;
@@ -49,7 +50,8 @@ function fresh() {
     totals: { wagered: 0, staked: 0, theo: 0 },
     giveaways: {}, // { [id]: { joined, followed, tickets } }
     limits: { daily: null, pauseUntil: 0 },
-    settings: { sound: true, motion: true, fast: false, realityCheck: 30 },
+    /** instant : le joueur a déjà accepté l'ouverture immédiate, on n'affiche plus la confirmation d'achat. */
+    settings: { sound: true, motion: true, fast: false, realityCheck: 30, instant: false },
     fair: { ...freshSeeds(), archive: [] },
     rolls: [], // journal des tirages (voir logRoll)
   };
@@ -359,6 +361,8 @@ export function logout() {
 
 /** Efface toutes les données locales du compte démo (le thème choisi est conservé à part). */
 export function resetDemo() {
+  // Les cartes encore au coffre au nom du joueur redeviennent disponibles.
+  state.cards.filter((c) => c.status === 'coffre').forEach((c) => adjustStock(c.cardId, 1));
   state = fresh();
   commit();
 }
@@ -399,33 +403,42 @@ export function buyPacks(slug, qty) {
   if (state.limits.daily != null && spentToday(now) + total > state.limits.daily) return fail('limit', 'Cet achat dépasserait ta limite de dépenses quotidienne.');
   if (state.balance < total) return fail('balance', 'Solde insuffisant.');
 
-  const table = tableVersion(pack);
+  if (!packTable(pack).ok) return fail('stock', "Ce pack est en rupture : le coffre ne permet plus de le composer.");
+
+  // Chaque carte gagnée quitte le coffre aussitôt : la table du tirage suivant en tient compte.
+  // Si le coffre ne suit plus en cours de route, la commande s'arrête au dernier pack tiré.
   const pulls = [];
+  const edge = packEdge(pack);
   for (let i = 0; i < qty; i++) {
+    const table = packTable(pack);
+    if (!table.ok) break;
     const roll = nextRoll(`pack:${pack.slug}`);
     const drop = resolveTicket(pack, roll.ticket);
+    adjustStock(drop.card.id, -1);
     pulls.push({ uid: uid('c'), cardId: drop.card.id, pack: pack.slug, rarity: drop.rarity, value: drop.card.value, at: now + i, status: 'coffre', roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } });
-    logRoll(roll, pack.name, { cardId: drop.card.id, table });
+    logRoll(roll, pack.name, { cardId: drop.card.id, table: table.version, from: drop.from, to: drop.to });
   }
+  const bought = pulls.length;
+  const paid = pack.price * bought;
 
-  const fromBonus = debit(total);
-  if (fromBonus > 0) pulls.forEach((p) => (p.bonusShare = fromBonus / total));
+  const fromBonus = debit(paid);
+  if (fromBonus > 0) pulls.forEach((p) => (p.bonusShare = fromBonus / paid));
   state.cards.push(...pulls);
   state.pending = pulls.map((p) => p.uid);
-  state.lastOrder = { pack: pack.slug, qty, total, at: now, uids: pulls.map((p) => p.uid) };
-  addTx('achat', -total, `${qty} × ${pack.name}`);
-  addPoints(total);
-  recordWager(total, packEdge(pack), true);
+  state.lastOrder = { pack: pack.slug, qty: bought, total: paid, at: now, uids: pulls.map((p) => p.uid) };
+  addTx('achat', -paid, `${bought} × ${pack.name}`);
+  addPoints(paid);
+  recordWager(paid, edge, true);
   settleBonus();
 
   if (pack.giveaway) {
     const g = state.giveaways[pack.giveaway] || { joined: false, followed: false, tickets: 0 };
-    g.tickets += qty;
+    g.tickets += bought;
     state.giveaways[pack.giveaway] = g;
   }
 
   commit();
-  return { ok: true, pulls };
+  return { ok: true, pulls, short: qty - bought };
 }
 
 /** Marque des cartes comme révélées (fin de l'animation d'ouverture). */
@@ -454,6 +467,7 @@ export function sellCards(uids) {
     owned.status = 'vendue';
     owned.soldFor = credit;
     owned.soldAt = now;
+    adjustStock(owned.cardId, 1);
     total += credit;
     const card = cardById(owned.cardId);
     addTx('rachat', credit, `Rachat — ${card ? card.name : 'carte'}`);
@@ -502,6 +516,16 @@ export function requestShipment({ uids, zone, address }) {
   return { ok: true, id, fee };
 }
 
+/** Avancement d'une livraison (espace admin) : état et numéro de suivi. */
+export function updateShipment(id, { status, tracking }) {
+  const shipment = state.shipments.find((s) => s.id === id);
+  if (!shipment) return fail('none', 'Livraison introuvable.');
+  if (['preparation', 'expediee', 'livree'].includes(status)) shipment.status = status;
+  shipment.tracking = String(tracking || '').trim().slice(0, 60);
+  commit();
+  return { ok: true };
+}
+
 /* ---------------------------------------------------------------- évolution */
 
 /** Marge du site sur une évolution : elle grandit avec le multiplicateur visé. */
@@ -525,9 +549,10 @@ export function evolve(stakeUid, targetId) {
   if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour tenter une évolution.');
   if (paused()) return fail('pause', 'Ton compte est en pause : les évolutions sont suspendues.');
   const stake = ownedByUid(stakeUid);
-  const target = cardById(targetId);
+  const target = stockCard(targetId);
   if (!stake || stake.status !== 'coffre') return fail('stake', "Cette carte n'est plus dans ton coffre.");
-  if (!target || target.value < stake.value * RULES.evolution.minRatio) return fail('target', 'La carte visée doit valoir nettement plus que la carte misée.');
+  if (!target || drawableQty(targetId) < 1) return fail('target', "La carte visée n'est plus au coffre : choisis-en une autre.");
+  if (target.value < stake.value * RULES.evolution.minRatio) return fail('target', 'La carte visée doit valoir nettement plus que la carte misée.');
 
   const chance = evolutionChance(stake.value, target.value);
   const winBelow = Math.round(chance * TICKETS);
@@ -536,7 +561,10 @@ export function evolve(stakeUid, targetId) {
   const now = Date.now();
   let gained = null;
 
+  // Dans les deux cas, la carte misée retourne au coffre du site.
+  adjustStock(stake.cardId, 1);
   if (win) {
+    adjustStock(target.id, -1);
     stake.status = 'evoluee';
     stake.endedAt = now;
     gained = { uid: uid('c'), cardId: target.id, pack: 'evolution', rarity: rarityByValue(target.value), value: target.value, at: now, status: 'coffre', from: stake.uid, roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } };

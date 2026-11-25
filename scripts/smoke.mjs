@@ -2,9 +2,11 @@
 // Contrôles rapides, sans navigateur : données, tables de tirage, équité, retour théorique.
 //   node scripts/smoke.mjs
 
+import './shim-storage.mjs';
 import crypto from 'node:crypto';
+import { adminConfigured, isAdmin, loginAdmin, logoutAdmin, setupAdmin } from '../js/admin.js';
 import { RULES } from '../js/config.js';
-import { CARDS, dropTable, expectedValue, packReturn, resolveTicket, tierPool } from '../js/catalog.js';
+import { CARDS, dropTable, expectedValue, packAvailable, packReturn, packTable, resolveTicket, stockCards } from '../js/catalog.js';
 import { BADGES, progress } from '../js/data/badges.js';
 import { giveawayPool, listGiveaways } from '../js/data/giveaways.js';
 import { DEFAULTS, blendedEdge, expectedMonth, levers, packEconomics, simulateMonths } from '../js/economics.js';
@@ -13,6 +15,7 @@ import { PACKS, RARITIES } from '../js/data/packs.js';
 import { THEMES } from '../js/data/themes.js';
 import { drawFromPack } from '../js/draw.js';
 import { TICKETS, hmacHex, sha256Hex, ticketFor } from '../js/fair.js';
+import { adjustStock, clearStock, drawableQty, exportStock, importStock, qtyOf, reservedOf, resetStock, setStock, usingDemoStock } from '../js/stock.js';
 import * as store from '../js/store.js';
 import fs from 'node:fs';
 
@@ -49,26 +52,74 @@ check(pairs.every(([k, m]) => hmacHex(k, m) === crypto.createHmac('sha256', k).u
   check(ticketFor('s', 'c', 1, 'pack:a') !== ticketFor('s', 'c', 2, 'pack:a') && ticketFor('s', 'c', 1, 'pack:a') === ticketFor('s', 'c', 1, 'pack:a'), 'ticket déterministe et sensible au compteur');
 }
 
-console.log('\nPacks');
+console.log('\nPacks (tables calculées sur le coffre)');
 for (const pack of PACKS) {
-  const total = pack.tiers.reduce((s, t) => s + t.p, 0);
-  check(Math.abs(total - 100) < 1e-9, `${pack.slug} : probabilités des paliers = ${total.toFixed(1)} %`);
   check(pack.tiers.every((t) => RARITIES[t.rarity]) && pack.tiers.every((t, i) => i === 0 || t.min > pack.tiers[i - 1].max), `${pack.slug} : paliers croissants, disjoints, raretés connues`);
-  const sizes = pack.tiers.map((_, i) => tierPool(pack, i).length);
-  check(sizes.every((n) => n >= 3), `${pack.slug} : cartes par palier ${sizes.join(' / ')}`);
-
-  const table = dropTable(pack);
+  const t = packTable(pack);
+  if (!t.ok) {
+    check(false, `${pack.slug} : en rupture avec le stock de départ (${t.message})`);
+    continue;
+  }
+  const table = t.drops;
   const contiguous = table.every((d, i) => d.from === (i ? table[i - 1].to : 0) && d.to > d.from);
   check(contiguous && table[table.length - 1].to === TICKETS, `${pack.slug} : table de ${table.length} cartes, ${TICKETS} tickets sans trou ni recouvrement`);
-  const tierOk = pack.tiers.every((t, i) => {
-    const tickets = table.filter((d) => d.tierIndex === i).reduce((s, d) => s + (d.to - d.from), 0);
-    return tickets === Math.round((t.p / 100) * TICKETS);
-  });
-  check(tierOk, `${pack.slug} : chaque palier pèse exactement sa probabilité publiée`);
-  check([0, 1, 499_999, TICKETS - 1].every((t) => { const d = resolveTicket(pack, t); return t >= d.from && t < d.to; }), `${pack.slug} : résolution des tickets`);
-
+  const tierOk = t.tiers.every((tier, i) => table.filter((d) => d.tierIndex === i).reduce((sum, d) => sum + (d.to - d.from), 0) === Math.round(tier.p * TICKETS));
+  check(tierOk && Math.abs(t.tiers.reduce((sum, tier) => sum + tier.p, 0) - 1) < 1e-9, `${pack.slug} : paliers ${t.tiers.map((tier) => `${tier.count}·${(tier.p * 100).toFixed(1)} %`).join(' / ')}`);
+  check(table.every((d) => d.copies >= 1 && drawableQty(d.card.id) >= 1), `${pack.slug} : chaque carte de la table est au coffre`);
+  check([0, 1, 499_999, TICKETS - 1].every((n) => { const d = resolveTicket(pack, n); return n >= d.from && n < d.to; }), `${pack.slug} : résolution des tickets`);
   const ret = packReturn(pack);
   check(Math.abs(ret - pack.target) <= RULES.returnTolerance, `${pack.slug} : retour théorique ${(ret * 100).toFixed(1)} % (cible ${Math.round(pack.target * 100)} % ± 1), cote moyenne ${(expectedValue(pack) / 100).toFixed(2)} € pour ${(pack.price / 100).toFixed(2)} €`);
+}
+
+console.log('\nCoffre');
+{
+  const copies = () => stockCards().reduce((sum, c) => sum + qtyOf(c.id), 0);
+  const start = copies();
+  check(usingDemoStock() && stockCards().length === CARDS.length, `stock de départ : ${stockCards().length} références, ${start} exemplaires`);
+
+  clearStock();
+  check(stockCards().length === 0 && PACKS.every((p) => !packAvailable(p)), 'coffre vide : tous les packs passent en rupture, sans erreur');
+
+  // Un coffre trop maigre : quelques cartes seulement, le pack ne se compose pas.
+  CARDS.filter((c) => c.value >= 4_00 && c.value <= 6_99).slice(0, 5).forEach((c) => setStock(c.id, 2));
+  const thin = packTable(PACKS[0]);
+  check(!thin.ok && thin.reason === 'stock' && thin.message.length > 10, `coffre trop maigre : le Starter reste fermé (« ${thin.message.slice(0, 60)}… »)`);
+
+  resetStock();
+  check(copies() === start && PACKS.every(packAvailable), 'retour au stock de départ : tous les packs rouvrent');
+
+  // Une carte gagnée quitte le coffre ; à zéro exemplaire, elle sort de toutes les tables.
+  const rare = stockCards().find((c) => qtyOf(c.id) === 1 && PACKS.some((p) => dropTable(p).some((d) => d.card.id === c.id)));
+  adjustStock(rare.id, -1);
+  check(qtyOf(rare.id) === 0 && PACKS.every((p) => !dropTable(p).some((d) => d.card.id === rare.id)) && !adjustStock(rare.id, -1), 'dernier exemplaire sorti : la carte quitte toutes les tables, et ne peut pas passer sous zéro');
+  adjustStock(rare.id, 1);
+
+  // Les lots d'un giveaway en cours sont mis de côté.
+  const lots = listGiveaways().filter((g) => g.fundRate).flatMap((g) => g.lots);
+  check(lots.length > 0 && lots.every((c) => reservedOf(c.id) === 1 && drawableQty(c.id) === qtyOf(c.id) - 1), `giveaway : ${lots.length} lots mis de côté, hors des packs`);
+  check(lots.filter((c) => qtyOf(c.id) === 1).every((c) => PACKS.every((p) => !dropTable(p).some((d) => d.card.id === c.id))), 'giveaway : un lot en un seul exemplaire ne peut sortir d\'aucun pack');
+
+  // Export puis import : même coffre.
+  const file = JSON.parse(JSON.stringify(exportStock()));
+  clearStock();
+  const refs = importStock(file);
+  check(refs === CARDS.length && copies() === start && !usingDemoStock() && PACKS.every(packAvailable), `export puis import : ${refs} références retrouvées`);
+  let refused = false;
+  try { importStock({ items: {} }); } catch { refused = true; }
+  check(refused, 'import : un fichier qui ne vient pas du site est refusé');
+  resetStock();
+}
+
+console.log('\nAccès admin');
+{
+  check(!adminConfigured() && !isAdmin(), 'aucun accès au départ');
+  check(!setupAdmin('ad', 'motdepasse').ok && !setupAdmin('admin', 'court').ok, 'identifiant et mot de passe trop courts refusés');
+  check(setupAdmin('Gerant', 'un-vrai-mot-de-passe').ok && isAdmin(), 'création de l\'accès : session ouverte');
+  logoutAdmin();
+  check(!isAdmin() && !loginAdmin('gerant', 'mauvais').ok && !isAdmin(), 'mauvais mot de passe refusé');
+  check(loginAdmin('gerant', 'un-vrai-mot-de-passe').ok && isAdmin(), 'connexion (identifiant insensible à la casse)');
+  check(!localStorage.getItem('pokiiiii.admin.v1').includes('un-vrai-mot-de-passe'), 'le mot de passe n\'est pas conservé en clair');
+  logoutAdmin();
 }
 
 console.log('\nTirage libre (200 000 tirages par pack)');
@@ -139,6 +190,8 @@ console.log('\nModèle économique (hypothèses par défaut)');
 
 console.log('\nCompte : bonus, argent du joueur, livraison');
 {
+  resetStock();
+  const stockStart = stockCards().reduce((sum, c) => sum + qtyOf(c.id), 0);
   const { wagering, firstDepositRate } = RULES.bonus;
   const st = () => store.getState();
   const sound = () => st().bonus.balance >= 0 && st().bonus.balance <= st().balance && store.withdrawable() === st().balance - st().bonus.balance;
@@ -200,6 +253,10 @@ console.log('\nCompte : bonus, argent du joueur, livraison');
     }
   }
   check(ok, `bonus sans dépôt, ${runs} comptes : toujours clos, joué (${converted}) ou épuisé (${runs - converted})`);
+  store.resetDemo();
+  const stockEnd = stockCards().reduce((sum, c) => sum + qtyOf(c.id), 0);
+  check(stockEnd === stockStart - 1, `coffre : après tous ces comptes, tout est revenu sauf la carte expédiée (${stockStart} -> ${stockEnd})`);
+  resetStock();
   check(paid / runs < RULES.welcomeCredit * 0.5, `bonus sans dépôt : ${(paid / runs / 100).toFixed(2)} € retirables en moyenne par compte pour ${RULES.welcomeCredit / 100} € offerts (à couper en production)`);
   store.resetDemo();
 }

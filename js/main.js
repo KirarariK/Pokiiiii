@@ -24,8 +24,9 @@ import wallet from './views/wallet.js';
 import profile from './views/profile.js';
 import settings from './views/settings.js';
 import auth from './views/auth.js';
+import cards from './views/cards.js';
 import fairness from './views/fairness.js';
-import pilotage from './views/pilotage.js';
+import admin from './views/admin.js';
 import faq from './views/faq.js';
 import transparency from './views/transparency.js';
 import contact from './views/contact.js';
@@ -42,6 +43,7 @@ const ROUTES = [
   ['/packs/:slug', pack],
   ['/ouverture', opening],
   ['/evolution', evolution],
+  ['/cartes', cards],
   ['/collection', collection],
   ['/livraisons', shipments],
   ['/giveaways', giveaways],
@@ -53,12 +55,16 @@ const ROUTES = [
   ['/parametres', settings],
   ['/connexion', auth],
   ['/equite', fairness],
-  ['/pilotage', pilotage],
+  ['/admin', admin],
+  ['/admin/:tab', admin],
   ['/faq', faq],
   ['/transparence', transparency],
   ['/contact', contact],
   ['/legal/:doc', legal],
 ].map(([pattern, view]) => ({ parts: pattern.split('/').filter(Boolean), view }));
+
+/** Anciennes adresses -> nouvelles. */
+const MOVED = { '/pilotage': '/admin/pilotage' };
 
 function parseHash() {
   const raw = location.hash.replace(/^#/, '') || '/';
@@ -103,6 +109,10 @@ let currentPath = null;
 
 function render({ keepScroll = false } = {}) {
   const { path, query } = parseHash();
+  if (MOVED[path]) {
+    navigate(MOVED[path], { replace: true });
+    return;
+  }
   const { view, params } = match(path);
 
   if (view.auth && !isLoggedIn()) {
@@ -203,6 +213,17 @@ function boot() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeNav();
   });
+  // Recherche de la barre du haut : elle mène à la page Cartes.
+  document.addEventListener('submit', (e) => {
+    const form = e.target.closest('[data-search]');
+    if (!form) return;
+    e.preventDefault();
+    const q = form.q.value.trim();
+    form.q.blur();
+    navigate(q ? `/cartes?q=${encodeURIComponent(q)}` : '/cartes');
+  });
+  // Quelques visuels manquent chez l'hébergeur d'images : on masque l'image cassée.
+  document.addEventListener('error', (e) => e.target instanceof HTMLImageElement && e.target.classList.add('is-missing'), true);
 
   window.addEventListener('hashchange', () => render());
   startCountdowns();

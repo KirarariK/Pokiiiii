@@ -44,7 +44,7 @@ export default {
     const today = spentToday();
     const bonus = bonusStatus();
     return `
-    ${pageHead({ icon: 'wallet', title: 'Mon solde', lead: 'Recharge ton solde pour acheter des packs ; tes reventes et ton cashback y sont crédités.' })}
+    ${pageHead({ icon: 'wallet', title: 'Mon solde' })}
 
     <section class="panel wallet">
       <div>

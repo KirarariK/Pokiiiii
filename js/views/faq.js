@@ -9,7 +9,7 @@ export default {
   title: 'FAQ',
   render() {
     return `
-    ${pageHead({ icon: 'circle-help', title: 'Foire aux questions', lead: 'Tout ce qu’il faut savoir avant d’ouvrir un pack.' })}
+    ${pageHead({ icon: 'circle-help', title: 'Foire aux questions' })}
     <div class="acc-list narrow">
       ${FAQ.map(
         (item, i) => `<details class="acc" ${i === 0 ? 'open' : ''}>

@@ -4,12 +4,18 @@
 // pris dans le catalogue (cartes réelles, cotes indicatives).
 
 import { CARDS } from '../catalog.js';
+import { qtyOf, setReserved } from '../stock.js';
 import { packBySlug } from './packs.js';
 
 const startOfMonth = (d, shift = 0) => new Date(d.getFullYear(), d.getMonth() + shift, 1).getTime();
 
-function lotsOf(type, count, minValue) {
-  return CARDS.filter((c) => c.type === type && c.value >= minValue)
+/**
+ * Lots d'un giveaway : les cartes les plus cotées d'un type.
+ * `inVault` ne garde que celles que le site possède encore (giveaway en cours) ;
+ * un giveaway passé garde ses lots tels qu'ils ont été attribués.
+ */
+function lotsOf(type, count, minValue, inVault) {
+  return CARDS.filter((c) => c.type === type && c.value >= minValue && (!inVault || qtyOf(c.id) > 0))
     .sort((a, b) => b.value - a.value)
     .slice(0, count);
 }
@@ -30,6 +36,13 @@ function lotsOf(type, count, minValue) {
 
 /** @returns {Giveaway[]} giveaways, les actifs d'abord */
 export function listGiveaways(now = Date.now()) {
+  const list = buildGiveaways(now);
+  // Un exemplaire de chaque lot en jeu est mis de côté : il ne peut plus sortir d'un pack.
+  setReserved('giveaways', list.filter((g) => now >= g.start && now <= g.end).flatMap((g) => g.lots.map((c) => c.id)));
+  return list;
+}
+
+function buildGiveaways(now) {
   const d = new Date(now);
   const withTotal = (g) => ({ ...g, total: g.lots.reduce((s, c) => s + c.value, 0) });
   const endOfMonth = startOfMonth(d, 1) - 1000;
@@ -42,7 +55,7 @@ export function listGiveaways(now = Date.now()) {
       start: startOfMonth(d),
       end: endOfMonth,
       drawAt: startOfMonth(d, 1) + 3 * 86400_000 + 18.5 * 3600_000,
-      lots: lotsOf('Fire', 12, 40_00),
+      lots: lotsOf('Fire', 12, 40_00, true),
       /** Part du prix de chaque pack vendu versée à la cagnotte : les lots se débloquent au fil des ventes. */
       fundRate: 0.05,
       hot: true,
@@ -55,7 +68,7 @@ export function listGiveaways(now = Date.now()) {
       start: startOfMonth(d, -1),
       end: startOfMonth(d) - 1000,
       drawAt: startOfMonth(d) + 3 * 86400_000 + 18.5 * 3600_000,
-      lots: lotsOf('Psychic', 6, 40_00),
+      lots: lotsOf('Psychic', 6, 40_00, false),
     }),
   ];
 }
