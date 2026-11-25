@@ -1,14 +1,21 @@
-// Ouverture des packs achetés : animation carte par carte, puis récapitulatif.
+// Ouverture des packs achetés : roulette carte par carte, puis récapitulatif.
 //
 // Les cartes sont déjà au coffre au moment où cette page s'affiche (le tirage
-// a lieu à l'achat) : l'animation ne fait que les révéler. Quitter la page en
-// cours de route ne fait donc rien perdre.
+// a lieu à l'achat, par ticket vérifiable) : l'animation ne fait que révéler
+// le résultat. Quitter la page en cours de route ne fait donc rien perdre.
+//
+// La bande de la roulette est HONNÊTE : les cartes qui défilent autour de la
+// carte gagnée sont tirées avec les mêmes probabilités que le pack. Aucune
+// « quasi-victoire » n'est fabriquée pour faire croire qu'un gros lot est
+// passé près.
 
 import { RULES } from '../config.js';
 import { cardById, cardRef } from '../catalog.js';
 import { RARITIES, packBySlug } from '../data/packs.js';
-import { esc, eur, plural } from '../format.js';
+import { drawFromPack } from '../draw.js';
+import { esc, eur, num, plural } from '../format.js';
 import { icon } from '../icons.js';
+import { intFrom, seeded } from '../rng.js';
 import { buybackOf, getState, markRevealed, ownedByUid, sellCards, setSetting } from '../store.js';
 import { emptyState } from '../ui/blocks.js';
 import { cardBack, cardTile, rarityBadge } from '../ui/card.js';
@@ -37,15 +44,25 @@ function preload(src, timeout = 3000) {
 const soundIcon = () => icon(getState().settings.sound ? 'volume-2' : 'volume-x');
 
 /** Intensité des particules selon la rareté. */
-const BURST = { peu_commune: 40, rare: 70, ultra_rare: 110, legendaire: 170 };
+const BURST = { peu_commune: 40, rare: 70, ultra_rare: 110, legendaire: 170, mythique: 240 };
+
+/** Roulette : nombre de cartes sur la bande et position de la carte gagnée. */
+const REEL_SIZE = 44;
+const REEL_WIN = 38;
+const REEL_START = 2;
+const SPIN_MS = 5200;
+
+const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
 function sceneHtml(pack, total) {
+  const fast = getState().settings.fast;
   return `
   <section class="opening" data-phase="idle" style="--glow:${themeGlow(pack.theme)}">
     <header class="opening__bar">
       <span class="opening__title"><strong>${esc(pack.name)}</strong><span data-progress></span></span>
       <span class="opening__tools">
         <button class="btn btn--icon btn--ghost" type="button" data-sound aria-label="Activer ou couper le son">${soundIcon()}</button>
+        <button class="btn btn--secondary btn--sm" type="button" data-fast aria-pressed="${fast}" title="Passe la roulette et révèle la carte tout de suite">${icon('fast-forward', { size: 15 })}Rapide</button>
         ${total > 1 ? `<button class="btn btn--secondary btn--sm" type="button" data-skip>Tout révéler${icon('skip-forward', { size: 15 })}</button>` : ''}
       </span>
     </header>
@@ -58,6 +75,10 @@ function sceneHtml(pack, total) {
         <span class="opening__pack-top">${packArt(pack)}</span>
         <span class="opening__pack-body">${packArt(pack)}</span>
       </button>
+      <div class="reel" data-reel hidden>
+        <div class="reel__window"><div class="reel__strip" data-strip></div></div>
+        <span class="reel__marker" aria-hidden="true"></span>
+      </div>
       <div class="opening__card" data-card hidden>
         <div class="flip" data-tilt>
           <div class="flip__inner">
@@ -81,6 +102,7 @@ function summaryHtml(session, pack, order, lockUntil) {
   const keptBuyback = kept.reduce((s, r) => s + buybackOf(r.owned), 0);
   const best = rows.reduce((top, r) => (!top || r.owned.value > top.owned.value ? r : top), null);
   const locked = Date.now() < lockUntil;
+  const diff = totalValue - order.total;
 
   return `
   <section class="summary">
@@ -91,7 +113,7 @@ function summaryHtml(session, pack, order, lockUntil) {
     </header>
 
     <div class="stats">
-      <div class="stat"><span class="stat__label">${icon('gem', { size: 16 })}Cote totale</span><strong class="stat__value">${eur(totalValue)}</strong></div>
+      <div class="stat"><span class="stat__label">${icon('gem', { size: 16 })}Cote totale</span><strong class="stat__value">${eur(totalValue)}</strong><span class="stat__hint ${diff >= 0 ? 'pos' : 'neg'}">${diff >= 0 ? '+' : '−'}${eur(Math.abs(diff))} par rapport au prix payé</span></div>
       <div class="stat"><span class="stat__label">${icon('star', { size: 16 })}Meilleure carte</span><strong class="stat__value stat__value--text">${esc(best.card.name)}</strong><span class="stat__hint">${eur(best.owned.value)}</span></div>
       <div class="stat"><span class="stat__label">${icon('hand-coins', { size: 16 })}Rachat des cartes gardées</span><strong class="stat__value">${eur(keptBuyback)}</strong><span class="stat__hint">${Math.round(RULES.buybackRate * 100)} % de la cote</span></div>
     </div>
@@ -118,6 +140,7 @@ function summaryHtml(session, pack, order, lockUntil) {
       <a class="btn btn--secondary" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>
       <a class="btn btn--primary" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Rouvrir un ${esc(pack.short)}</a>
     </div>
+    <p class="center small muted">${icon('shield-check', { size: 14 })} Chaque tirage est vérifiable : <a href="#/equite">voir mes tickets</a></p>
   </section>`;
 }
 
@@ -157,6 +180,8 @@ export default {
     let index = 0;
     let busy = false;
     let alive = true;
+    let skipSpin = null;
+    let raf = 0;
     let untilt = () => {};
 
     queue.forEach((o) => preload(cardById(o.cardId).imgHi));
@@ -187,53 +212,74 @@ export default {
           ${next}
         </div>
         ${locked ? `<p class="lock">${icon('timer', { size: 16 })}Prix de rachat garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}</p>` : ''}
-        <p class="opening__kept">${icon('lock', { size: 14 })}Ta carte est déjà rangée dans ton coffre. ${single ? '<a href="#/collection">Voir ma collection</a>' : ''}</p>`;
+        <p class="opening__kept">${icon('shield-check', { size: 14 })}Ticket n° ${num(owned.roll?.ticket ?? 0)} · <a href="#/equite">vérifier ce tirage</a>${single ? ` · <a href="#/collection">voir ma collection</a>` : ''}</p>`;
     }
 
-    async function open() {
-      if (busy || scene.dataset.phase !== 'idle') return;
-      busy = true;
-      const owned = queue[index];
-      const card = cardById(owned.cardId);
-      const animated = motionOk();
-      scene.dataset.rarity = '';
-      scene.style.setProperty('--rc', `var(--r-${owned.rarity})`);
-      $('[data-hint]').hidden = true;
+    /** Bande de la roulette : la carte gagnée à sa place, le reste tiré honnêtement. */
+    function buildReel(owned, card) {
+      const next = seeded(`reel:${owned.uid}`);
+      const draw = intFrom(next);
+      const tiles = Array.from({ length: REEL_SIZE }, (_, i) =>
+        i === REEL_WIN ? { card, rarity: owned.rarity } : drawFromPack(pack, draw),
+      );
+      $('[data-strip]').innerHTML = tiles
+        .map(
+          (t, i) => `<span class="reel__tile" data-rarity="${t.rarity}" ${i === REEL_WIN ? 'data-win' : ''}>
+            <img src="${t.card.img}" alt="" width="245" height="342" draggable="false">
+          </span>`,
+        )
+        .join('');
+      // Décalage d'arrêt à l'intérieur de la carte gagnée : purement visuel.
+      return { tiles, jitter: (next() - 0.5) * 0.56 };
+    }
 
-      const front = $('[data-front]');
-      front.innerHTML = '';
-      const ready = preload(card.imgHi);
+    /** Fait défiler la bande jusqu'à la carte gagnée. Un clic termine l'animation. */
+    function spin(jitter) {
+      return new Promise((resolve) => {
+        const strip = $('[data-strip]');
+        const windowEl = strip.parentElement;
+        const first = strip.children[0];
+        const pitch = first.getBoundingClientRect().width + Number.parseFloat(getComputedStyle(strip).columnGap || '0');
+        const tileW = first.getBoundingClientRect().width;
+        const center = windowEl.getBoundingClientRect().width / 2;
+        const at = (i) => center - (i * pitch + tileW / 2);
+        const from = at(REEL_START);
+        const to = at(REEL_WIN) - jitter * tileW;
+        const t0 = performance.now();
+        let lastIndex = -1;
+        let lastTick = 0;
+        let done = false;
 
-      if (animated) {
-        sfx.charge();
-        setPhase('charging');
-        await wait(900);
-        if (!alive) return;
-        sfx.tear();
-        setPhase('burst');
-        $('[data-card]').hidden = false;
-        await wait(650);
-        if (!alive) return;
-      } else {
-        $('[data-card]').hidden = false;
-      }
+        const finish = () => {
+          if (done) return;
+          done = true;
+          cancelAnimationFrame(raf);
+          skipSpin = null;
+          strip.style.transform = `translate3d(${to}px, 0, 0)`;
+          resolve();
+        };
+        skipSpin = finish;
 
-      await ready;
-      if (!alive) return;
-      front.innerHTML = `<img src="${card.imgHi}" alt="${esc(card.name)} — ${esc(card.set)}" width="734" height="1024" draggable="false">`;
+        const frame = (now) => {
+          if (!alive || done) return;
+          const k = Math.min(1, (now - t0) / SPIN_MS);
+          const x = from + (to - from) * easeOutQuart(k);
+          strip.style.transform = `translate3d(${x}px, 0, 0)`;
+          const under = Math.round((center - x - tileW / 2) / pitch);
+          if (under !== lastIndex && now - lastTick > 40) {
+            lastIndex = under;
+            lastTick = now;
+            sfx.tick();
+          }
+          if (k < 1) raf = requestAnimationFrame(frame);
+          else finish();
+        };
+        strip.style.transform = `translate3d(${from}px, 0, 0)`;
+        raf = requestAnimationFrame(frame);
+      });
+    }
 
-      if (animated) {
-        // Indice de rareté : le halo prend la couleur de la carte avant le retournement.
-        scene.dataset.rarity = owned.rarity;
-        setPhase('tease');
-        await wait(RARITIES[owned.rarity].rank >= 3 ? 1100 : 600);
-        if (!alive) return;
-        sfx.flip();
-        setPhase('flip');
-        await wait(320);
-        if (!alive) return;
-      }
-
+    function reveal(owned, card) {
       scene.dataset.rarity = owned.rarity;
       setPhase('revealed');
       sfx.reveal(owned.rarity);
@@ -244,12 +290,11 @@ export default {
           power: 1 + RARITIES[owned.rarity].rank * 0.18,
         });
       }
-
       const result = $('[data-result]');
       result.innerHTML = resultHtml(owned, card);
       result.hidden = false;
       refreshCountdowns(result);
-      countUp(result.querySelector('[data-value]'), owned.value, eur, 700 + RARITIES[owned.rarity].rank * 250);
+      countUp(result.querySelector('[data-value]'), owned.value, eur, 700 + RARITIES[owned.rarity].rank * 220);
       untilt();
       untilt = attachTilt($('[data-tilt]'), 14);
       markRevealed([owned.uid]);
@@ -258,12 +303,84 @@ export default {
       busy = false;
     }
 
+    async function open() {
+      if (busy || scene.dataset.phase !== 'idle') return;
+      busy = true;
+      const owned = queue[index];
+      const card = cardById(owned.cardId);
+      const animated = motionOk();
+      const fast = getState().settings.fast;
+      scene.dataset.rarity = '';
+      scene.style.setProperty('--rc', `var(--r-${owned.rarity})`);
+      $('[data-hint]').hidden = true;
+
+      const front = $('[data-front]');
+      front.innerHTML = '';
+      const ready = preload(card.imgHi);
+      const showCard = () => {
+        front.innerHTML = `<img src="${card.imgHi}" alt="${esc(card.name)} — ${esc(card.set)}" width="734" height="1024" draggable="false">`;
+        $('[data-card]').hidden = false;
+      };
+
+      if (!animated) {
+        await ready;
+        if (!alive) return;
+        showCard();
+        reveal(owned, card);
+        return;
+      }
+
+      if (fast) {
+        // Ouverture rapide : le pack se déchire, la carte se retourne.
+        sfx.tear();
+        setPhase('burst');
+        $('[data-card]').hidden = false;
+        await Promise.all([ready, wait(420)]);
+        if (!alive) return;
+        showCard();
+        scene.dataset.rarity = owned.rarity;
+        setPhase('tease');
+        await wait(RARITIES[owned.rarity].rank >= 3 ? 700 : 320);
+        if (!alive) return;
+        sfx.flip();
+        setPhase('flip');
+        await wait(320);
+        if (!alive) return;
+        reveal(owned, card);
+        return;
+      }
+
+      // Ouverture complète : le pack se charge, se déchire, puis la roulette tourne.
+      const { tiles, jitter } = buildReel(owned, card);
+      const thumbs = Promise.all(tiles.map((t) => preload(t.card.img, 1500)));
+      sfx.charge();
+      setPhase('charging');
+      await Promise.all([wait(900), thumbs]);
+      if (!alive) return;
+      sfx.tear();
+      setPhase('burst');
+      await wait(380);
+      if (!alive) return;
+      $('[data-reel]').hidden = false;
+      setPhase('spin');
+      await spin(jitter);
+      if (!alive) return;
+      scene.dataset.rarity = owned.rarity;
+      setPhase('landed');
+      await Promise.all([ready, wait(750)]);
+      if (!alive) return;
+      $('[data-reel]').hidden = true;
+      showCard();
+      reveal(owned, card);
+    }
+
     function resetScene() {
       untilt();
       untilt = () => {};
       $('[data-result]').hidden = true;
       $('[data-result]').innerHTML = '';
       $('[data-card]').hidden = true;
+      $('[data-reel]').hidden = true;
       scene.dataset.rarity = '';
       setPhase('idle');
       paintProgress();
@@ -271,10 +388,10 @@ export default {
 
     function showSummary() {
       alive = false;
+      cancelAnimationFrame(raf);
       untilt();
       markRevealed(queue.map((o) => o.uid));
-      const shell = document.getElementById('shell');
-      shell?.classList.remove('is-immersive');
+      document.getElementById('shell')?.classList.remove('is-immersive');
       root.innerHTML = summaryHtml(session, pack, order, lockUntil);
       refreshCountdowns(root);
       window.scrollTo(0, 0);
@@ -309,6 +426,18 @@ export default {
         if (btn) btn.innerHTML = soundIcon();
         return;
       }
+      const fastBtn = e.target.closest('[data-fast]');
+      if (fastBtn) {
+        const on = !getState().settings.fast;
+        setSetting('fast', on);
+        fastBtn.setAttribute('aria-pressed', String(on));
+        if (on) skipSpin?.();
+        return;
+      }
+      if (e.target.closest('[data-reel]')) {
+        skipSpin?.();
+        return;
+      }
       if (e.target.closest('[data-open]')) {
         open();
         return;
@@ -328,8 +457,6 @@ export default {
         if (queue.length === 1) {
           e.target.closest('[data-sell-one]').outerHTML = `<span class="btn btn--secondary btn--lg is-done" aria-disabled="true">${icon('check', { size: 18 })}Revendue ${eur(buybackOf(owned))}</span>`;
           root.querySelector('.lock')?.remove();
-          const keptLine = root.querySelector('.opening__kept');
-          if (keptLine) keptLine.innerHTML = `${icon('wallet', { size: 14 })}Le montant a été crédité sur ton solde.`;
         } else next();
         return;
       }
@@ -355,6 +482,7 @@ export default {
 
     return () => {
       alive = false;
+      cancelAnimationFrame(raf);
       untilt();
       root.removeEventListener('click', onClick);
     };

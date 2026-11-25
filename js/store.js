@@ -1,19 +1,29 @@
 // État du compte démo, conservé dans le navigateur (localStorage).
 //
-// Tout ce module est une maquette de back-office : solde, coffre, rachats et
-// livraisons sont simulés localement. En production, chaque action ci-dessous
-// devient un appel à une API authentifiée et l'état fait foi côté serveur.
+// Tout ce module est une maquette de back-office : solde, coffre, tirages,
+// rachats et livraisons sont simulés localement. En production, chaque action
+// ci-dessous devient un appel à une API authentifiée et l'état fait foi côté
+// serveur (en particulier la graine serveur, qui ne doit jamais être lisible).
 
 import { RULES, STORAGE_KEY } from './config.js';
-import { packBySlug } from './data/packs.js';
-import { cardById } from './catalog.js';
-import { drawFromPack } from './draw.js';
+import { cardById, resolveTicket } from './catalog.js';
+import { progress } from './data/badges.js';
+import { packBySlug, rarityByValue } from './data/packs.js';
+import { TICKETS, isValidClientSeed, newClientSeed, newServerSeed, sha256Hex, ticketFor } from './fair.js';
 import { uid } from './rng.js';
 
-const VERSION = 1;
+const VERSION = 2;
 const MAX_TX = 500;
+const MAX_ROLLS = 300;
+const MAX_ARCHIVE = 20;
 
 export const monthKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+export const dayKey = (d = new Date()) => `${monthKey(d)}-${String(d.getDate()).padStart(2, '0')}`;
+
+function freshSeeds(clientSeed = newClientSeed()) {
+  const serverSeed = newServerSeed();
+  return { serverSeed, serverHash: sha256Hex(serverSeed), clientSeed, nonce: 0, since: Date.now() };
+}
 
 function fresh() {
   return {
@@ -21,15 +31,19 @@ function fresh() {
     user: null, // { pseudo, since }
     session: false,
     balance: 0, // centimes
-    cards: [], // cartes obtenues (voir buyPacks)
+    cards: [], // cartes obtenues (voir buyPacks et evolve)
     pending: [], // uid des cartes achetées mais pas encore révélées
     lastOrder: null,
     tx: [],
     shipments: [],
     points: { month: monthKey(), monthly: 0, total: 0 },
+    xp: 0,
+    daily: { lastDay: '', streak: 0 },
     giveaways: {}, // { [id]: { joined, followed, tickets } }
     limits: { daily: null, pauseUntil: 0 },
-    settings: { theme: 'dark', sound: true, motion: true },
+    settings: { sound: true, motion: true, fast: false, realityCheck: 30 },
+    fair: { ...freshSeeds(), archive: [] },
+    rolls: [], // journal des tirages (voir logRoll)
   };
 }
 
@@ -38,12 +52,13 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fresh();
     const data = JSON.parse(raw);
-    if (!data || data.v !== VERSION) return fresh();
+    if (!data || data.v !== VERSION || !data.fair?.serverSeed) return fresh();
     const base = fresh();
     return {
       ...base,
       ...data,
       points: { ...base.points, ...data.points },
+      daily: { ...base.daily, ...data.daily },
       limits: { ...base.limits, ...data.limits },
       settings: { ...base.settings, ...data.settings },
     };
@@ -87,11 +102,21 @@ export const ownedByUid = (id) => state.cards.find((c) => c.uid === id) || null;
 /** Montant crédité si la carte est revendue maintenant, en centimes. */
 export const buybackOf = (owned) => Math.round(owned.value * RULES.buybackRate);
 
+/** Dépenses en packs depuis un instant donné, en centimes. */
+const spentSince = (ts) => state.tx.filter((t) => t.type === 'achat' && t.at >= ts).reduce((sum, t) => sum - t.amount, 0);
+
 /** Dépenses en packs depuis minuit (heure locale), en centimes. */
 export function spentToday(now = Date.now()) {
   const midnight = new Date(now);
   midnight.setHours(0, 0, 0, 0);
-  return state.tx.filter((t) => t.type === 'achat' && t.at >= midnight.getTime()).reduce((sum, t) => sum - t.amount, 0);
+  return spentSince(midnight.getTime());
+}
+
+/** Bilan depuis un instant donné (rappel de session) : dépensé, reçu en reventes, net. */
+export function activitySince(ts) {
+  const spent = spentSince(ts);
+  const received = state.tx.filter((t) => t.type === 'rachat' && t.at >= ts).reduce((sum, t) => sum + t.amount, 0);
+  return { spent, received, net: received - spent };
 }
 
 export function shippingFee(zone, count) {
@@ -107,7 +132,7 @@ export function stats() {
   const best = state.cards.reduce((top, c) => (!top || c.value > top.value ? c : top), null);
   const vault = vaultCards();
   return {
-    packsOpened: state.cards.length,
+    packsOpened: state.cards.filter((c) => packBySlug(c.pack)).length,
     spent,
     received,
     best,
@@ -121,6 +146,9 @@ export function stats() {
 export function monthlyPoints() {
   return state.points.month === monthKey() ? state.points.monthly : 0;
 }
+
+/** Badge atteint et avancement vers le suivant. */
+export const badgeProgress = () => progress(state.xp);
 
 /* ------------------------------------------------------------------ interne */
 
@@ -136,6 +164,29 @@ function addPoints(cents) {
   state.points.monthly += pts;
   state.points.total += pts;
 }
+
+/** 1 € engagé = 1 XP. */
+function addXp(cents) {
+  state.xp += Math.floor(cents / 100);
+}
+
+/**
+ * Consomme un tirage vérifiable : le ticket dépend de la graine serveur, de la
+ * graine client, du compteur et du jeu. Le compteur avance à chaque appel.
+ */
+function nextRoll(game) {
+  const f = state.fair;
+  const roll = { game, nonce: f.nonce, hash: f.serverHash, clientSeed: f.clientSeed, ticket: ticketFor(f.serverSeed, f.clientSeed, f.nonce, game) };
+  f.nonce += 1;
+  return roll;
+}
+
+function logRoll(roll, label, outcome) {
+  state.rolls.unshift({ id: uid('r'), at: Date.now(), label, outcome, ...roll });
+  if (state.rolls.length > MAX_ROLLS) state.rolls.length = MAX_ROLLS;
+}
+
+const paused = () => state.limits.pauseUntil > Date.now();
 
 /* ------------------------------------------------------------------- compte */
 
@@ -167,11 +218,9 @@ export function logout() {
   commit();
 }
 
-/** Efface toutes les données locales de la démo. */
+/** Efface toutes les données locales du compte démo (le thème choisi est conservé à part). */
 export function resetDemo() {
-  const theme = state.settings.theme;
   state = fresh();
-  state.settings.theme = theme;
   commit();
 }
 
@@ -200,15 +249,17 @@ export function buyPacks(slug, qty) {
   if (!Number.isInteger(qty) || qty < 1 || qty > RULES.maxPacksPerOrder) return fail('qty', `Entre 1 et ${RULES.maxPacksPerOrder} packs par achat.`);
 
   const now = Date.now();
-  if (state.limits.pauseUntil > now) return fail('pause', 'Ton compte est en pause : les achats sont suspendus.');
+  if (paused()) return fail('pause', 'Ton compte est en pause : les achats sont suspendus.');
   const total = pack.price * qty;
   if (state.limits.daily != null && spentToday(now) + total > state.limits.daily) return fail('limit', 'Cet achat dépasserait ta limite de dépenses quotidienne.');
   if (state.balance < total) return fail('balance', 'Solde insuffisant.');
 
   const pulls = [];
   for (let i = 0; i < qty; i++) {
-    const { card, rarity } = drawFromPack(pack);
-    pulls.push({ uid: uid('c'), cardId: card.id, pack: pack.slug, rarity, value: card.value, at: now + i, status: 'coffre' });
+    const roll = nextRoll(`pack:${pack.slug}`);
+    const drop = resolveTicket(pack, roll.ticket);
+    pulls.push({ uid: uid('c'), cardId: drop.card.id, pack: pack.slug, rarity: drop.rarity, value: drop.card.value, at: now + i, status: 'coffre', roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } });
+    logRoll(roll, pack.name, { cardId: drop.card.id });
   }
 
   state.balance -= total;
@@ -217,6 +268,7 @@ export function buyPacks(slug, qty) {
   state.lastOrder = { pack: pack.slug, qty, total, at: now, uids: pulls.map((p) => p.uid) };
   addTx('achat', -total, `${qty} × ${pack.name}`);
   addPoints(total);
+  addXp(total);
 
   if (pack.giveaway) {
     const g = state.giveaways[pack.giveaway] || { joined: false, followed: false, tickets: 0 };
@@ -293,6 +345,99 @@ export function requestShipment({ uids, zone, address }) {
   commit();
   return { ok: true, id, fee };
 }
+
+/* ---------------------------------------------------------------- évolution */
+
+/** Chance de réussite (0 à 1) d'une évolution, d'après les deux cotes en centimes. */
+export function evolutionChance(stakeValue, targetValue) {
+  const { edge, maxChance } = RULES.evolution;
+  return Math.min(maxChance, (stakeValue / targetValue) * (1 - edge));
+}
+
+/**
+ * Mise une carte du coffre pour tenter d'obtenir la carte visée.
+ * Réussite : la carte misée est consommée, la carte visée rejoint le coffre.
+ * Échec : la carte misée est perdue.
+ */
+export function evolve(stakeUid, targetId) {
+  if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour tenter une évolution.');
+  if (paused()) return fail('pause', 'Ton compte est en pause : les évolutions sont suspendues.');
+  const stake = ownedByUid(stakeUid);
+  const target = cardById(targetId);
+  if (!stake || stake.status !== 'coffre') return fail('stake', "Cette carte n'est plus dans ton coffre.");
+  if (!target || target.value < stake.value * RULES.evolution.minRatio) return fail('target', 'La carte visée doit valoir nettement plus que la carte misée.');
+
+  const chance = evolutionChance(stake.value, target.value);
+  const winBelow = Math.round(chance * TICKETS);
+  const roll = nextRoll('evolution');
+  const win = roll.ticket < winBelow;
+  const now = Date.now();
+  let gained = null;
+
+  if (win) {
+    stake.status = 'evoluee';
+    stake.endedAt = now;
+    gained = { uid: uid('c'), cardId: target.id, pack: 'evolution', rarity: rarityByValue(target.value), value: target.value, at: now, status: 'coffre', from: stake.uid, roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } };
+    state.cards.push(gained);
+  } else {
+    stake.status = 'perdue';
+    stake.endedAt = now;
+  }
+  state.pending = state.pending.filter((id) => id !== stake.uid);
+  addXp(stake.value);
+  logRoll(roll, 'Évolution', { win, winBelow, stakeId: stake.cardId, targetId: target.id });
+  commit();
+  return { ok: true, win, chance, winBelow, ticket: roll.ticket, gained };
+}
+
+/* ---------------------------------------------------------- récompense du jour */
+
+export const dailyAvailable = () => state.daily.lastDay !== dayKey();
+
+/** Récompense du jour : une fois par jour civil, montant multiplié par le badge. */
+export function claimDaily() {
+  if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour récupérer ta récompense.');
+  if (!dailyAvailable()) return fail('done', 'Tu as déjà récupéré ta récompense du jour.');
+  const roll = nextRoll('daily');
+  let cursor = 0;
+  let base = RULES.dailyReward[0][0];
+  for (const [amount, tickets] of RULES.dailyReward) {
+    cursor += tickets;
+    if (roll.ticket < cursor) {
+      base = amount;
+      break;
+    }
+  }
+  const { current } = badgeProgress();
+  const amount = Math.round(base * current.daily);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  state.daily = { lastDay: dayKey(), streak: state.daily.lastDay === dayKey(yesterday) ? state.daily.streak + 1 : 1 };
+  state.balance += amount;
+  addTx('bonus', amount, `Récompense du jour (×${current.daily})`);
+  logRoll(roll, 'Récompense du jour', { base, amount });
+  commit();
+  return { ok: true, base, amount, multiplier: current.daily, ticket: roll.ticket };
+}
+
+/* ------------------------------------------------------------------- équité */
+
+/**
+ * Renouvelle les graines : la graine serveur en cours est révélée (archivée)
+ * et une nouvelle paire est créée. C'est le seul moyen de changer de graine
+ * client, pour qu'on ne puisse pas la choisir en connaissant la graine serveur.
+ */
+export function rotateSeeds(clientSeed) {
+  const next = String(clientSeed || '').trim() || newClientSeed();
+  if (!isValidClientSeed(next)) return fail('seed', 'La graine client doit faire 4 à 64 caractères, sans espace ni deux-points.');
+  const { archive, ...current } = state.fair;
+  state.fair = { ...freshSeeds(next), archive: [{ ...current, until: Date.now() }, ...archive].slice(0, MAX_ARCHIVE) };
+  commit();
+  return { ok: true };
+}
+
+/** Graine serveur révélée correspondant à une empreinte, si elle a été renouvelée depuis. */
+export const revealedSeed = (hash) => state.fair.archive.find((a) => a.serverHash === hash)?.serverSeed || null;
 
 /* ---------------------------------------------------------------- giveaways */
 

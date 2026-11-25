@@ -92,22 +92,28 @@ const SETS = {
 };
 
 const MIN_VALUE = 4_00;
-const MAX_VALUE = 1050_99;
+const MAX_VALUE = 1600_00;
 
-/** Tranches de cote (centimes) et nombre maximal de cartes conservées par tranche. */
+/**
+ * Tranches de cote (centimes) et nombre maximal de cartes conservées par tranche.
+ * Au-delà de 26 €, tout est gardé : les cartes chères sont rares et font les gros lots.
+ */
 const BUCKETS = [
-  [4_00, 6_99, 48],
-  [7_00, 9_99, 42],
-  [10_00, 15_99, 46],
-  [16_00, 25_99, 46],
-  [26_00, 50_99, 56],
-  [51_00, 99_99, 70],
-  [100_00, 199_99, 60],
-  [200_00, MAX_VALUE, 60],
+  [4_00, 6_99, 80],
+  [7_00, 9_99, 80],
+  [10_00, 15_99, 90],
+  [16_00, 25_99, 80],
+  [26_00, MAX_VALUE, Infinity],
 ];
 
+/** Extensions de l'ère Wizards of the Coast : alimentent le pack « Rétro ». */
+const VINTAGE = ['base1', 'base2', 'base3', 'base5', 'gym1', 'gym2', 'neo1', 'neo2', 'neo3', 'neo4'];
+
+/** Famille Évoli : alimente le pack « Évoli ». */
+const EEVEE = /(Eevee|Vaporeon|Jolteon|Flareon|Espeon|Umbreon|Leafeon|Glaceon|Sylveon)/;
+
 /** Espèces mises en avant quand une tranche déborde. */
-const STARS = ['Charizard', 'Pikachu', 'Eevee', 'Umbreon', 'Espeon', 'Sylveon', 'Vaporeon', 'Jolteon', 'Flareon', 'Leafeon', 'Glaceon', 'Mewtwo', 'Mew', 'Rayquaza', 'Lugia', 'Gengar', 'Dragonite', 'Blastoise', 'Venusaur', 'Gyarados', 'Snorlax', 'Lucario', 'Greninja', 'Gardevoir', 'Giratina', 'Arceus', 'Garchomp', 'Tyranitar', 'Charmander', 'Squirtle', 'Bulbasaur', 'Suicune', 'Ho-Oh', 'Zekrom', 'Reshiram', 'Latias', 'Latios', 'Magikarp', 'Psyduck', 'Dialga', 'Palkia'];
+const STARS = ['Charizard', 'Pikachu', 'Mewtwo', 'Mew', 'Rayquaza', 'Lugia', 'Gengar', 'Dragonite', 'Blastoise', 'Venusaur', 'Gyarados', 'Snorlax', 'Lucario', 'Greninja', 'Gardevoir', 'Giratina', 'Arceus', 'Garchomp', 'Tyranitar', 'Charmander', 'Squirtle', 'Bulbasaur', 'Suicune', 'Ho-Oh', 'Zekrom', 'Reshiram', 'Latias', 'Latios', 'Magikarp', 'Psyduck', 'Dialga', 'Palkia'];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -189,7 +195,8 @@ const selected = [];
 for (const [lo, hi, cap] of BUCKETS) {
   const inBucket = candidates.filter((c) => c.value >= lo && c.value <= hi);
   inBucket.sort((a, b) => {
-    const score = (c) => (c.type === 'Fire' && c.value >= 18_00 ? 2 : 0) + (isStar(c.name) ? 1 : 0);
+    const themed = (c) => VINTAGE.includes(c.id.slice(0, c.id.lastIndexOf('-'))) || EEVEE.test(c.name) || (c.type === 'Fire' && c.value >= 18_00);
+    const score = (c) => (themed(c) ? 2 : 0) + (isStar(c.name) ? 1 : 0);
     return score(b) - score(a) || hash(a.id) - hash(b.id);
   });
   selected.push(...inBucket.slice(0, cap));

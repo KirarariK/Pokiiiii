@@ -4,7 +4,7 @@ import { cardById, cardRef } from '../catalog.js';
 import { communityRanking } from '../data/community.js';
 import { dateFr, esc, eur, initials, num } from '../format.js';
 import { icon } from '../icons.js';
-import { getState, monthlyPoints, stats } from '../store.js';
+import { badgeProgress, getState, monthlyPoints, stats } from '../store.js';
 import { pageHead, statTile } from '../ui/blocks.js';
 import { cardImage, rarityBadge } from '../ui/card.js';
 
@@ -17,7 +17,8 @@ export default {
   title: 'Mon profil',
   auth: true,
   render() {
-    const { user, points } = getState();
+    const { user, points, xp } = getState();
+    const badge = badgeProgress().current;
     const s = stats();
     const month = monthlyPoints();
     const best = s.best ? cardById(s.best.cardId) : null;
@@ -34,6 +35,7 @@ export default {
         <p class="profile__badges">
           <span class="badge badge--info">${icon('trophy', { size: 13 })}#${num(monthlyRank(month))} ce mois-ci</span>
           <span class="badge badge--info">${icon('star', { size: 13 })}${num(points.total)} points</span>
+          <a class="badge badge--info" href="#/recompenses">${icon(badge.icon, { size: 13 })}${esc(badge.name)} · ${num(xp)} XP</a>
         </p>
       </div>
       <div class="profile__actions">

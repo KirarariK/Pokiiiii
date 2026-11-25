@@ -1,25 +1,30 @@
 // Point d'entrée : habillage, routeur par ancre (#/chemin) et actions globales.
 
 import { BRAND } from './config.js';
-import { getState, isLoggedIn, logout, setSetting, subscribe } from './store.js';
+import { getState, isLoggedIn, logout, subscribe } from './store.js';
+import { applyTheme, currentTheme, openThemeChooser, savedTheme } from './theme.js';
 import { refreshCountdowns, startCountdowns } from './ui/countdown.js';
 import { closeModal, toast } from './ui/modal.js';
-import { renderAccount, renderShell, setActiveNav } from './ui/shell.js';
+import { startRealityCheck } from './ui/reality-check.js';
+import { paintDailyDot, renderAccount, renderShell, setActiveNav } from './ui/shell.js';
 import { openTopup } from './ui/topup.js';
 
 import home from './views/home.js';
 import packs from './views/packs.js';
 import pack from './views/pack.js';
 import opening from './views/opening.js';
+import evolution from './views/evolution.js';
 import collection from './views/collection.js';
 import shipments from './views/shipments.js';
 import giveaways from './views/giveaways.js';
 import giveaway from './views/giveaway.js';
+import rewards from './views/rewards.js';
 import leaderboard from './views/leaderboard.js';
 import wallet from './views/wallet.js';
 import profile from './views/profile.js';
 import settings from './views/settings.js';
 import auth from './views/auth.js';
+import fairness from './views/fairness.js';
 import faq from './views/faq.js';
 import transparency from './views/transparency.js';
 import contact from './views/contact.js';
@@ -35,15 +40,18 @@ const ROUTES = [
   ['/packs', packs],
   ['/packs/:slug', pack],
   ['/ouverture', opening],
+  ['/evolution', evolution],
   ['/collection', collection],
   ['/livraisons', shipments],
   ['/giveaways', giveaways],
   ['/giveaways/:id', giveaway],
+  ['/recompenses', rewards],
   ['/classement', leaderboard],
   ['/solde', wallet],
   ['/profil', profile],
   ['/parametres', settings],
   ['/connexion', auth],
+  ['/equite', fairness],
   ['/faq', faq],
   ['/transparence', transparency],
   ['/contact', contact],
@@ -144,14 +152,8 @@ function render({ keepScroll = false } = {}) {
 
 /* ------------------------------------------------------- actions globales */
 
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f4f5fb' : '#0a0c14');
-}
-
 /** Reflète les réglages d'affichage sur <html> pour que le CSS puisse en tenir compte. */
 function applySettings({ settings }) {
-  applyTheme(settings.theme);
   document.documentElement.dataset.motion = settings.motion ? 'on' : 'off';
 }
 
@@ -160,7 +162,9 @@ const closeNav = () => document.getElementById('shell')?.classList.remove('is-na
 
 const ACTIONS = {
   theme() {
-    setSetting('theme', getState().settings.theme === 'dark' ? 'light' : 'dark');
+    closeNav();
+    // La page est redessinée ensuite : certaines illustrations suivent le thème.
+    openThemeChooser().then(() => render({ keepScroll: true }));
   },
   'nav-open': openNav,
   'nav-close': closeNav,
@@ -177,11 +181,13 @@ function boot() {
   const account = document.getElementById('topbar-account');
   const paintAccount = () => {
     account.innerHTML = renderAccount();
+    paintDailyDot();
   };
   paintAccount();
   subscribe(paintAccount);
   applySettings(getState());
   subscribe(applySettings);
+  applyTheme(currentTheme().id);
 
   document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-action]');
@@ -198,7 +204,11 @@ function boot() {
 
   window.addEventListener('hashchange', () => render());
   startCountdowns();
+  startRealityCheck();
   render();
+
+  // Première visite sur cet appareil : on propose le choix du thème, une seule fois.
+  if (!savedTheme()) openThemeChooser({ first: true }).then(() => render({ keepScroll: true }));
 }
 
 boot();

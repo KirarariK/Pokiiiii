@@ -1,20 +1,33 @@
 // Page d'un pack : visuel, répartitions, achat, plus grosses cartes, dernières ouvertures.
 
 import { RULES } from '../config.js';
-import { topHits } from '../catalog.js';
+import { cardRef, dropTable, expectedValue, packReturn, profitChance, topHits } from '../catalog.js';
 import { recentOpenings } from '../data/community.js';
 import { giveawayById, isActive } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
-import { esc, eur, plural } from '../format.js';
+import { esc, eur, num, pctFine, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { buyPacks, getState, giveawayEntry, isLoggedIn } from '../store.js';
 import { emptyState, note, oddsGrid, openingItem, sectionHead } from '../ui/blocks.js';
-import { cardTile } from '../ui/card.js';
+import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
 import { countdownInline } from '../ui/countdown.js';
 import { attachTilt, sfx } from '../ui/effects.js';
 import { confirmDialog, toast } from '../ui/modal.js';
 import { packArt, themeGlow } from '../ui/pack-art.js';
 import { openTopup } from '../ui/topup.js';
+
+/** Nombre de lignes de la table de tirage affichées avant « tout afficher ». */
+const PREVIEW_ROWS = 12;
+
+function dropRow(d) {
+  return `<tr data-rarity="${d.rarity}">
+    <td><span class="drop"><span class="drop__img">${cardImage(d.card)}</span><span><strong>${esc(d.card.name)}</strong><small>${esc(cardRef(d.card))} · ${esc(d.card.set)}</small></span></span></td>
+    <td>${rarityBadge(d.rarity)}</td>
+    <td class="num">${eur(d.card.value)}</td>
+    <td class="num"><strong>${pctFine(d.p)}</strong></td>
+    <td class="num muted">${num(d.from)} – ${num(d.to - 1)}</td>
+  </tr>`;
+}
 
 function giveawayBox(pack) {
   if (!pack.giveaway) return '';
@@ -45,6 +58,7 @@ export default {
     const qty = Math.min(RULES.maxPacksPerOrder, Math.max(1, Number.parseInt(query.qty, 10) || 1));
     const others = PACKS.filter((p) => p.slug !== pack.slug);
     const hits = topHits(pack, 10);
+    const drops = dropTable(pack);
     const pulls = recentOpenings(pack.slug, 5);
 
     return `
@@ -79,7 +93,12 @@ export default {
 
         <h2 class="buy__sub">Répartitions</h2>
         ${oddsGrid(pack)}
-        <p class="small muted">Probabilité d'obtenir une carte dont la cote tombe dans chaque palier. <a href="#/transparence">Comment le tirage fonctionne</a></p>
+        <div class="facts">
+          <div class="fact"><span>Retour théorique</span><strong>${pctFine(packReturn(pack))}</strong><small>en revente immédiate</small></div>
+          <div class="fact"><span>Cote moyenne</span><strong>${eur(expectedValue(pack))}</strong><small>par carte tirée</small></div>
+          <div class="fact"><span>Carte ≥ prix du pack</span><strong>${pctFine(profitChance(pack))}</strong><small>des tirages</small></div>
+        </div>
+        <p class="small muted">${icon('shield-check', { size: 14 })} Tirage vérifiable : chaque carte occupe une plage de tickets publiée plus bas. <a href="#/equite">Comment ça marche</a></p>
 
         <div class="buy__qty">
           <span id="qty-label">Quantité de packs</span>
@@ -103,6 +122,16 @@ export default {
       <div class="tile-grid tile-grid--5">
         ${hits.map(({ card, rarity }) => cardTile(card, { rarity })).join('')}
       </div>
+    </section>
+
+    <section class="section panel panel--pad">
+      ${sectionHead(`Contenu du pack · ${num(drops.length)} cartes`, { iconName: 'list' })}
+      <p class="muted small">Toutes les cartes qui peuvent sortir, de la plus rare à la plus fréquente, avec leur probabilité exacte et leur plage de tickets (sur 1 000 000).</p>
+      <div class="table-wrap"><table class="table table--drops">
+        <thead><tr><th>Carte</th><th>Rareté</th><th class="num">Cote</th><th class="num">Probabilité</th><th class="num">Tickets</th></tr></thead>
+        <tbody data-drops>${drops.slice(0, PREVIEW_ROWS).map(dropRow).join('')}</tbody>
+      </table></div>
+      ${drops.length > PREVIEW_ROWS ? `<button class="btn btn--secondary" type="button" data-drops-more>${icon('chevron-down', { size: 16 })}Afficher les ${num(drops.length)} cartes</button>` : ''}
     </section>
 
     <section class="section panel panel--pad">
@@ -162,6 +191,12 @@ export default {
       if (step) {
         qty = Math.min(RULES.maxPacksPerOrder, Math.max(1, qty + Number(step.dataset.step)));
         paint();
+        return;
+      }
+      const more = e.target.closest('[data-drops-more]');
+      if (more) {
+        root.querySelector('[data-drops]').innerHTML = dropTable(pack).map(dropRow).join('');
+        more.remove();
         return;
       }
       if (e.target.closest('[data-buy]')) buy();

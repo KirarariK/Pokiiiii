@@ -15,8 +15,22 @@ export const FAQ = [
   },
   {
     q: 'Comment les cartes sont-elles tirées ?',
-    a: `<p>Chaque pack affiche ses <strong>répartitions</strong> : la probabilité d'obtenir une carte dans chaque palier de cote. Le tirage choisit d'abord un palier selon ces probabilités, puis une carte dans ce palier.</p>
-        <p>Le détail et la cote moyenne de chaque pack sont sur la page <a href="#/transparence">Transparence</a>.</p>`,
+    a: `<p>Chaque pack publie sa <strong>table de tirage complète</strong> : toutes les cartes, avec leur probabilité exacte. Le tirage désigne un ticket parmi un million ; la table dit à quelle carte il correspond.</p>
+        <p>Ce ticket est <strong>vérifiable</strong> : il est calculé à partir d'une graine que nous fixons à l'avance, d'une graine que tu choisis et d'un compteur. Le détail est sur la page <a href="#/equite">Équité prouvable</a>.</p>`,
+  },
+  {
+    q: 'Combien rapporte un pack en moyenne ?',
+    a: `<p>Tous les packs visent le même <strong>retour théorique de ${Math.round(RULES.targetReturn * 100)} %</strong> : en ouvrant un grand nombre de packs et en revendant chaque carte aussitôt, on récupère en moyenne ${Math.round(RULES.targetReturn * 100)} € pour 100 € dépensés.</p>
+        <p>Le chiffre exact de chaque pack est affiché sur sa page et sur la page <a href="#/transparence">Transparence</a>. Sur la durée, le jeu coûte donc plus qu'il ne rapporte.</p>`,
+  },
+  {
+    q: "Qu'est-ce que l'Évolution ?",
+    a: `<p>Tu mises une carte de ton coffre pour tenter d'en obtenir une plus cotée. La chance de réussite vaut la cote misée divisée par la cote visée, multipliée par ${Math.round((1 - RULES.evolution.edge) * 100)} %.</p>
+        <p>En cas de réussite, la carte visée remplace la tienne. En cas d'échec, <strong>la carte misée est perdue</strong>.</p>`,
+  },
+  {
+    q: 'À quoi servent les badges ?',
+    a: `<p>Chaque euro engagé rapporte 1 XP. L'XP débloque neuf badges, un par type, et chaque badge multiplie ta <a href="#/recompenses">récompense du jour</a>.</p>`,
   },
   {
     q: 'Quels moyens de paiement sont acceptés ?',

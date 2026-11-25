@@ -99,6 +99,7 @@ const REVEAL_NOTES = {
   rare: [523, 659, 784],
   ultra_rare: [523, 659, 784, 1047],
   legendaire: [523, 659, 784, 1047, 1319, 1568],
+  mythique: [523, 659, 784, 1047, 1319, 1568, 2093, 2637],
 };
 
 export const sfx = {
@@ -129,6 +130,21 @@ export const sfx = {
     const ac = ctx();
     if (!ac) return;
     [1320, 1760, 2090].forEach((freq, i) => tone(ac, { freq, start: i * 0.06, dur: 0.16, type: 'square', gain: 0.025 }));
+  },
+  /** Cliquetis de la roulette : une note brève à chaque carte qui passe sous le repère. */
+  tick() {
+    const ac = ctx();
+    if (ac) tone(ac, { freq: 880, to: 660, dur: 0.035, type: 'square', gain: 0.022 });
+  },
+  fail() {
+    const ac = ctx();
+    if (!ac) return;
+    tone(ac, { freq: 330, to: 110, dur: 0.5, type: 'sawtooth', gain: 0.05 });
+  },
+  win() {
+    const ac = ctx();
+    if (!ac) return;
+    [523, 784, 1047, 1568].forEach((freq, i) => tone(ac, { freq, start: i * 0.09, dur: 0.35, type: 'triangle', gain: 0.07 }));
   },
 };
 

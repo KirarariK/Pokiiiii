@@ -133,7 +133,8 @@ Frigibax=Frigodo;Arctibax=Cryodo;Baxcalibur=Glaivodo;Gimmighoul=Mordudor;Gholden
 Wo-Chien=Chongjian;Chien-Pao=Baojian;Ting-Lu=Dinglu;Chi-Yu=Yuyu;Roaring Moon=Rugit-Lune;
 Iron Valiant=Garde-de-Fer;Walking Wake=Serpente-Eau;Iron Leaves=Vert-de-Fer;Dipplin=Pomdramour;
 Sinistcha=Théffroyable;Archaludon=Pondralugon;Hydrapple=Pomdorochi;Gouging Fire=Feu-Perçant;
-Raging Bolt=Ire-Foudre;Iron Boulder=Roc-de-Fer;Iron Crown=Chef-de-Fer;Pecharunt=Pêchaminus
+Raging Bolt=Ire-Foudre;Iron Boulder=Roc-de-Fer;Iron Crown=Chef-de-Fer;Pecharunt=Pêchaminus;
+Okidogi=Félicanis;Munkidori=Fortusimia;Fezandipiti=Favianos
 `;
 
 /** Espèces au nom identique dans les deux langues. */
@@ -215,6 +216,7 @@ const FORMS = [
   [/^Wellspring Mask (Ogerpon)$/, (m, sp) => `${sp(m[1])} Masque du Puits`],
   [/^Cornerstone Mask (Ogerpon)$/, (m, sp) => `${sp(m[1])} Masque de la Pierre`],
   [/^(.+) with Grey Felt Hat$/, (m, sp) => `${sp(m[1])} au chapeau de feutre gris`],
+  [/^(.+) \[([A-Z?!])\]$/, (m, sp) => `${sp(m[1])} [${m[2]}]`],
 ];
 
 const SUFFIX = /^(.*?)(-GX|-EX| ex| EX| GX| V-UNION| VMAX| VSTAR| V| BREAK| LV\.X| ★| δ)$/;

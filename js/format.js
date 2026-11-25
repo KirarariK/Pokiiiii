@@ -21,6 +21,13 @@ export const num = (n) => NUM.format(n || 0);
 export const pct = (p) =>
   `${p.toLocaleString('fr-FR', { minimumFractionDigits: p % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })} %`;
 
+/** Probabilité (0 à 1) -> « 12,5 % », « 0,045 % » ou « 0,0019 % » : assez de décimales pour ne jamais afficher zéro. */
+export function pctFine(p) {
+  const v = p * 100;
+  const digits = v >= 10 ? 1 : v >= 1 ? 2 : v >= 0.01 ? 3 : 4;
+  return `${v.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits })} %`;
+}
+
 /** Durée écoulée -> « il y a 3 min ». */
 export function ago(ts, now = Date.now()) {
   const s = Math.max(0, Math.round((now - ts) / 1000));

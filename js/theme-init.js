@@ -1,12 +1,20 @@
-// Applique le thème enregistré avant le premier rendu (évite le flash clair/sombre).
+// Applique le thème avant le premier affichage, pour éviter tout flash.
 // Script classique, volontairement minuscule et sans dépendance.
+// La clé et les identifiants doivent rester alignés avec js/data/themes.js.
 (function () {
+  var IDS = ['electrik', 'feu', 'eau', 'plante', 'psy', 'tenebres', 'dragon', 'glace', 'fee'];
+  var root = document.documentElement;
+  var theme = null;
   try {
-    var raw = localStorage.getItem('pokiiiii.demo.v1');
-    var theme = raw ? (JSON.parse(raw).settings || {}).theme : null;
-    if (theme !== 'light' && theme !== 'dark') theme = 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
+    var saved = JSON.parse(localStorage.getItem('pokiiiii.theme.v1') || 'null');
+    if (saved && IDS.indexOf(saved.id) !== -1) theme = saved.id;
   } catch (e) {
-    document.documentElement.setAttribute('data-theme', 'dark');
+    theme = null;
   }
+  if (!theme) {
+    // Première visite : thème d'attente, le choix est proposé dès le chargement.
+    root.setAttribute('data-theme-pending', '');
+    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'glace' : 'electrik';
+  }
+  root.setAttribute('data-theme', theme);
 })();

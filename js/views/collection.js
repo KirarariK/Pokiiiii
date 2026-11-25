@@ -3,7 +3,7 @@
 import { RULES } from '../config.js';
 import { cardById, cardRef } from '../catalog.js';
 import { RARITIES, packBySlug } from '../data/packs.js';
-import { dateFr, esc, eur, plural } from '../format.js';
+import { dateFr, esc, eur, num, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { buybackOf, getState, ownedByUid, requestShipment, sellCards, shippingFee, stats } from '../store.js';
 import { emptyState, note, pageHead, statTile } from '../ui/blocks.js';
@@ -15,8 +15,11 @@ import { openTopup } from '../ui/topup.js';
 const TABS = [
   { key: 'coffre', label: 'Au coffre', icon: 'vault' },
   { key: 'livraison', label: 'En livraison', icon: 'truck' },
-  { key: 'vendue', label: 'Revendues', icon: 'history' },
+  { key: 'historique', label: 'Historique', icon: 'history' },
 ];
+
+const PAST = ['vendue', 'evoluee', 'perdue'];
+const inTab = (owned, tab) => (tab === 'historique' ? PAST.includes(owned.status) : owned.status === tab);
 
 const SORTS = {
   recent: { label: 'Plus récentes', fn: (a, b) => b.at - a.at },
@@ -29,7 +32,7 @@ const ui = { tab: 'coffre', rarity: 'all', sort: 'recent', selected: new Set() }
 
 function visibleCards() {
   return getState()
-    .cards.filter((c) => c.status === ui.tab && (ui.rarity === 'all' || c.rarity === ui.rarity))
+    .cards.filter((c) => inTab(c, ui.tab) && (ui.rarity === 'all' || c.rarity === ui.rarity))
     .sort(SORTS[ui.sort].fn);
 }
 
@@ -39,11 +42,12 @@ function tileFor(owned) {
   const selectable = ui.tab === 'coffre';
   const checked = ui.selected.has(owned.uid);
   const extra =
-    ui.tab === 'vendue'
-      ? `<span class="tile__status">${icon('check', { size: 14 })}Revendue ${eur(owned.soldFor)}</span>`
-      : ui.tab === 'livraison'
-        ? `<span class="tile__status">${icon('truck', { size: 14 })}En préparation</span>`
-        : '';
+    {
+      vendue: `<span class="tile__status">${icon('check', { size: 14 })}Revendue ${eur(owned.soldFor)}</span>`,
+      evoluee: `<span class="tile__status">${icon('chevrons-up', { size: 14 })}A évolué</span>`,
+      perdue: `<span class="tile__status tile__status--lost">${icon('circle-x', { size: 14 })}Perdue en évolution</span>`,
+      livraison: `<span class="tile__status">${icon('truck', { size: 14 })}En préparation</span>`,
+    }[owned.status] || '';
   return `<div class="tile-wrap ${checked ? 'is-selected' : ''}">
     ${selectable ? `<label class="tile-check" title="Sélectionner"><input type="checkbox" data-select="${owned.uid}" ${checked ? 'checked' : ''}><span class="sr-only">Sélectionner ${esc(card.name)}</span></label>` : ''}
     ${cardTile(card, { rarity: owned.rarity, value: owned.value, tag: 'button', attrs: `type="button" data-detail="${owned.uid}"`, extra })}
@@ -83,7 +87,8 @@ function openDetail(uid, rerender) {
           <div><dt>Référence</dt><dd>${esc(cardRef(card))}</dd></div>
           <div><dt>Rareté imprimée</dt><dd>${esc(card.tcgRarity)}</dd></div>
           <div><dt>Nom imprimé</dt><dd>${esc(card.nameEn)}</dd></div>
-          <div><dt>Obtenue le</dt><dd>${dateFr(owned.at)}${pack ? ` · ${esc(pack.name)}` : ''}</dd></div>
+          <div><dt>Obtenue le</dt><dd>${dateFr(owned.at)} · ${pack ? esc(pack.name) : 'Évolution'}</dd></div>
+          ${owned.roll ? `<div><dt>Tirage</dt><dd>ticket n° ${num(owned.roll.ticket)} · <a href="#/equite" data-close>vérifier</a></dd></div>` : ''}
           <div><dt>Cote indicative</dt><dd><strong>${eur(owned.value)}</strong></dd></div>
           ${inVault ? `<div><dt>Rachat immédiat</dt><dd><strong>${eur(buybackOf(owned))}</strong> <span class="muted">(${Math.round(RULES.buybackRate * 100)} %)</span></dd></div>` : ''}
           ${owned.status === 'vendue' ? `<div><dt>Revendue</dt><dd>${eur(owned.soldFor)} le ${dateFr(owned.soldAt)}</dd></div>` : ''}
@@ -92,7 +97,8 @@ function openDetail(uid, rerender) {
       </div>
     </div>`,
     footer: inVault
-      ? `<button class="btn btn--secondary" type="button" data-detail-ship>${icon('truck', { size: 16 })}Faire livrer</button>
+      ? `<a class="btn btn--ghost" href="#/evolution?carte=${owned.uid}" data-close>${icon('chevrons-up', { size: 16 })}Faire évoluer</a>
+         <button class="btn btn--secondary" type="button" data-detail-ship>${icon('truck', { size: 16 })}Faire livrer</button>
          <button class="btn btn--primary" type="button" data-detail-sell>${icon('hand-coins', { size: 16 })}Revendre ${eur(buybackOf(owned))}</button>`
       : '',
     onMount(el, close) {
@@ -201,7 +207,7 @@ export default {
   render() {
     const state = getState();
     const s = stats();
-    const counts = Object.fromEntries(TABS.map((t) => [t.key, state.cards.filter((c) => c.status === t.key).length]));
+    const counts = Object.fromEntries(TABS.map((t) => [t.key, state.cards.filter((c) => inTab(c, t.key)).length]));
     const cards = visibleCards();
     const pending = state.pending.length;
 

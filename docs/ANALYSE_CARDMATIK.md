@@ -149,23 +149,24 @@ avocat avant d'écrire le moindre texte commercial.
 
 Repris du site de référence :
 
-- l'organisation des pages et du menu ;
 - le parcours choisir → ouvrir → garder, livrer ou revendre ;
-- la gamme (quatre niveaux et un pack événement), les prix et les répartitions ;
+- le menu latéral et la page d'un pack (visuel, répartitions, achat, gros lots,
+  dernières ouvertures) ;
 - les règles : rachat à 90 %, prix garanti 10 minutes, 10 packs maximum, points
-  du classement, délais de livraison et de retrait.
+  du classement, délais de livraison et de retrait ;
+- les giveaways et le classement mensuel.
 
-Volontairement différent :
+Refait autrement, parce que le site de référence s'arrête là où un opérateur
+de métier commence (détail dans `docs/CONCEPTION.md`) :
 
-- **la marque** : nom de travail, logo, couleurs et polices propres ;
-- **les visuels** : boosters et dos de carte dessinés pour la maquette, aucune
-  image de Cardmatik ;
-- **les textes** : réécrits ;
-- **le pack événement** : « Pack Brasier », cartes de type Feu ;
-- **une page Transparence** qui affiche la valeur moyenne de chaque pack et ce
-  que la démonstration ne fait pas ;
-- **des garde-fous** : limite de dépenses quotidienne, pause du compte, mention
-  18+ et numéro d'aide.
+- **la gamme** : huit packs conçus pour un même retour théorique de 90 %, au
+  lieu d'une grille dont la marge ne se lit nulle part ;
+- **le tirage** : vérifiable par le joueur (graines, tickets), avec la table
+  complète de chaque pack publiée carte par carte ;
+- **l'ouverture** : une roulette, dont la bande est tirée honnêtement ;
+- **les jeux** : Évolution, récompense du jour, badges ;
+- **l'habillage** : neuf thèmes par type, choisis à la première visite ;
+- **la marque, les visuels et les textes**, propres à la maquette.
 
 Non repris pour l'instant : marketplace entre joueurs, pack gratuit, espace
 créateurs, guides de référencement, back-office, paiement et KYC.

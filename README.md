@@ -1,8 +1,8 @@
 # Pokiiiii
 
 Maquette d'un site de **packs mystère de cartes à collectionner** : on achète un
-pack, on l'ouvre en ligne, on découvre une carte, puis on la garde au coffre, on
-se la fait livrer ou on la revend à 90 % de sa cote.
+pack, une roulette tourne, on découvre une carte, puis on la garde au coffre, on
+se la fait livrer, on la revend à 90 % de sa cote ou on tente de la faire évoluer.
 
 **C'est une démonstration.** Les crédits sont fictifs, aucun paiement n'est
 effectué, aucune carte n'est en stock ni expédiée, et la communauté (classement,
@@ -18,7 +18,7 @@ Aucune installation ni compilation : ce sont des fichiers statiques.
 
 ```bash
 npm start            # sert le dossier sur http://127.0.0.1:4173
-npm run smoke        # contrôle les données et le tirage (sans navigateur)
+npm run smoke        # contrôle les données, les tables de tirage et l'équité
 ```
 
 Le site peut être déposé tel quel sur n'importe quel hébergement statique. La
@@ -30,61 +30,70 @@ de réécriture n'est nécessaire.
 | Page | Adresse |
 | --- | --- |
 | Accueil | `#/` |
-| Packs mystère, page d'un pack avec ses répartitions | `#/packs`, `#/packs/starter` |
-| Ouverture animée et récapitulatif | `#/ouverture` |
+| Packs, page d'un pack avec sa table de tirage complète | `#/packs`, `#/packs/starter` |
+| Ouverture en roulette et récapitulatif | `#/ouverture` |
+| Évolution (miser une carte pour en obtenir une meilleure) | `#/evolution` |
 | Collection, livraisons | `#/collection`, `#/livraisons` |
-| Giveaways | `#/giveaways`, `#/giveaways/brasier` |
-| Classement | `#/classement` |
-| Solde, profil, paramètres | `#/solde`, `#/profil`, `#/parametres` |
+| Récompense du jour et badges | `#/recompenses` |
+| Giveaways, classement | `#/giveaways`, `#/classement` |
+| Équité prouvable : graines, journal des tirages, vérificateur | `#/equite` |
+| Solde, profil, paramètres (thème, limites, pause) | `#/solde`, `#/profil`, `#/parametres` |
 | FAQ, transparence et jeu responsable, contact | `#/faq`, `#/transparence`, `#/contact` |
 | Trames des documents légaux | `#/legal/cgv`, `cgu`, `confidentialite`, `mentions` |
 
+À la première visite, un écran propose neuf thèmes (un par type). Le choix est
+gardé sur l'appareil.
+
 ## Où changer quoi
 
-| Pour changer… | Fichier |
-| --- | --- |
-| le nom, les coordonnées, le taux de rachat, les frais de livraison, le crédit de bienvenue | `js/config.js` |
-| les packs, leurs prix et leurs répartitions | `js/data/packs.js` |
-| l'apparence des boosters | `js/ui/pack-art.js` |
-| les couleurs et les polices | `css/app.css` (variables en tête de fichier) |
-| les questions de la FAQ | `js/data/faq.js` |
-| les giveaways | `js/data/giveaways.js` |
-| le catalogue de cartes | `npm run cards` (régénère `js/data/cards.js`) |
+| Pour changer… | Fichier | Puis |
+| --- | --- | --- |
+| le nom, les coordonnées, le taux de rachat, la marge de l'Évolution, la récompense du jour | `js/config.js` | |
+| les packs, leurs prix et leurs probabilités | `js/data/packs.js` | `npm run design` pour recalculer, `npm run smoke` pour contrôler |
+| les couleurs d'un thème, ou ajouter un thème | `scripts/build-themes.mjs` | `npm run themes` |
+| le nom et la suggestion d'un thème | `js/data/themes.js` | |
+| l'apparence des boosters | `js/ui/pack-art.js` | |
+| les badges | `js/data/badges.js` | |
+| la FAQ, les giveaways | `js/data/faq.js`, `js/data/giveaways.js` | |
+| le catalogue de cartes | `scripts/build-cards.mjs` | `npm run cards` |
 
 ## Organisation du code
 
 ```
 index.html            page unique
-css/app.css           styles (thème sombre par défaut, thème clair)
+css/themes.css        couleurs des neuf thèmes (généré)
+css/app.css           mise en page et composants
 js/main.js            routeur et actions globales
-js/store.js           compte démo : solde, coffre, rachats, livraisons (localStorage)
-js/draw.js            tirage d'une carte dans un pack
-js/catalog.js         catalogue et calcul de la cote moyenne d'un pack
-js/data/              packs, cartes, noms français, giveaways, FAQ, communauté simulée
-js/ui/                composants : boosters, cartes, fenêtres, comptes à rebours, effets
+js/store.js           compte démo : solde, coffre, tirages, évolution (localStorage)
+js/fair.js            tirage vérifiable : SHA-256, HMAC, tickets
+js/catalog.js         catalogue et tables de tirage des packs
+js/theme.js           thème : application, suggestion, écran de choix
+js/data/              packs, cartes, noms français, thèmes, badges, giveaways, FAQ
+js/ui/                composants : boosters, cartes, fenêtres, effets
 js/views/             une page par fichier
-scripts/              génération du catalogue, contrôles
-docs/                 analyse du site de référence
+scripts/              génération (cartes, thèmes, icônes), conception des packs, contrôles
+docs/                 analyse du site de référence, choix de conception
 ```
 
-## Comment une carte est tirée
+## Les règles du jeu, en bref
 
-1. Un palier de cote est tiré selon les probabilités affichées sur la page du pack.
-2. Une carte est tirée dans ce palier. Par défaut, les cartes les moins cotées
-   sortent plus souvent (`RULES.tierSkew` dans `js/config.js`).
+- **Packs** : huit packs, tous conçus pour un retour théorique de 90 %. La
+  table de tirage complète de chaque pack est publiée sur sa page.
+- **Tirage** : un ticket parmi un million, calculé à partir d'une graine
+  serveur (dont l'empreinte est publiée avant), d'une graine client et d'un
+  compteur. Vérifiable après coup sur la page Équité.
+- **Évolution** : chance = cote misée ÷ cote visée × 92 %.
+- **Récompense du jour** : gratuite, 0,50 € en moyenne, multipliée par le badge.
 
-La page **Transparence** affiche, pour chaque pack, la cote moyenne d'une carte
-et ce que rapporte une revente immédiate. Avec le catalogue de démonstration,
-les packs Starter et Pro rendent en moyenne plus que leur prix : la grille est à
-régler sur un stock réel avant toute mise en vente (voir
-`docs/ANALYSE_CARDMATIK.md`, section 2).
+Le détail et les raisons de ces choix sont dans `docs/CONCEPTION.md`.
 
 ## Avant une ouverture au public
 
 Ce dépôt ne contient que l'interface. Restent à construire ou à obtenir :
 
 - la qualification juridique du modèle et les textes légaux, avec un avocat ;
-- un serveur : comptes, tirage sur un stock réel avec un aléa audité, journal des ouvertures ;
+- un serveur : comptes, graine serveur réellement secrète, tirage sur un stock
+  réel, journal des ouvertures, audit du générateur d'aléa ;
 - le paiement, la vérification d'âge et d'identité, les retraits ;
 - l'inventaire, le coffre et l'expédition ;
 - les limites de dépenses et l'auto-exclusion appliquées côté serveur.

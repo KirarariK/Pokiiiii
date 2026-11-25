@@ -1,28 +1,34 @@
-// Catalogue de cartes : met en forme les données brutes de js/data/cards.js
-// et fournit les sélections utilisées par les packs.
+// Catalogue de cartes et tables de tirage des packs.
+//
+// Une table de tirage découpe 1 000 000 de tickets entre les cartes d'un pack.
+// Chaque carte y occupe une plage [from, to) : sa probabilité est la taille de
+// sa plage divisée par le nombre de tickets. C'est cette table, publiée sur la
+// page du pack, qui fait foi : le tirage ne fait que désigner un ticket.
 
 import { RULES } from './config.js';
 import { CARDS as RAW, SETS } from './data/cards.js';
 import { nameFr } from './data/names-fr.js';
+import { TICKETS } from './fair.js';
 
 const IMG = 'https://images.pokemontcg.io';
 
 /**
  * @typedef {Object} Card
- * @property {string} id       identifiant API (ex. « sv3pt5-199 »)
- * @property {string} name     nom affiché (français quand il est connu)
- * @property {string} nameEn   nom imprimé sur la carte
- * @property {string} set      nom de l'extension
- * @property {string} code     code de l'extension (ex. « MEW »)
- * @property {string} number   numéro dans l'extension
- * @property {number} value    cote indicative, en centimes
- * @property {string} type     type principal (anglais, tel que fourni par l'API)
+ * @property {string} id        identifiant API (ex. « sv3pt5-199 »)
+ * @property {string} name      nom affiché (français quand il est connu)
+ * @property {string} nameEn    nom imprimé sur la carte
+ * @property {string} setId     identifiant de l'extension
+ * @property {string} set       nom de l'extension
+ * @property {string} code      code de l'extension (ex. « MEW »)
+ * @property {string} number    numéro dans l'extension
+ * @property {number} value     cote indicative, en centimes
+ * @property {string} type      type principal (anglais, tel que fourni par l'API)
  * @property {string} tcgRarity rareté imprimée
- * @property {string} img      image basse définition
- * @property {string} imgHi    image haute définition
+ * @property {string} img       image basse définition
+ * @property {string} imgHi     image haute définition
  */
 
-/** @type {Card[]} */
+/** @type {Card[]} du plus coté au moins coté */
 export const CARDS = RAW.map(([id, nameEn, value, tcgRarity, type]) => {
   const cut = id.lastIndexOf('-');
   const setId = id.slice(0, cut);
@@ -32,6 +38,7 @@ export const CARDS = RAW.map(([id, nameEn, value, tcgRarity, type]) => {
     id,
     name: nameFr(nameEn),
     nameEn,
+    setId,
     set: set.name,
     code: set.code,
     number,
@@ -51,88 +58,105 @@ export const cardById = (id) => BY_ID.get(id);
 /** Référence courte façon classeur : « MEW 199 » (les promos portent déjà leur code : « SWSH141 »). */
 export const cardRef = (card) => (card.number.startsWith(card.code) ? card.number : `${card.code} ${card.number}`);
 
-/** Cartes dont la cote tombe dans [minEuro, maxEuro] (bornes incluses, à l'euro près). */
-export function cardsInRange(minEuro, maxEuro, types) {
-  const lo = minEuro * 100;
-  const hi = maxEuro * 100 + 99;
-  return CARDS.filter((c) => c.value >= lo && c.value <= hi && (!types || types.includes(c.type)));
+/** Une carte entre-t-elle dans la sélection d'un pack thématique ? */
+function matches(card, filter) {
+  if (!filter) return true;
+  if (filter.types && !filter.types.includes(card.type)) return false;
+  if (filter.sets && !filter.sets.includes(card.setId)) return false;
+  if (filter.names && !filter.names.test(card.nameEn)) return false;
+  return true;
 }
 
-/** Nombre minimal de cartes thématiques pour qu'un palier reste varié. */
-const MIN_THEMED = 3;
-
-const poolCache = new Map();
-
-/**
- * Cartes pouvant sortir d'un palier donné d'un pack.
- * Un pack thématique (pack.types) retombe sur le catalogue complet quand un
- * palier ne compte pas assez de cartes du thème.
- * @returns {Card[]}
- */
+/** Cartes d'un palier : cote dans [min, max] euros (bornes incluses) et dans le thème du pack. */
 export function tierPool(pack, tierIndex) {
-  const key = `${pack.slug}:${tierIndex}`;
-  if (poolCache.has(key)) return poolCache.get(key);
   const tier = pack.tiers[tierIndex];
-  let pool = pack.types ? cardsInRange(tier.min, tier.max, pack.types) : [];
-  if (pool.length < MIN_THEMED) pool = cardsInRange(tier.min, tier.max);
-  poolCache.set(key, pool);
-  return pool;
-}
-
-/** Toutes les cartes pouvant sortir d'un pack, de la plus cotée à la moins cotée. */
-export function packPool(pack) {
-  const seen = new Set();
-  const out = [];
-  pack.tiers.forEach((_, i) => {
-    for (const c of tierPool(pack, i)) {
-      if (!seen.has(c.id)) {
-        seen.add(c.id);
-        out.push(c);
-      }
-    }
-  });
-  return out.sort((a, b) => b.value - a.value);
-}
-
-/** Les plus grosses cartes d'un pack, avec la rareté du palier dont elles relèvent. */
-export function topHits(pack, n = 10) {
-  return packPool(pack)
-    .slice(0, n)
-    .map((card) => ({ card, rarity: rarityInPack(pack, card) }));
-}
-
-/** Rareté affichée d'une carte dans un pack : celle du palier qui contient sa cote. */
-export function rarityInPack(pack, card) {
-  const euros = Math.floor(card.value / 100);
-  const tier = pack.tiers.find((t) => euros >= t.min && euros <= t.max);
-  return tier ? tier.rarity : 'commune';
+  const lo = tier.min * 100;
+  const hi = tier.max * 100 + 99;
+  return CARDS.filter((c) => c.value >= lo && c.value <= hi && matches(c, pack.filter));
 }
 
 /**
- * Poids de tirage d'une carte à l'intérieur de son palier (entier >= 1).
- * Avec RULES.tierSkew = 0, toutes les cartes d'un palier se valent ; avec 1,
- * la probabilité est inversement proportionnelle à la cote : les cartes les
- * moins chères sortent plus souvent, comme dans un stock réel.
+ * Répartit `total` tickets selon des poids, au plus fort reste, en garantissant
+ * au moins un ticket par élément. La somme rendue vaut exactement `total`.
  */
-export function cardWeight(card, pool) {
-  if (!RULES.tierSkew) return 1;
-  const floor = pool.reduce((m, c) => Math.min(m, c.value), Infinity);
-  return Math.max(1, Math.round(1e6 * Math.pow(floor / card.value, RULES.tierSkew)));
-}
-
-/** Cote moyenne d'une carte tirée dans un palier, en centimes. */
-export function tierMean(pack, tierIndex) {
-  const pool = tierPool(pack, tierIndex);
-  if (!pool.length) return 0;
-  const weights = pool.map((c) => cardWeight(c, pool));
-  const total = weights.reduce((a, b) => a + b, 0);
-  return pool.reduce((sum, c, i) => sum + c.value * weights[i], 0) / total;
+function allocate(weights, total) {
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const exact = weights.map((w) => (w / sum) * total);
+  const shares = exact.map((x) => Math.max(1, Math.floor(x)));
+  let diff = total - shares.reduce((a, b) => a + b, 0);
+  const order = exact.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  for (let k = 0; diff > 0; k = (k + 1) % order.length, diff--) shares[order[k][1]]++;
+  // Si le minimum garanti a fait déborder, on reprend sur les plus grosses parts.
+  while (diff < 0) {
+    const big = shares.indexOf(Math.max(...shares));
+    shares[big]--;
+    diff++;
+  }
+  return shares;
 }
 
 /**
- * Cote moyenne attendue d'une carte tirée dans un pack, en centimes : moyenne
- * des paliers pondérée par leur probabilité.
+ * @typedef {Object} Drop
+ * @property {Card} card
+ * @property {string} rarity     rareté du palier
+ * @property {number} tierIndex
+ * @property {number} from       premier ticket (inclus)
+ * @property {number} to         dernier ticket (exclu)
+ * @property {number} p          probabilité, entre 0 et 1
  */
-export function expectedValue(pack) {
-  return Math.round(pack.tiers.reduce((sum, tier, i) => sum + (tier.p / 100) * tierMean(pack, i), 0));
+
+const tables = new Map();
+
+/**
+ * Table de tirage d'un pack, des plus gros lots (petits tickets) aux plus petits.
+ * Dans un palier, le poids d'une carte vaut (cote plancher / cote)^skew :
+ * skew = 0 donne des cartes équiprobables, 1 une probabilité inversement
+ * proportionnelle à la cote.
+ * @returns {Drop[]}
+ */
+export function dropTable(pack) {
+  if (tables.has(pack.slug)) return tables.get(pack.slug);
+  const skew = pack.skew ?? RULES.tierSkew;
+  const drops = [];
+  let cursor = 0;
+  for (let i = pack.tiers.length - 1; i >= 0; i--) {
+    const tier = pack.tiers[i];
+    const pool = tierPool(pack, i).sort((a, b) => b.value - a.value || a.id.localeCompare(b.id));
+    const tickets = Math.round((tier.p / 100) * TICKETS);
+    if (!pool.length) throw new Error(`Pack « ${pack.slug} » : aucune carte pour le palier ${tier.min}–${tier.max} €`);
+    const floor = pool[pool.length - 1].value;
+    const shares = allocate(pool.map((c) => Math.pow(floor / c.value, skew)), tickets);
+    pool.forEach((card, j) => {
+      drops.push({ card, rarity: tier.rarity, tierIndex: i, from: cursor, to: cursor + shares[j], p: shares[j] / TICKETS });
+      cursor += shares[j];
+    });
+  }
+  if (cursor !== TICKETS) throw new Error(`Pack « ${pack.slug} » : la table couvre ${cursor} tickets au lieu de ${TICKETS}`);
+  tables.set(pack.slug, drops);
+  return drops;
 }
+
+/** Lot correspondant à un ticket (recherche dichotomique). @returns {Drop} */
+export function resolveTicket(pack, ticket) {
+  const table = dropTable(pack);
+  let lo = 0;
+  let hi = table.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (ticket >= table[mid].to) lo = mid + 1;
+    else hi = mid;
+  }
+  return table[lo];
+}
+
+/** Les plus grosses cartes d'un pack. @returns {Drop[]} */
+export const topHits = (pack, n = 10) => dropTable(pack).slice(0, n);
+
+/** Cote moyenne d'une carte tirée dans un pack, en centimes. */
+export const expectedValue = (pack) => Math.round(dropTable(pack).reduce((sum, d) => sum + d.card.value * d.p, 0));
+
+/** Retour théorique d'un pack : part du prix récupérée en revendant aussitôt la carte. */
+export const packReturn = (pack) => (expectedValue(pack) * RULES.buybackRate) / pack.price;
+
+/** Probabilité d'obtenir une carte valant au moins le prix du pack. */
+export const profitChance = (pack) => dropTable(pack).reduce((sum, d) => sum + (d.card.value >= pack.price ? d.p : 0), 0);
