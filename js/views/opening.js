@@ -72,8 +72,8 @@ function sceneHtml(pack, total) {
       <span class="opening__rays" aria-hidden="true"></span>
       <canvas class="opening__fx" aria-hidden="true"></canvas>
       <button class="opening__pack" type="button" data-open aria-label="Ouvrir le pack">
-        <span class="opening__pack-top">${packArt(pack)}</span>
-        <span class="opening__pack-body">${packArt(pack)}</span>
+        <span class="opening__pack-top">${packArt(pack, { lazy: false })}</span>
+        <span class="opening__pack-body">${packArt(pack, { lazy: false })}</span>
       </button>
       <div class="reel" data-reel hidden>
         <div class="reel__band">

@@ -5,13 +5,13 @@ import { esc, eur, initials, num } from '../format.js';
 import { icon } from '../icons.js';
 import { badgeProgress, cashbackAvailable, getState, isLoggedIn } from '../store.js';
 import { currentTheme } from '../theme.js';
+import { MARK_BOX, MARK_PATH } from './logo-mark.js';
 
-/** Logo : deux cartes inclinées et un éclat, aux couleurs du thème. */
+/** Logo : une carte inclinée avec un éclat découpé, à la couleur du thème. */
 export function logoMark(size = 30) {
-  return `<svg class="logo__mark" viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true">
-    <rect class="logo__back" x="10.5" y="4.5" width="15" height="21" rx="3.2" transform="rotate(12 18 15)"/>
-    <rect class="logo__front" x="6.5" y="6" width="15" height="21" rx="3.2" transform="rotate(-10 14 16.5)"/>
-    <path class="logo__spark" d="M13.2 10.4 14.9 14.9 19.4 16.6 14.9 18.3 13.2 22.8 11.5 18.3 7 16.6 11.5 14.9Z" transform="rotate(-10 14 16.5)"/>
+  const [x, y, w, h] = MARK_BOX;
+  return `<svg class="logo__mark" viewBox="${x} ${y} ${w} ${h}" width="${Math.round((size * w) / h)}" height="${size}" aria-hidden="true">
+    <path class="logo__front" fill-rule="evenodd" d="${MARK_PATH}"/>
   </svg>`;
 }
 

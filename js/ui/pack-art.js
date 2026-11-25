@@ -109,11 +109,53 @@ function zigzag(y, fromX, toX, amplitude) {
 }
 
 /**
+ * Illustrations des boosters (assets/packs/<pack>.webp) : largeur et hauteur en pixels.
+ * Un pack sans illustration est dessiné en SVG (voir drawnPack).
+ */
+const ART = {
+  starter: [506, 960],
+  evoli: [498, 960],
+  pro: [492, 960],
+  retro: [502, 960],
+  brasier: [471, 960],
+  master: [477, 960],
+  expert: [468, 960],
+  legende: [468, 960],
+};
+
+/** Proportions du cadre réservé à un booster dans la mise en page (largeur / hauteur). */
+const FRAME = 240 / 340;
+
+/**
+ * Visuel d'un booster : son illustration, avec son nom posé sur le bandeau du bas.
+ * @param {object} pack  pack de js/data/packs.js (slug, theme, short)
+ * @param {{ title?: string, lazy?: boolean }} [opts]
+ * @returns {string} balisage HTML
+ */
+export function packArt(pack, opts = {}) {
+  const art = ART[pack.slug];
+  if (!art) return drawnPack(pack, opts);
+  const [w, h] = art;
+  const src = `assets/packs/${pack.slug}.webp`;
+  const label = esc((pack.short || pack.name).toUpperCase());
+  // Le booster occupe toute la hauteur du cadre ; sa largeur s'en déduit.
+  const width = ((w / h / FRAME) * 100).toFixed(2);
+  return `<span class="pack-art pack-art--img" role="img" aria-label="${esc(opts.title || pack.name)}">
+    <span class="pack-art__in" style="width:${width}%;aspect-ratio:${w}/${h}">
+      <img src="${src}" alt="" width="${w}" height="${h}" ${opts.lazy === false ? '' : 'loading="lazy"'} decoding="async" draggable="false">
+      <span class="pack-art__shine" aria-hidden="true" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></span>
+      <span class="pack-art__label ${label.length > 6 ? 'is-long' : ''}" aria-hidden="true"><b>${label}</b><i>1 carte mystère</i></span>
+    </span>
+  </span>`;
+}
+
+/**
+ * Booster dessiné en SVG, pour un pack qui n'a pas encore d'illustration.
  * @param {object} pack  pack de js/data/packs.js (theme, short)
  * @param {{ title?: string }} [opts]
  * @returns {string} balisage SVG
  */
-export function packArt(pack, opts = {}) {
+function drawnPack(pack, opts = {}) {
   const t = THEMES[pack.theme] || THEMES.glacier;
   const id = `pk${++seq}`;
   const label = esc((pack.short || pack.name).toUpperCase());

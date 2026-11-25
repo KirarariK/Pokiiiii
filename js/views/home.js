@@ -168,7 +168,7 @@ export default {
         <span class="hero__card hero__card--l">${cardImage(b, { lazy: false })}</span>
         <span class="hero__card hero__card--r">${cardImage(c, { lazy: false })}</span>
         <span class="hero__card hero__card--c" data-tilt>${cardImage(a, { hi: true, lazy: false })}</span>
-        <span class="hero__pack">${packArt(packBySlug('legende'))}</span>
+        <span class="hero__pack">${packArt(packBySlug('legende'), { lazy: false })}</span>
       </div>
     </section>
 

@@ -287,6 +287,16 @@ for (const g of listGiveaways()) {
   check(funded, `${g.id} : la valeur des lots débloqués ne dépasse jamais la cagnotte`);
 }
 
+console.log('\nIllustrations');
+{
+  const exists = (rel) => fs.existsSync(new URL(`../${rel}`, import.meta.url));
+  const missing = PACKS.filter((p) => !exists(`assets/packs/${p.slug}.webp`)).map((p) => p.slug);
+  check(missing.length === 0, `chaque pack a son illustration (${missing.length ? `manquent : ${missing.join(', ')}` : PACKS.length + ' fichiers'})`);
+  const heavy = PACKS.filter((p) => exists(`assets/packs/${p.slug}.webp`) && fs.statSync(new URL(`../assets/packs/${p.slug}.webp`, import.meta.url)).size > 200_000).map((p) => p.slug);
+  check(heavy.length === 0, 'illustrations sous 200 Ko chacune');
+  check(['favicon.svg', 'icon-180.png', 'icon-512.png'].every((f) => exists(`assets/brand/${f}`)), "icône d'onglet et icônes d'application présentes");
+}
+
 console.log('\nThèmes');
 const css = fs.readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
 const init = fs.readFileSync(new URL('../js/theme-init.js', import.meta.url), 'utf8');

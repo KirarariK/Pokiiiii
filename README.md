@@ -92,7 +92,8 @@ Limites tant qu'il n'y a pas de serveur :
 | les hypothèses du simulateur (ventes par pack, frais, TVA) | `js/economics.js` | |
 | les couleurs d'un thème, ou ajouter un thème | `scripts/build-themes.mjs` | `npm run themes` |
 | le nom et la suggestion d'un thème | `js/data/themes.js` | |
-| l'apparence des boosters | `js/ui/pack-art.js` | |
+| l'illustration d'un booster | `assets/packs/<pack>.webp` | déclarer sa taille dans `js/ui/pack-art.js` ; sans illustration, le booster est dessiné en SVG |
+| le logo et l'icône d'onglet | `js/ui/logo-mark.js`, `assets/brand/` | |
 | les badges et leur part de cashback | `js/data/badges.js` | |
 | la FAQ, les giveaways | `js/data/faq.js`, `js/data/giveaways.js` | |
 | le catalogue complet (toutes les cartes) | `scripts/build-catalogue.mjs` | `npm run catalogue` |
@@ -158,6 +159,9 @@ Ce dépôt ne contient que l'interface. Restent à construire ou à obtenir :
 
 - Visuels et données des cartes : [API Pokémon TCG](https://pokemontcg.io) ;
   cotes Cardmarket (moyenne 30 jours), indicatives.
+- Illustrations des boosters et marque du logo : générées par IA (outil de
+  génération d'images de Figma), puis détourées. Elles ne reprennent aucun
+  personnage ni visuel officiel ; le nom des packs est du texte posé par le site.
 - Icônes : [Lucide](https://lucide.dev), licence ISC.
 - Polices : Unbounded et Manrope, licence SIL OFL (voir `assets/fonts/`).
 

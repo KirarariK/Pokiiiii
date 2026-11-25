@@ -102,7 +102,7 @@ export default {
           ${open ? `<span class="badge badge--stock">${icon('check', { size: 13 })}En stock</span>` : `<span class="badge badge--out">Rupture</span>`}
           ${pack.event ? `<span class="badge badge--event">${icon('flame', { size: 13 })}Événement</span>` : ''}
           <span class="pack-stage__glow"></span>
-          <span class="pack-stage__art" data-tilt>${packArt(pack)}</span>
+          <span class="pack-stage__art" data-tilt>${packArt(pack, { lazy: false })}</span>
         </div>
         <div class="others">
           <h2 class="others__title">Autres boosters</h2>
