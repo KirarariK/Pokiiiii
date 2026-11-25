@@ -8,7 +8,7 @@
 import { RULES } from './config.js';
 import { CARDS as RAW, SETS } from './data/cards.js';
 import { nameFr } from './data/names-fr.js';
-import { TICKETS } from './fair.js';
+import { TICKETS, sha256Hex } from './fair.js';
 
 const IMG = 'https://images.pokemontcg.io';
 
@@ -157,6 +157,24 @@ export const expectedValue = (pack) => Math.round(dropTable(pack).reduce((sum, d
 
 /** Retour théorique d'un pack : part du prix récupérée en revendant aussitôt la carte. */
 export const packReturn = (pack) => (expectedValue(pack) * RULES.buybackRate) / pack.price;
+
+/** Marge théorique du site sur un pack dont la carte est revendue aussitôt. */
+export const packEdge = (pack) => 1 - packReturn(pack);
+
+const versions = new Map();
+
+/**
+ * Empreinte courte de la table de tirage. Elle change dès qu'une carte, une
+ * plage de tickets ou un palier change : notée avec chaque tirage, elle permet
+ * de savoir sur quelle version de la table il a été fait.
+ */
+export function tableVersion(pack) {
+  if (!versions.has(pack.slug)) {
+    const text = dropTable(pack).map((d) => `${d.card.id}:${d.from}-${d.to}`).join('|');
+    versions.set(pack.slug, sha256Hex(text).slice(0, 12));
+  }
+  return versions.get(pack.slug);
+}
 
 /** Probabilité d'obtenir une carte valant au moins le prix du pack. */
 export const profitChance = (pack) => dropTable(pack).reduce((sum, d) => sum + (d.card.value >= pack.price ? d.p : 0), 0);

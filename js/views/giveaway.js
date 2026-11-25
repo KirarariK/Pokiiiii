@@ -1,11 +1,11 @@
-// Détail d'un giveaway : compte à rebours, participation, activité, lots.
+// Détail d'un giveaway : compte à rebours, cagnotte, participation, activité, lots.
 
 import { BRAND } from '../config.js';
 import { cardRef } from '../catalog.js';
-import { giveawayActivity, giveawayParticipants, pastWinners } from '../data/community.js';
-import { giveawayById, isActive } from '../data/giveaways.js';
+import { giveawayActivity, giveawayParticipants, giveawayTickets, pastWinners } from '../data/community.js';
+import { giveawayById, giveawayPool, isActive } from '../data/giveaways.js';
 import { packBySlug } from '../data/packs.js';
-import { ago, dateFr, dateTimeFr, esc, eur, eurShort, num } from '../format.js';
+import { ago, dateFr, dateTimeFr, esc, eur, eurShort, num, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { giveawayEntry, isLoggedIn, updateGiveaway } from '../store.js';
 import { emptyState, sectionHead } from '../ui/blocks.js';
@@ -60,6 +60,19 @@ function participation(g, active) {
   </section>`;
 }
 
+/** Cagnotte : ce que les ventes du pack ont déjà financé, et ce qu'il manque pour le lot suivant. */
+function poolPanel(g, pool) {
+  const pack = packBySlug(g.pack);
+  const ratio = Math.min(100, Math.round((pool.pool / g.total) * 100));
+  return `<section class="panel panel--pad">
+    ${sectionHead('Cagnotte', { iconName: 'trending-up', note: 'Ventes simulées' })}
+    <p class="pool__amount"><strong>${eur(pool.pool)}</strong> <span class="muted">sur ${eur(g.total)}</span></p>
+    <div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${ratio}" aria-label="Cagnotte du giveaway"><span class="xpbar__fill" style="width:${ratio}%"></span></div>
+    <p class="muted">${pct(g.fundRate * 100)} du prix de chaque ${esc(pack.name)} vendu alimente la cagnotte, soit ${eur(Math.round(pool.perTicket))} par pack. Les lots se débloquent du plus petit au plus gros : <strong>${pool.unlocked} sur ${g.lots.length}</strong> à ce jour, pour ${num(pool.tickets)} packs vendus. Ce qui reste dans la cagnotte à la clôture est reporté sur le giveaway suivant.</p>
+    ${pool.next ? `<p class="pool__next">${icon('lock', { size: 16 })}<span>Prochain lot : <strong>${esc(pool.next.card.name)}</strong> (${eur(pool.next.card.value)}), dans <strong>${num(pool.next.missing)} pack${pool.next.missing > 1 ? 's' : ''}</strong>.</span></p>` : `<p class="pool__next is-full">${icon('circle-check', { size: 16 })}<span>Tous les lots sont débloqués.</span></p>`}
+  </section>`;
+}
+
 export default {
   nav: 'giveaways',
   title: (ctx) => giveawayById(ctx.params.id)?.title || 'Giveaway introuvable',
@@ -70,6 +83,9 @@ export default {
     const active = isActive(g, now);
     const [first, ...rest] = g.lots;
     const feed = giveawayActivity(g, 14, now);
+    const pool = giveawayPool(g, giveawayTickets(g, now) + giveawayEntry(g.id).tickets);
+    const locked = (card) => pool.funded && pool.need.get(card.id) > pool.tickets;
+    const lockTag = (card) => (locked(card) ? `<span class="lot__lock">${icon('lock', { size: 13 })}à ${num(pool.need.get(card.id))} packs</span>` : '');
 
     return `
     <a class="back-link" href="#/giveaways">${icon('arrow-left', { size: 16 })}Tous les giveaways</a>
@@ -87,11 +103,12 @@ export default {
     }
 
     <div class="stats">
-      <div class="stat"><span class="stat__label">${icon('circle-dollar-sign', { size: 16 })}Valeur totale</span><strong class="stat__value">${eurShort(g.total)}</strong></div>
-      <div class="stat"><span class="stat__label">${icon('gift', { size: 16 })}Lots</span><strong class="stat__value">${g.lots.length}</strong></div>
+      <div class="stat"><span class="stat__label">${icon('circle-dollar-sign', { size: 16 })}${pool.funded ? 'Lots débloqués' : 'Valeur totale'}</span><strong class="stat__value">${eurShort(pool.pool)}</strong>${pool.funded ? `<span class="stat__hint">sur ${eurShort(g.total)} possibles</span>` : ''}</div>
+      <div class="stat"><span class="stat__label">${icon('gift', { size: 16 })}Lots</span><strong class="stat__value">${pool.unlocked}${pool.funded ? ` / ${g.lots.length}` : ''}</strong></div>
       <div class="stat"><span class="stat__label">${icon('users', { size: 16 })}Participants</span><strong class="stat__value">${num(giveawayParticipants(g, now))}</strong><span class="stat__hint">simulé</span></div>
     </div>
 
+    ${active && pool.funded ? poolPanel(g, pool) : ''}
     ${participation(g, active)}
 
     ${
@@ -106,30 +123,32 @@ export default {
     }
 
     <section class="panel panel--pad">
-      ${sectionHead(`${g.lots.length} lots à gagner`, { iconName: 'trophy' })}
-      <article class="lot-first">
+      ${sectionHead(pool.funded ? `Jusqu'à ${g.lots.length} lots à gagner` : `${g.lots.length} lots à gagner`, { iconName: 'trophy' })}
+      <article class="lot-first ${locked(first) ? 'is-locked' : ''}">
         <span class="lot-first__img">${cardImage(first, { hi: true })}</span>
         <div>
           <span class="badge badge--gold">${icon('trophy', { size: 13 })}1er lot</span>
           <h3>${esc(first.name)} <span class="muted">${esc(cardRef(first))}</span></h3>
           <p class="muted">${esc(first.set)}</p>
           <p class="lot-first__value">${eur(first.value)}</p>
+          ${lockTag(first)}
         </div>
       </article>
       <div class="lots">
         ${rest
           .map(
-            (c, i) => `<article class="lot">
+            (c, i) => `<article class="lot ${locked(c) ? 'is-locked' : ''}">
               ${cardImage(c)}
               <span class="lot__rank">Lot n°${i + 2}</span>
               <span class="lot__name">${esc(c.name)}</span>
               <span class="lot__value">${eur(c.value)}</span>
               <span class="lot__set">${esc(c.set)}</span>
+              ${lockTag(c)}
             </article>`,
           )
           .join('')}
       </div>
-      <p class="muted small center">${g.lots.length} lots au total · cotes indicatives</p>
+      <p class="muted small center">${pool.funded ? 'Seuls les lots débloqués à la clôture sont tirés au sort.' : `${g.lots.length} lots au total.`} Cotes indicatives.</p>
     </section>`;
   },
   mount(root, { params, rerender }) {

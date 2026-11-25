@@ -13,7 +13,7 @@ export default {
     ${pageHead({
       icon: 'package',
       title: 'Packs mystère',
-      lead: `Un pack, une vraie carte. Les probabilités de chaque palier sont affichées sur la page du pack, et tu peux revendre ta carte à ${Math.round(RULES.buybackRate * 100)} % de sa cote dès l'ouverture.`,
+      lead: `Un pack, une vraie carte. La probabilité de chaque carte et le retour théorique sont affichés sur la page du pack ; tu peux revendre ta carte à ${Math.round(RULES.buybackRate * 100)} % de sa cote dans les ${RULES.buybackLockMinutes} minutes.`,
     })}
     <div class="pack-grid pack-grid--wide">${PACKS.map(packTile).join('')}</div>
     <p class="muted small center">${icon('shield-check', { size: 14 })} État garanti : Near Mint minimum pour les séries récentes, Excellent pour les anciennes.</p>`;

@@ -115,7 +115,7 @@ function summaryHtml(session, pack, order, lockUntil) {
     <div class="stats">
       <div class="stat"><span class="stat__label">${icon('gem', { size: 16 })}Cote totale</span><strong class="stat__value">${eur(totalValue)}</strong><span class="stat__hint ${diff >= 0 ? 'pos' : 'neg'}">${diff >= 0 ? '+' : '−'}${eur(Math.abs(diff))} par rapport au prix payé</span></div>
       <div class="stat"><span class="stat__label">${icon('star', { size: 16 })}Meilleure carte</span><strong class="stat__value stat__value--text">${esc(best.card.name)}</strong><span class="stat__hint">${eur(best.owned.value)}</span></div>
-      <div class="stat"><span class="stat__label">${icon('hand-coins', { size: 16 })}Rachat des cartes gardées</span><strong class="stat__value">${eur(keptBuyback)}</strong><span class="stat__hint">${Math.round(RULES.buybackRate * 100)} % de la cote</span></div>
+      <div class="stat"><span class="stat__label">${icon('hand-coins', { size: 16 })}Rachat des cartes gardées</span><strong class="stat__value">${eur(keptBuyback)}</strong><span class="stat__hint">${Math.round((locked ? RULES.buybackRate : RULES.buybackLaterRate) * 100)} % de la cote</span></div>
     </div>
 
     <div class="tile-grid tile-grid--5">
@@ -133,7 +133,7 @@ function summaryHtml(session, pack, order, lockUntil) {
         .join('')}
     </div>
 
-    ${locked && kept.length ? `<p class="lock">${icon('timer', { size: 16 })}Prix de rachat garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}</p>` : ''}
+    ${locked && kept.length ? `<p class="lock">${icon('timer', { size: 16 })}Rachat à ${Math.round(RULES.buybackRate * 100)} % garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}, puis ${Math.round(RULES.buybackLaterRate * 100)} %</p>` : ''}
 
     <div class="summary__actions">
       ${kept.length > 1 ? `<button class="btn btn--secondary" type="button" data-sell-all>${icon('hand-coins', { size: 18 })}Tout revendre — ${eur(keptBuyback)}</button>` : ''}
@@ -211,7 +211,7 @@ export default {
           <button class="btn btn--secondary btn--lg" type="button" data-sell-one>${icon('hand-coins', { size: 18 })}Revendre ${eur(buybackOf(owned))}</button>
           ${next}
         </div>
-        ${locked ? `<p class="lock">${icon('timer', { size: 16 })}Prix de rachat garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}</p>` : ''}
+        ${locked ? `<p class="lock">${icon('timer', { size: 16 })}Rachat à ${Math.round(RULES.buybackRate * 100)} % garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}, puis ${Math.round(RULES.buybackLaterRate * 100)} %</p>` : ''}
         <p class="opening__kept">${icon('shield-check', { size: 14 })}Ticket n° ${num(owned.roll?.ticket ?? 0)} · <a href="#/equite">vérifier ce tirage</a>${single ? ` · <a href="#/collection">voir ma collection</a>` : ''}</p>`;
     }
 
@@ -477,7 +477,20 @@ export default {
       }
     };
 
+    // Fin de la garantie de prix : les montants de rachat affichés passent au tarif différé.
+    const onLockEnd = () => {
+      if (root.querySelector('.summary')) {
+        root.innerHTML = summaryHtml(session, pack, order, lockUntil);
+        refreshCountdowns(root);
+        return;
+      }
+      root.querySelector('.opening .lock')?.remove();
+      const btn = root.querySelector('[data-sell-one]');
+      if (btn) btn.innerHTML = `${icon('hand-coins', { size: 18 })}Revendre ${eur(buybackOf(queue[index]))}`;
+    };
+
     root.addEventListener('click', onClick);
+    root.addEventListener('countdown:end', onLockEnd);
     paintProgress();
 
     return () => {
@@ -485,6 +498,7 @@ export default {
       cancelAnimationFrame(raf);
       untilt();
       root.removeEventListener('click', onClick);
+      root.removeEventListener('countdown:end', onLockEnd);
     };
   },
 };

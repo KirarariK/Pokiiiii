@@ -1,28 +1,32 @@
-// Solde : recharge, retrait et historique des mouvements.
+// Solde : recharge, part retirable, bonus à jouer et historique des mouvements.
 
 import { RULES } from '../config.js';
 import { dateTimeFr, esc, eur } from '../format.js';
 import { icon } from '../icons.js';
-import { getState, spentToday, subscribe } from '../store.js';
+import { bonusStatus, getState, spentToday, subscribe, withdrawable } from '../store.js';
 import { emptyState, note, pageHead, statTile } from '../ui/blocks.js';
 import { openModal } from '../ui/modal.js';
 
 const TYPES = {
   depot: { label: 'Recharge', icon: 'arrow-down-left' },
   bonus: { label: 'Bonus', icon: 'gift' },
+  cashback: { label: 'Cashback', icon: 'hand-coins' },
   achat: { label: 'Achat de packs', icon: 'package' },
   rachat: { label: 'Revente', icon: 'hand-coins' },
   livraison: { label: 'Livraison', icon: 'truck' },
 };
 
 function openWithdraw() {
+  const bonus = bonusStatus();
   openModal({
     title: 'Retirer mon solde',
     size: 'sm',
     body: `
-      <p>En production, l'avoir issu de tes reventes pourra être versé par virement bancaire :</p>
+      <p>Montant retirable aujourd'hui : <strong>${eur(withdrawable())}</strong>.</p>
+      ${bonus.active ? `<p class="muted">${eur(bonus.balance)} de fonds de bonus restent en jeu : encore ${eur(bonus.wagerLeft)} de mises avant qu'ils deviennent retirables. Ton argent, lui, n'est jamais bloqué.</p>` : ''}
+      <p>En production, le virement se fait :</p>
       <ul class="list">
-        <li>${icon('scan-face', { size: 16 })}après vérification d'identité (KYC)</li>
+        <li>${icon('scan-face', { size: 16 })}après vérification d'identité (KYC), vers un compte à ton nom</li>
         <li>${icon('banknote', { size: 16 })}à partir de ${eur(RULES.withdrawal.minimum)}</li>
         <li>${icon('clock', { size: 16 })}sous ${RULES.withdrawal.delay}, sans frais</li>
       </ul>
@@ -38,8 +42,9 @@ export default {
   render() {
     const { balance, tx, limits } = getState();
     const today = spentToday();
+    const bonus = bonusStatus();
     return `
-    ${pageHead({ icon: 'wallet', title: 'Mon solde', lead: 'Recharge ton solde pour acheter des packs ; tes reventes y sont créditées.' })}
+    ${pageHead({ icon: 'wallet', title: 'Mon solde', lead: 'Recharge ton solde pour acheter des packs ; tes reventes et ton cashback y sont crédités.' })}
 
     <section class="panel wallet">
       <div>
@@ -53,10 +58,14 @@ export default {
       </div>
     </section>
 
-    <div class="stats stats--2">
+    <div class="stats stats--4">
+      ${statTile({ iconName: 'landmark', label: 'Retirable', value: eur(withdrawable()), hint: bonus.active ? 'ton argent, hors bonus en jeu' : 'tout ton solde' })}
+      ${statTile({ iconName: 'gift', label: 'Bonus en jeu', value: eur(bonus.balance), hint: bonus.active ? `encore ${eur(bonus.wagerLeft)} de mises (${Math.floor(bonus.progress * 100)} % fait)` : 'aucun bonus en cours' })}
       ${statTile({ iconName: 'calendar', label: "Dépensé aujourd'hui", value: eur(today), hint: limits.daily != null ? `limite : ${eur(limits.daily)}` : 'aucune limite fixée' })}
       ${statTile({ iconName: 'shield', label: 'Limite quotidienne', value: limits.daily != null ? eur(limits.daily) : '—', hint: '<a href="#/parametres">Régler ma limite</a>' })}
     </div>
+
+    ${bonus.active ? note(`Tes achats sont payés avec ton argent d'abord, avec le bonus ensuite. Le bonus, et ce qu'il t'a rapporté, deviennent retirables une fois que tu as misé ${RULES.bonus.wagering} fois son montant en packs. Ton argent, lui, reste retirable à tout moment.`, 'info') : ''}
 
     <section class="panel panel--pad">
       <div class="section__head"><h2>${icon('receipt', { size: 22 })}<span>Mouvements</span></h2></div>

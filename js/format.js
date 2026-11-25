@@ -18,8 +18,11 @@ export const eurShort = (cents) => ((cents || 0) % 100 === 0 ? EUR0.format(cents
 export const num = (n) => NUM.format(n || 0);
 
 /** Pourcentage -> « 5,5 % ». */
-export const pct = (p) =>
-  `${p.toLocaleString('fr-FR', { minimumFractionDigits: p % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })} %`;
+export const pct = (p) => {
+  // Arrondi au dixième d'abord : 0,07 × 100 vaut 7,000000000000001 en virgule flottante.
+  const v = Math.round(p * 10) / 10;
+  return `${v.toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(v) ? 0 : 1, maximumFractionDigits: 1 })} %`;
+};
 
 /** Probabilité (0 à 1) -> « 12,5 % », « 0,045 % » ou « 0,0019 % » : assez de décimales pour ne jamais afficher zéro. */
 export function pctFine(p) {

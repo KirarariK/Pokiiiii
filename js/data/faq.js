@@ -3,15 +3,19 @@
 
 import { BRAND, RULES } from '../config.js';
 import { eur } from '../format.js';
+import { PACKS } from './packs.js';
 
 const rate = Math.round(RULES.buybackRate * 100);
+const later = Math.round(RULES.buybackLaterRate * 100);
+const lowReturn = Math.round(Math.min(...PACKS.map((p) => p.target)) * 100);
+const highReturn = Math.round(Math.max(...PACKS.map((p) => p.target)) * 100);
 
 export const FAQ = [
   {
     q: `Comment fonctionne ${BRAND.name} ?`,
     a: `<p>${BRAND.name} vend des <strong>packs mystère</strong> : chaque pack contient <strong>une vraie carte à collectionner</strong>, conservée dans notre coffre.</p>
         <p>Tu ouvres ton pack en ligne, tu découvres ta carte, puis tu choisis :</p>
-        <ul><li>la <strong>garder</strong> dans ta collection ;</li><li>te la <strong>faire livrer</strong> ;</li><li>la <strong>revendre</strong> aussitôt à ${rate} % de sa cote.</li></ul>`,
+        <ul><li>la <strong>garder</strong> dans ta collection ;</li><li>te la <strong>faire livrer</strong> ;</li><li>la <strong>revendre</strong> à ${rate} % de sa cote dans les ${RULES.buybackLockMinutes} minutes, ${later} % ensuite.</li></ul>`,
   },
   {
     q: 'Comment les cartes sont-elles tirées ?',
@@ -20,17 +24,30 @@ export const FAQ = [
   },
   {
     q: 'Combien rapporte un pack en moyenne ?',
-    a: `<p>Tous les packs visent le même <strong>retour théorique de ${Math.round(RULES.targetReturn * 100)} %</strong> : en ouvrant un grand nombre de packs et en revendant chaque carte aussitôt, on récupère en moyenne ${Math.round(RULES.targetReturn * 100)} € pour 100 € dépensés.</p>
-        <p>Le chiffre exact de chaque pack est affiché sur sa page et sur la page <a href="#/transparence">Transparence</a>. Sur la durée, le jeu coûte donc plus qu'il ne rapporte.</p>`,
+    a: `<p>Chaque pack affiche son <strong>retour théorique</strong> : ce qu'on récupère en moyenne en revendant la carte aussitôt. Il va de ${lowReturn} % à ${highReturn} % selon le pack : sur 100 € dépensés, il en revient donc ${lowReturn} à ${highReturn} en moyenne.</p>
+        <p>Les chiffres de tous les packs sont réunis sur la page <a href="#/transparence">Transparence</a>. Sur la durée, le jeu coûte plus qu'il ne rapporte.</p>`,
+  },
+  {
+    q: 'À quel prix puis-je revendre ma carte ?',
+    a: `<p><strong>${rate} % de sa cote</strong> pendant les ${RULES.buybackLockMinutes} minutes qui suivent l'ouverture : c'est le prix garanti. Passé ce délai, le rachat se fait à <strong>${later} %</strong>.</p>
+        <p>Tu peux aussi garder ta carte au coffre sans limite de durée, ou te la faire livrer.</p>`,
   },
   {
     q: "Qu'est-ce que l'Évolution ?",
-    a: `<p>Tu mises une carte de ton coffre pour tenter d'en obtenir une plus cotée. La chance de réussite vaut la cote misée divisée par la cote visée, multipliée par ${Math.round((1 - RULES.evolution.edge) * 100)} %.</p>
+    a: `<p>Tu mises une carte de ton coffre pour tenter d'en obtenir une plus cotée. La chance de réussite vaut la cote misée divisée par la cote visée, moins la marge du site : de ${Math.round(RULES.evolution.edgeMin * 100)} % pour une petite marche à ${Math.round(RULES.evolution.edgeMax * 100)} % pour les plus grands écarts.</p>
         <p>En cas de réussite, la carte visée remplace la tienne. En cas d'échec, <strong>la carte misée est perdue</strong>.</p>`,
   },
   {
-    q: 'À quoi servent les badges ?',
-    a: `<p>Chaque euro engagé rapporte 1 XP. L'XP débloque neuf badges, un par type, et chaque badge multiplie ta <a href="#/recompenses">récompense du jour</a>.</p>`,
+    q: 'Comment fonctionne le cashback ?',
+    a: `<p>Une part de la marge du site sur tes mises alimente ta <a href="#/recompenses">cagnotte</a>. Tu l'encaisses telle quelle, ou tu la joues à la roue, qui la multiplie par 0,5 à 5 avec une moyenne de 1.</p>
+        <p>L'XP débloque neuf badges, un par type, et chaque badge augmente ta part. Le cashback rend une partie de ce que le jeu coûte : il ne le rend pas gagnant.</p>`,
+  },
+  {
+    q: "Qu'est-ce qu'un bonus à jouer ?",
+    a: `<p>Un bonus (premier dépôt, crédit de bienvenue) s'ajoute à ton solde tout de suite. Tes achats sont payés avec ton argent d'abord, avec le bonus ensuite.</p>
+        <p>Le bonus, et ce qu'il t'a rapporté, deviennent retirables une fois que tu as misé <strong>${RULES.bonus.wagering} fois son montant</strong> en packs. D'ici là, une carte payée avec un bonus peut être gardée ou revendue, mais pas expédiée.</p>
+        <p>Ton argent déposé n'est jamais bloqué : ton <a href="#/solde">solde</a> indique à tout moment ce qui est retirable.</p>
+        <p class="muted">Un bonus prend fin quand il a été joué, ou quand il n'en reste rien à jouer : moins d'un euro de bonus et plus de carte payée avec, ou un solde qui ne permet plus d'acheter un pack avec un coffre vide. Le reliquat est alors repris.</p>`,
   },
   {
     q: 'Quels moyens de paiement sont acceptés ?',
@@ -39,7 +56,7 @@ export const FAQ = [
   },
   {
     q: "Puis-je récupérer l'argent de mes reventes ?",
-    a: `<p>Une carte revendue est rachetée à <strong>${rate} % de sa cote de référence</strong>. Le montant est crédité sur ton solde.</p>
+    a: `<p>Une carte revendue est rachetée à <strong>${rate} % de sa cote</strong> pendant la garantie de prix, ${later} % ensuite. Le montant est crédité sur ton solde.</p>
         <p>Ce solde sert à acheter d'autres packs. Au lancement, il pourra aussi être versé par virement, après vérification d'identité (KYC), à partir de ${eur(RULES.withdrawal.minimum)} et sous ${RULES.withdrawal.delay}.</p>
         <p class="muted">Le retrait est désactivé en démonstration.</p>`,
   },

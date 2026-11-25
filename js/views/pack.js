@@ -1,7 +1,7 @@
 // Page d'un pack : visuel, répartitions, achat, plus grosses cartes, dernières ouvertures.
 
 import { RULES } from '../config.js';
-import { cardRef, dropTable, expectedValue, packReturn, profitChance, topHits } from '../catalog.js';
+import { cardRef, dropTable, expectedValue, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
 import { recentOpenings } from '../data/community.js';
 import { giveawayById, isActive } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
@@ -99,6 +99,7 @@ export default {
           <div class="fact"><span>Carte ≥ prix du pack</span><strong>${pctFine(profitChance(pack))}</strong><small>des tirages</small></div>
         </div>
         <p class="small muted">${icon('shield-check', { size: 14 })} Tirage vérifiable : chaque carte occupe une plage de tickets publiée plus bas. <a href="#/equite">Comment ça marche</a></p>
+        <p class="small muted">${icon('hand-coins', { size: 14 })} Rachat : ${Math.round(RULES.buybackRate * 100)} % de la cote pendant ${RULES.buybackLockMinutes} minutes après l'ouverture, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite.</p>
 
         <div class="buy__qty">
           <span id="qty-label">Quantité de packs</span>
@@ -126,7 +127,7 @@ export default {
 
     <section class="section panel panel--pad">
       ${sectionHead(`Contenu du pack · ${num(drops.length)} cartes`, { iconName: 'list' })}
-      <p class="muted small">Toutes les cartes qui peuvent sortir, de la plus rare à la plus fréquente, avec leur probabilité exacte et leur plage de tickets (sur 1 000 000).</p>
+      <p class="muted small">Toutes les cartes qui peuvent sortir, de la plus rare à la plus fréquente, avec leur probabilité exacte et leur plage de tickets (sur 1 000 000). Version de la table : <code>${tableVersion(pack)}</code></p>
       <div class="table-wrap"><table class="table table--drops">
         <thead><tr><th>Carte</th><th>Rareté</th><th class="num">Cote</th><th class="num">Probabilité</th><th class="num">Tickets</th></tr></thead>
         <tbody data-drops>${drops.slice(0, PREVIEW_ROWS).map(dropRow).join('')}</tbody>
@@ -174,7 +175,7 @@ export default {
         title: "Confirmer l'achat",
         confirm: 'Acheter et ouvrir',
         body: `<p><strong>${plural(qty, 'pack', 'packs')} ${esc(pack.name)}</strong> pour <strong>${eur(total)}</strong>.</p>
-               <p class="muted small">Solde après achat : ${eur(balance - total)} (crédits fictifs). L'achat est définitif : la carte est tirée immédiatement.</p>`,
+               <p class="muted small">Solde après achat : ${eur(balance - total)} (crédits fictifs). En confirmant, tu demandes l'ouverture immédiate : la carte est tirée tout de suite et l'achat est définitif, sans droit de rétractation.</p>`,
       });
       if (!ok) return;
       const res = buyPacks(pack.slug, qty);

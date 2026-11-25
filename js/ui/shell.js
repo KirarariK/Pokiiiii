@@ -3,7 +3,7 @@
 import { BRAND, DEMO, RULES } from '../config.js';
 import { esc, eur, initials, num } from '../format.js';
 import { icon } from '../icons.js';
-import { badgeProgress, dailyAvailable, getState, isLoggedIn } from '../store.js';
+import { badgeProgress, cashbackAvailable, getState, isLoggedIn } from '../store.js';
 import { currentTheme } from '../theme.js';
 
 /** Logo : deux cartes inclinées et un éclat, aux couleurs du thème. */
@@ -24,7 +24,7 @@ const NAV_MAIN = [
   { key: 'evolution', href: '#/evolution', label: 'Évolution', icon: 'chevrons-up' },
   { key: 'collection', href: '#/collection', label: 'Collection', icon: 'archive' },
   { key: 'giveaways', href: '#/giveaways', label: 'Giveaways', icon: 'gift' },
-  { key: 'recompenses', href: '#/recompenses', label: 'Récompenses', icon: 'calendar-check', dot: true },
+  { key: 'recompenses', href: '#/recompenses', label: 'Récompenses', icon: 'hand-coins', dot: true },
   { key: 'classement', href: '#/classement', label: 'Classement', icon: 'trophy' },
 ];
 
@@ -94,7 +94,7 @@ function renderFooter() {
         <a href="#/packs">Packs mystère</a>
         <a href="#/evolution">Évolution</a>
         <a href="#/giveaways">Giveaways</a>
-        <a href="#/recompenses">Récompenses et badges</a>
+        <a href="#/recompenses">Cashback et badges</a>
         <a href="#/classement">Classement</a>
       </div>
       <div>
@@ -103,6 +103,7 @@ function renderFooter() {
         <a href="#/transparence">Transparence et jeu responsable</a>
         <a href="#/faq">FAQ</a>
         <a href="#/contact">Contact</a>
+        <a href="#/pilotage">Pilotage (vue gérant)</a>
       </div>
       <div>
         <h3 class="footer__title">Légal</h3>
@@ -128,7 +129,7 @@ export function renderAccount() {
   }
   const { user, balance, xp } = getState();
   const { current, next, ratio } = badgeProgress();
-  return `<a class="xp" href="#/recompenses" data-theme="${current.theme}" title="${esc(current.name)} · ${num(xp)} XP${next ? ` · prochain badge à ${num(next.xp)} XP` : ''}" aria-label="${esc(current.name)}, ${num(xp)} XP">
+  return `<a class="xp" href="#/recompenses" data-theme="${current.theme}" title="${esc(current.name)} · ${num(Math.floor(xp))} XP${next ? ` · prochain badge à ${num(next.xp)} XP` : ''}" aria-label="${esc(current.name)}, ${num(Math.floor(xp))} XP">
             <span class="xp__ring" style="--p:${Math.round(ratio * 100)}">${icon(current.icon, { size: 16 })}</span>
           </a>
           <a class="balance" href="#/solde" title="Mon solde">${icon('wallet', { size: 18 })}<strong>${eur(balance)}</strong></a>
@@ -136,9 +137,9 @@ export function renderAccount() {
           <a class="avatar" href="#/profil" title="${esc(user.pseudo)}" aria-label="Mon profil">${esc(initials(user.pseudo))}</a>`;
 }
 
-/** Pastille « récompense du jour disponible » dans la navigation. */
+/** Pastille « cashback à encaisser » dans la navigation. */
 export function paintDailyDot() {
-  const show = isLoggedIn() && dailyAvailable();
+  const show = isLoggedIn() && cashbackAvailable();
   document.querySelectorAll('[data-daily-dot]').forEach((el) => {
     el.hidden = !show;
   });

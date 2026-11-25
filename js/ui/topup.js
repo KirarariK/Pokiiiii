@@ -18,6 +18,7 @@ export function openTopup(opts = {}) {
   }
   const { need = 0, onDone } = opts;
   const preset = RULES.topups.find((a) => a >= need) ?? RULES.topups[RULES.topups.length - 1];
+  const first = !getState().tx.some((t) => t.type === 'depot');
 
   openModal({
     title: 'Recharger mon solde',
@@ -32,6 +33,7 @@ export function openTopup(opts = {}) {
           )
           .join('')}
       </div>
+      ${first ? `<p class="small">${icon('gift', { size: 15 })} Premier dépôt : <strong>+${Math.round(RULES.bonus.firstDepositRate * 100)} % de bonus</strong> (jusqu'à ${eurShort(RULES.bonus.firstDepositMax)}), à jouer ${RULES.bonus.wagering} fois avant retrait. Ton dépôt, lui, reste retirable.</p>` : ''}
       <p class="muted small">Solde actuel : <strong>${eur(getState().balance)}</strong></p>`,
     footer: `<button class="btn btn--secondary" type="button" data-close>Annuler</button>
              <button class="btn btn--primary" type="button" data-topup-confirm>${icon('plus', { size: 16 })}<span>Créditer</span></button>`,
@@ -44,7 +46,7 @@ export function openTopup(opts = {}) {
           return;
         }
         sfx.coins();
-        toast(`${eur(amount)} crédités sur ton solde (fictif).`, 'success');
+        toast(res.bonus ? `${eur(amount)} crédités, plus ${eur(res.bonus)} de bonus à jouer.` : `${eur(amount)} crédités sur ton solde (fictif).`, 'success');
         close();
         onDone?.();
       });

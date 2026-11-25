@@ -35,7 +35,7 @@ export default {
         <p class="profile__badges">
           <span class="badge badge--info">${icon('trophy', { size: 13 })}#${num(monthlyRank(month))} ce mois-ci</span>
           <span class="badge badge--info">${icon('star', { size: 13 })}${num(points.total)} points</span>
-          <a class="badge badge--info" href="#/recompenses">${icon(badge.icon, { size: 13 })}${esc(badge.name)} · ${num(xp)} XP</a>
+          <a class="badge badge--info" href="#/recompenses">${icon(badge.icon, { size: 13 })}${esc(badge.name)} · ${num(Math.floor(xp))} XP</a>
         </p>
       </div>
       <div class="profile__actions">

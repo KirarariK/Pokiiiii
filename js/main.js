@@ -25,6 +25,7 @@ import profile from './views/profile.js';
 import settings from './views/settings.js';
 import auth from './views/auth.js';
 import fairness from './views/fairness.js';
+import pilotage from './views/pilotage.js';
 import faq from './views/faq.js';
 import transparency from './views/transparency.js';
 import contact from './views/contact.js';
@@ -52,6 +53,7 @@ const ROUTES = [
   ['/parametres', settings],
   ['/connexion', auth],
   ['/equite', fairness],
+  ['/pilotage', pilotage],
   ['/faq', faq],
   ['/transparence', transparency],
   ['/contact', contact],

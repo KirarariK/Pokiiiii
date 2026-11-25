@@ -9,6 +9,7 @@ import { icon } from '../icons.js';
 import { emptyState, note, pageHead } from '../ui/blocks.js';
 
 const rate = Math.round(RULES.buybackRate * 100);
+const laterRate = Math.round(RULES.buybackLaterRate * 100);
 
 const DOCS = {
   cgv: {
@@ -18,9 +19,9 @@ const DOCS = {
       ['Produits et répartitions', 'Description des packs, prix TTC, paliers de cote et probabilités associées, état garanti des cartes.'],
       ['Commande et paiement', 'Création de compte, majorité requise, moyens de paiement, moment où la vente est conclue.'],
       ['Conservation au coffre', "Conditions de garde, assurance, durée, propriété de la carte."],
-      ['Livraison', `Zones desservies, délais annoncés (${RULES.shipping.fr.delay} en France), frais affichés avant validation, transfert des risques.`],
-      ['Rachat', `Rachat à ${rate} % de la cote de référence, définition de cette cote, crédit en avoir, conditions de versement par virement.`],
-      ['Droit de rétractation', "Application ou exclusion du droit de rétractation pour un contenu révélé immédiatement : point à faire trancher par un juriste."],
+      ['Livraison', `Zones desservies, délais annoncés (${RULES.shipping.fr.delay} en France), frais et assurance affichés avant validation, transfert des risques.`],
+      ['Rachat', `Rachat à ${rate} % de la cote de référence pendant ${RULES.buybackLockMinutes} minutes après l'ouverture, ${laterRate} % ensuite ; définition de cette cote, crédit en avoir, conditions de versement par virement.`],
+      ['Droit de rétractation', "Accord exprès du client pour une ouverture immédiate et renonciation au droit de rétractation, recueillis à chaque achat : validité à faire trancher par un juriste."],
       ['Garanties et réclamations', 'Garantie légale de conformité, service client, médiation de la consommation.'],
     ],
   },
@@ -30,7 +31,8 @@ const DOCS = {
       ['Accès au service', `Service réservé aux personnes de ${RULES.minAge} ans ou plus ; un seul compte par personne.`],
       ['Compte', "Exactitude des informations, sécurité des identifiants, suspension et clôture."],
       ['Comportements interdits', 'Fraude, multi-comptes, automatisation, détournement des giveaways et du classement.'],
-      ['Giveaways et classement', 'Règlement des tirages au sort, conditions de participation, attribution des lots.'],
+      ['Bonus et cashback', `Conditions de mise d'un bonus (${RULES.bonus.wagering} fois son montant), ordre de dépense (l'argent du joueur d'abord), cas de clôture d'un bonus, calcul et versement du cashback.`],
+      ['Giveaways et classement', 'Règlement des tirages au sort, financement et déblocage des lots, conditions de participation, calcul de la dotation.'],
       ['Jeu responsable', 'Limites de dépenses, pauses, auto-exclusion, ressources d’aide.'],
       ['Propriété intellectuelle', "Marques et visuels des cartes appartenant à leurs titulaires ; absence d'affiliation."],
       ['Responsabilité', 'Disponibilité du service, évolution des cotes, limites de responsabilité.'],

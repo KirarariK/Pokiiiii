@@ -11,7 +11,7 @@ import { confirmDialog, toast } from '../ui/modal.js';
 
 const short = (hex) => `${hex.slice(0, 10)}…${hex.slice(-6)}`;
 
-const GAMES = [...PACKS.map((p) => ({ id: `pack:${p.slug}`, label: p.name })), { id: 'evolution', label: 'Évolution' }, { id: 'daily', label: 'Récompense du jour' }];
+const GAMES = [...PACKS.map((p) => ({ id: `pack:${p.slug}`, label: p.name })), { id: 'evolution', label: 'Évolution' }, { id: 'cashback', label: 'Roue du cashback' }];
 
 /** Ce qu'un ticket donne pour un jeu : la carte du pack, ou le ticket seul. */
 function describe(game, ticket) {
@@ -22,7 +22,7 @@ function describe(game, ticket) {
     return `${esc(drop.card.name)} (${eur(drop.card.value)}), plage ${num(drop.from)} – ${num(drop.to - 1)}`;
   }
   if (game === 'evolution') return 'Réussite si le ticket est inférieur au seuil affiché lors de la tentative';
-  return 'Gain lu dans le barème de la récompense du jour';
+  return 'Multiplicateur lu dans le barème de la roue du cashback';
 }
 
 function outcome(roll) {

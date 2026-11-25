@@ -77,6 +77,12 @@ export function giveawayParticipants(giveaway, now = Date.now()) {
   return 64 + Math.floor(elapsed / (52 * 60_000));
 }
 
+/** Tickets vendus (simulés) pour un giveaway : le compteur monte régulièrement pendant sa durée. */
+export function giveawayTickets(giveaway, now = Date.now()) {
+  const elapsed = Math.max(0, Math.min(now, giveaway.end) - giveaway.start);
+  return 90 + Math.floor(elapsed / (23 * 60_000));
+}
+
 /** Gagnants fictifs d'un giveaway terminé. */
 export function pastWinners(id, count) {
   const next = seeded(`winners:${id}`);

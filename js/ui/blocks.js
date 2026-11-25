@@ -37,7 +37,7 @@ export function packTile(pack) {
     <span class="pack-tile__body">
       <span class="pack-tile__name">${esc(pack.name)}</span>
       <span class="pack-tile__tag">Cartes de ${packRange(pack)}</span>
-      <span class="pack-tile__foot"><strong>${eur(pack.price)}</strong><span class="pack-tile__go">Voir${icon('arrow-right', { size: 15 })}</span></span>
+      <span class="pack-tile__foot"><strong>${eur(pack.price)}</strong><span class="pack-tile__go"><span>Voir</span>${icon('arrow-right', { size: 15 })}</span></span>
     </span>
   </a>`;
 }

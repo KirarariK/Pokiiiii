@@ -9,7 +9,7 @@ import { CARDS, cardById, cardRef } from '../catalog.js';
 import { TICKETS } from '../fair.js';
 import { esc, eur, num, pctFine } from '../format.js';
 import { icon } from '../icons.js';
-import { evolutionChance, evolve, getState, ownedByUid, vaultCards } from '../store.js';
+import { evolutionChance, evolutionEdge, evolve, getState, ownedByUid, vaultCards } from '../store.js';
 import { emptyState, note, pageHead } from '../ui/blocks.js';
 import { cardImage, cardTile } from '../ui/card.js';
 import { burst, motionOk, sfx } from '../ui/effects.js';
@@ -33,7 +33,8 @@ function targetsFor(stake) {
     const best = pool.filter((c) => !seen.has(c.id)).reduce((top, c) => (!top || Math.abs(c.value - want) < Math.abs(top.value - want) ? c : top), null);
     if (!best) continue;
     seen.add(best.id);
-    out.push({ card: best, multiplier: best.value / stake.value, chance: evolutionChance(stake.value, best.value) });
+    const multiplier = best.value / stake.value;
+    out.push({ card: best, multiplier, chance: evolutionChance(stake.value, best.value), edge: evolutionEdge(multiplier) });
   }
   return out.sort((a, b) => a.card.value - b.card.value);
 }
@@ -83,7 +84,8 @@ export default {
   auth: true,
 
   render({ query }) {
-    const { edge, maxChance } = RULES.evolution;
+    const { edgeMin, edgeMax } = RULES.evolution;
+    const percent = (x) => `${Math.round(x * 100)} %`;
     // Arrivée depuis la collection avec une carte déjà choisie.
     if (query.carte && !ui.last && ownedByUid(query.carte)?.status === 'coffre') ui.stakeUid = query.carte;
     const head = pageHead({
@@ -155,6 +157,7 @@ export default {
                     <span class="evo__target-name">${esc(t.card.name)}</span>
                     <span class="evo__target-meta"><strong>${eur(t.card.value)}</strong><span>×${t.multiplier.toLocaleString('fr-FR', { maximumFractionDigits: 1 })}</span></span>
                     <span class="evo__target-chance">${pctFine(t.chance)}</span>
+                    <span class="evo__target-return">retour ${pctFine(1 - t.edge)}</span>
                   </button>`,
                 )
                 .join('')}
@@ -166,9 +169,9 @@ export default {
     <section class="panel panel--pad prose">
       <h2>${icon('info', { size: 22 })}Les règles</h2>
       <ul>
-        <li><strong>Chance de réussite</strong> = cote misée ÷ cote visée × ${Math.round((1 - edge) * 100)} %, plafonnée à ${Math.round(maxChance * 100)} %.</li>
+        <li><strong>Chance de réussite</strong> = cote misée ÷ cote visée × (1 − marge). La marge du site va de ${percent(edgeMin)} pour la plus petite marche à ${percent(edgeMax)} pour les plus grands écarts : plus tu vises haut, plus le jeu coûte cher.</li>
         <li><strong>Réussite</strong> : ta carte est remplacée par la carte visée, rangée dans ton coffre. <strong>Échec</strong> : la carte misée est perdue.</li>
-        <li>En moyenne, une tentative rend <strong>${Math.round((1 - edge) * 100)} % de la cote misée</strong> : sur la durée, ce jeu coûte plus qu'il ne rapporte.</li>
+        <li>En moyenne, une tentative rend <strong>de ${percent(1 - edgeMin)} à ${percent(1 - edgeMax)} de la cote misée</strong>, selon la cible. Le retour exact est affiché sous chaque carte : sur la durée, ce jeu coûte plus qu'il ne rapporte.</li>
         <li>Le tirage est <a href="#/equite">vérifiable</a> : la zone colorée de la jauge couvre exactement les tickets gagnants.</li>
       </ul>
       ${note("Démonstration : les cartes misées et gagnées ne sont pas adossées à un stock réel.", 'demo')}

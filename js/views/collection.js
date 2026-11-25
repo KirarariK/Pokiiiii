@@ -3,11 +3,12 @@
 import { RULES } from '../config.js';
 import { cardById, cardRef } from '../catalog.js';
 import { RARITIES, packBySlug } from '../data/packs.js';
-import { dateFr, esc, eur, num, plural } from '../format.js';
+import { dateFr, esc, eur, eurShort, num, pct, plural } from '../format.js';
 import { icon } from '../icons.js';
-import { buybackOf, getState, ownedByUid, requestShipment, sellCards, shippingFee, stats } from '../store.js';
+import { bonusStatus, buybackOf, buybackRate, canShip, getState, lockEnd, ownedByUid, requestShipment, sellCards, shippingFee, shippingInsurance, stats, withdrawable } from '../store.js';
 import { emptyState, note, pageHead, statTile } from '../ui/blocks.js';
 import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
+import { countdownInline, refreshCountdowns } from '../ui/countdown.js';
 import { attachTilt, sfx } from '../ui/effects.js';
 import { confirmDialog, openModal, toast } from '../ui/modal.js';
 import { openTopup } from '../ui/topup.js';
@@ -90,7 +91,7 @@ function openDetail(uid, rerender) {
           <div><dt>Obtenue le</dt><dd>${dateFr(owned.at)} · ${pack ? esc(pack.name) : 'Évolution'}</dd></div>
           ${owned.roll ? `<div><dt>Tirage</dt><dd>ticket n° ${num(owned.roll.ticket)} · <a href="#/equite" data-close>vérifier</a></dd></div>` : ''}
           <div><dt>Cote indicative</dt><dd><strong>${eur(owned.value)}</strong></dd></div>
-          ${inVault ? `<div><dt>Rachat immédiat</dt><dd><strong>${eur(buybackOf(owned))}</strong> <span class="muted">(${Math.round(RULES.buybackRate * 100)} %)</span></dd></div>` : ''}
+          ${inVault ? `<div><dt>Rachat</dt><dd><strong>${eur(buybackOf(owned))}</strong> <span class="muted">(${Math.round(buybackRate(owned) * 100)} %${Date.now() < lockEnd(owned) ? `, garanti encore ${countdownInline(lockEnd(owned), 'mmss')}` : ''})</span></dd></div>` : ''}
           ${owned.status === 'vendue' ? `<div><dt>Revendue</dt><dd>${eur(owned.soldFor)} le ${dateFr(owned.soldAt)}</dd></div>` : ''}
           ${owned.status === 'livraison' ? `<div><dt>Statut</dt><dd>En préparation · <a href="#/livraisons" data-close>suivre</a></dd></div>` : ''}
         </dl>
@@ -102,6 +103,7 @@ function openDetail(uid, rerender) {
          <button class="btn btn--primary" type="button" data-detail-sell>${icon('hand-coins', { size: 16 })}Revendre ${eur(buybackOf(owned))}</button>`
       : '',
     onMount(el, close) {
+      refreshCountdowns(el);
       untilt = attachTilt(el.querySelector('[data-tilt]'), 12);
       el.querySelector('[data-detail-sell]')?.addEventListener('click', async () => {
         close();
@@ -123,7 +125,7 @@ async function sellFlow(uids, rerender) {
   const ok = await confirmDialog({
     title: picked.length > 1 ? 'Revendre ces cartes ?' : 'Revendre cette carte ?',
     confirm: `Revendre pour ${eur(total)}`,
-    body: `<p>${plural(picked.length, 'carte quittera', 'cartes quitteront')} ton coffre et <strong>${eur(total)}</strong> seront crédités sur ton solde (${Math.round(RULES.buybackRate * 100)} % de la cote).</p>
+    body: `<p>${plural(picked.length, 'carte quittera', 'cartes quitteront')} ton coffre et <strong>${eur(total)}</strong> seront crédités sur ton solde, soit ${Math.round((total / picked.reduce((s, o) => s + o.value, 0)) * 100)} % de la cote.</p>
            <p class="muted small">La revente est définitive.</p>`,
   });
   if (!ok) return;
@@ -141,8 +143,14 @@ async function sellFlow(uids, rerender) {
 function openShipping(uids, rerender) {
   const picked = uids.map(ownedByUid).filter((o) => o && o.status === 'coffre');
   if (!picked.length) return;
+  if (picked.some((o) => !canShip(o))) {
+    toast("Une carte payée avec un bonus ne s'expédie qu'une fois le bonus joué. D'ici là, tu peux la garder au coffre ou la revendre.", 'info');
+    return;
+  }
   const zones = Object.entries(RULES.shipping);
-  const feeLine = (zone) => `${eur(shippingFee(zone, picked.length))} · ${RULES.shipping[zone].delay}`;
+  const value = picked.reduce((sum, o) => sum + o.value, 0);
+  const insurance = shippingInsurance(value);
+  const feeLine = (zone) => `${eur(shippingFee(zone, picked.length, value))} · ${RULES.shipping[zone].delay}`;
 
   openModal({
     title: 'Demander la livraison',
@@ -162,6 +170,7 @@ function openShipping(uids, rerender) {
         <div class="field"><label for="ship-city">Ville</label><input class="input" id="ship-city" name="city" autocomplete="address-level2" required maxlength="80"></div>
       </div>
       <p class="fee">${icon('truck', { size: 16 })}<span>Frais et délai : <strong data-fee>${feeLine(zones[0][0])}</strong></span></p>
+      ${insurance ? `<p class="small muted">Dont ${eur(insurance)} d'assurance : ${pct(RULES.shippingInsurance.rate * 100)} de la cote expédiée au-delà de ${eurShort(RULES.shippingInsurance.from)}.</p>` : ''}
       ${note("Démonstration : aucune carte n'est expédiée et l'adresse reste dans ton navigateur. Barème de livraison indicatif.", 'demo')}
       <p class="form__error" data-error role="alert" hidden></p>
     </form>`,
@@ -176,10 +185,16 @@ function openShipping(uids, rerender) {
       const submit = (e) => {
         e?.preventDefault();
         const data = Object.fromEntries(new FormData(form));
-        const fee = shippingFee(data.zone, picked.length);
-        if (getState().balance < fee) {
+        const fee = shippingFee(data.zone, picked.length, value);
+        // Les frais se règlent avec l'argent du joueur, pas avec des fonds de bonus.
+        if (withdrawable() < fee) {
+          if (bonusStatus().active) {
+            error.textContent = `Les frais de livraison se règlent hors bonus : il te manque ${eur(fee - withdrawable())} d'argent déposé.`;
+            error.hidden = false;
+            return;
+          }
           close();
-          openTopup({ need: fee - getState().balance });
+          openTopup({ need: fee - withdrawable() });
           return;
         }
         const res = requestShipment({ uids: picked.map((o) => o.uid), zone: data.zone, address: data });
@@ -233,7 +248,7 @@ export default {
     <div class="stats">
       ${statTile({ iconName: 'vault', label: 'Cartes au coffre', value: String(s.vaultCount) })}
       ${statTile({ iconName: 'gem', label: 'Cote du coffre', value: eur(s.vaultValue), hint: 'cotes indicatives' })}
-      ${statTile({ iconName: 'hand-coins', label: 'Valeur de rachat', value: eur(s.vaultBuyback), hint: `${Math.round(RULES.buybackRate * 100)} % de la cote` })}
+      ${statTile({ iconName: 'hand-coins', label: 'Valeur de rachat', value: eur(s.vaultBuyback), hint: `${Math.round(RULES.buybackRate * 100)} % pendant ${RULES.buybackLockMinutes} min, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite` })}
     </div>
 
     <div class="toolbar">

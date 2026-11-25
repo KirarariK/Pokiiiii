@@ -2,8 +2,8 @@
 
 import { RULES } from '../config.js';
 import { CARDS } from '../catalog.js';
-import { recentOpenings } from '../data/community.js';
-import { isActive, listGiveaways } from '../data/giveaways.js';
+import { giveawayTickets, recentOpenings } from '../data/community.js';
+import { giveawayPool, isActive, listGiveaways } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
 import { esc, eur, eurShort } from '../format.js';
 import { icon } from '../icons.js';
@@ -68,7 +68,7 @@ const STEPS = [
   {
     icon: 'hand-coins',
     title: 'Garde, fais livrer ou revends',
-    text: `Conserve-la au coffre, reçois-la chez toi (${RULES.shipping.fr.delay} en France), ou revends-la aussitôt à ${rate} % de sa cote.`,
+    text: `Conserve-la au coffre, reçois-la chez toi (${RULES.shipping.fr.delay} en France), ou revends-la à ${rate} % de sa cote dans les ${RULES.buybackLockMinutes} minutes.`,
   },
 ];
 
@@ -76,11 +76,12 @@ function giveawayBanner() {
   const g = listGiveaways().find((x) => isActive(x));
   if (!g) return '';
   const pack = g.pack ? packBySlug(g.pack) : null;
+  const pool = giveawayPool(g, giveawayTickets(g));
   return `<section class="gw-banner">
     <div class="gw-banner__copy">
       <span class="badge badge--hot">${icon('flame', { size: 13 })}En cours</span>
       <h2>${esc(g.title)}</h2>
-      <p>${eurShort(g.total)} de lots · ${g.lots.length} gagnants${pack ? ` · 1 ${esc(pack.name)} = 1 ticket` : ''}</p>
+      <p>${pool.funded ? `${eurShort(pool.pool)} de lots déjà débloqués sur ${eurShort(g.total)}` : `${eurShort(g.total)} de lots`}${pack ? ` · 1 ${esc(pack.name)} = 1 ticket` : ''}</p>
       <div class="gw-banner__row">
         ${countdownBlocks(g.end, { seconds: false })}
         <a class="btn btn--primary" href="#/giveaways/${g.id}">Voir le giveaway${icon('arrow-right', { size: 16 })}</a>
@@ -93,7 +94,7 @@ function giveawayBanner() {
 const FEATURES = [
   { icon: 'shield-check', title: 'Équité prouvable', text: 'Chaque tirage est fixé avant que tu joues et tu peux le recalculer toi-même. La table complète de chaque pack est publique.', href: '#/equite', cta: 'Voir comment' },
   { icon: 'chevrons-up', title: 'Évolution', text: 'Mise une carte de ton coffre pour tenter de la faire évoluer en une carte plus cotée. La jauge montre exactement ta chance.', href: '#/evolution', cta: 'Tenter une évolution' },
-  { icon: 'calendar-check', title: 'Récompense du jour', text: 'Un tirage gratuit chaque jour, et neuf badges à décrocher qui le font grossir.', href: '#/recompenses', cta: 'Voir les récompenses' },
+  { icon: 'hand-coins', title: 'Cashback', text: 'Une part de la marge du site sur tes mises te revient. Neuf badges à décrocher la font grossir.', href: '#/recompenses', cta: 'Voir le cashback' },
 ];
 
 export default {
@@ -114,7 +115,7 @@ export default {
         </div>
         <ul class="hero__trust">
           <li>${icon('shield-check', { size: 17 })}Équité prouvable</li>
-          <li>${icon('percent', { size: 17 })}Retour théorique affiché : ${Math.round(RULES.targetReturn * 100)} %</li>
+          <li>${icon('percent', { size: 17 })}Retour théorique affiché sur chaque pack</li>
           <li>${icon('hand-coins', { size: 17 })}Rachat immédiat à ${rate} %</li>
         </ul>
       </div>
