@@ -76,8 +76,10 @@ function sceneHtml(pack, total) {
         <span class="opening__pack-body">${packArt(pack)}</span>
       </button>
       <div class="reel" data-reel hidden>
-        <div class="reel__window"><div class="reel__strip" data-strip></div></div>
-        <span class="reel__marker" aria-hidden="true"></span>
+        <div class="reel__band">
+          <div class="reel__window"><div class="reel__strip" data-strip></div></div>
+          <span class="reel__marker" aria-hidden="true"></span>
+        </div>
       </div>
       <div class="opening__card" data-card hidden>
         <div class="flip" data-tilt>
@@ -106,10 +108,12 @@ function summaryHtml(session, pack, order, lockUntil) {
 
   return `
   <section class="summary">
-    <header class="page-head page-head--compact">
-      <span class="page-head__ico">${icon('party-popper', { size: 28 })}</span>
-      <h1>Ton ouverture</h1>
-      <p class="page-head__lead">${plural(order.qty, 'pack', 'packs')} ${esc(pack.name)} · payé ${eur(order.total)}</p>
+    <header class="page-head">
+      <span class="page-head__ico">${icon('party-popper', { size: 24 })}</span>
+      <div class="page-head__text">
+        <h1>Ton ouverture</h1>
+        <p class="page-head__lead">${plural(order.qty, 'pack', 'packs')} ${esc(pack.name)} · payé ${eur(order.total)}</p>
+      </div>
     </header>
 
     <div class="stats">

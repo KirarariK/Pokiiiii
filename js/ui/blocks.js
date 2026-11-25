@@ -1,18 +1,20 @@
 // Blocs réutilisés par plusieurs pages.
 
-import { cardRef } from '../catalog.js';
+import { cardRef, topHits } from '../catalog.js';
 import { ago, esc, eur, eurShort, pct } from '../format.js';
 import { icon } from '../icons.js';
-import { RARITIES } from '../data/packs.js';
+import { PACKS, RARITIES } from '../data/packs.js';
 import { cardImage, rarityBadge } from './card.js';
 import { packArt, themeGlow } from './pack-art.js';
 
 /** En-tête de page : pastille d'icône, titre, sous-titre. */
 export function pageHead({ icon: name, title, lead = '', actions = '' }) {
   return `<header class="page-head">
-    ${name ? `<span class="page-head__ico">${icon(name, { size: 28 })}</span>` : ''}
-    <h1>${esc(title)}</h1>
-    ${lead ? `<p class="page-head__lead">${lead}</p>` : ''}
+    ${name ? `<span class="page-head__ico">${icon(name, { size: 24 })}</span>` : ''}
+    <div class="page-head__text">
+      <h1>${esc(title)}</h1>
+      ${lead ? `<p class="page-head__lead">${lead}</p>` : ''}
+    </div>
     ${actions ? `<div class="page-head__actions">${actions}</div>` : ''}
   </header>`;
 }
@@ -30,10 +32,32 @@ export function sectionHead(title, { iconName = '', link = '', note = '' } = {})
 export const packRange = (pack) => `${pack.tiers[0].min} à ${eurShort(pack.tiers[pack.tiers.length - 1].max * 100)}`;
 
 /** Vignette d'un pack (listes et accueil). */
+let peeks = null;
+/**
+ * Carte qui dépasse derrière le booster d'une tuile : une des plus grosses
+ * cartes du pack, différente d'un pack à l'autre pour que les tuiles se distinguent.
+ */
+function peekCard(pack) {
+  if (!peeks) {
+    peeks = new Map();
+    const taken = new Set();
+    for (const p of PACKS) {
+      const hits = topHits(p, 8).map((d) => d.card);
+      const card = hits.find((c) => !taken.has(c.nameEn)) || hits[0];
+      taken.add(card.nameEn);
+      peeks.set(p.slug, card);
+    }
+  }
+  return peeks.get(pack.slug) || topHits(pack, 1)[0].card;
+}
+
 export function packTile(pack) {
   return `<a class="pack-tile" href="#/packs/${pack.slug}" style="--glow:${themeGlow(pack.theme)}">
     ${pack.event ? `<span class="badge badge--event">${icon('flame', { size: 13 })}Événement</span>` : ''}
-    <span class="pack-tile__stage">${packArt(pack)}</span>
+    <span class="pack-tile__stage">
+      <span class="pack-tile__peek" aria-hidden="true">${cardImage(peekCard(pack))}</span>
+      ${packArt(pack)}
+    </span>
     <span class="pack-tile__body">
       <span class="pack-tile__name">${esc(pack.name)}</span>
       <span class="pack-tile__tag">Cartes de ${packRange(pack)}</span>

@@ -2,11 +2,13 @@
 
 import { RULES } from '../config.js';
 import { CARDS } from '../catalog.js';
+import { BADGES } from '../data/badges.js';
 import { giveawayTickets, recentOpenings } from '../data/community.js';
 import { giveawayPool, isActive, listGiveaways } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
-import { esc, eur, eurShort } from '../format.js';
+import { esc, eur, eurShort, num, pct } from '../format.js';
 import { icon } from '../icons.js';
+import { evolutionChance } from '../store.js';
 import { currentTheme, signatureCard } from '../theme.js';
 import { packTile, sectionHead } from '../ui/blocks.js';
 import { cardImage, cardTile } from '../ui/card.js';
@@ -56,19 +58,16 @@ function ticker() {
 
 const STEPS = [
   {
-    icon: 'package',
     title: 'Choisis ton booster',
-    text: `${PACKS.length} packs, de ${eur(Math.min(...PACKS.map((p) => p.price)))} à ${eur(Math.max(...PACKS.map((p) => p.price)))}. La probabilité exacte de chaque carte est publiée avant l'achat.`,
+    text: `${PACKS.length} packs, de ${eur(Math.min(...PACKS.map((p) => p.price)))} à ${eur(Math.max(...PACKS.map((p) => p.price)))}. La probabilité de chaque carte est publiée avant l'achat.`,
   },
   {
-    icon: 'sparkles',
     title: 'Ouvre-le en ligne',
-    text: 'La roulette tourne, ta carte sort. Elle est rangée à ton nom dans notre coffre sécurisé, et son tirage est vérifiable.',
+    text: 'La roulette tourne, ta carte sort. Elle est rangée à ton nom dans notre coffre, et son tirage est vérifiable.',
   },
   {
-    icon: 'hand-coins',
     title: 'Garde, fais livrer ou revends',
-    text: `Conserve-la au coffre, reçois-la chez toi (${RULES.shipping.fr.delay} en France), ou revends-la à ${rate} % de sa cote dans les ${RULES.buybackLockMinutes} minutes.`,
+    text: `Au coffre, chez toi (${RULES.shipping.fr.delay} en France), ou revendue à ${rate} % de sa cote dans les ${RULES.buybackLockMinutes} minutes.`,
   },
 ];
 
@@ -91,11 +90,68 @@ function giveawayBanner() {
   </section>`;
 }
 
-const FEATURES = [
-  { icon: 'shield-check', title: 'Équité prouvable', text: 'Chaque tirage est fixé avant que tu joues et tu peux le recalculer toi-même. La table complète de chaque pack est publique.', href: '#/equite', cta: 'Voir comment' },
-  { icon: 'chevrons-up', title: 'Évolution', text: 'Mise une carte de ton coffre pour tenter de la faire évoluer en une carte plus cotée. La jauge montre exactement ta chance.', href: '#/evolution', cta: 'Tenter une évolution' },
-  { icon: 'hand-coins', title: 'Cashback', text: 'Une part de la marge du site sur tes mises te revient. Neuf badges à décrocher la font grossir.', href: '#/recompenses', cta: 'Voir le cashback' },
-];
+/**
+ * Exemple d'Évolution pour l'accueil : deux cartes du catalogue, l'une valant
+ * à peu près le double de l'autre, et la chance réelle que donne la règle.
+ */
+function evolutionExample() {
+  const stake = [...CARDS].reverse().find((c) => c.value >= 18_00) || CARDS[CARDS.length - 1];
+  const target = [...CARDS].reverse().find((c) => c.value >= stake.value * 2 && c.nameEn !== stake.nameEn) || CARDS[0];
+  return { stake, target, chance: evolutionChance(stake.value, target.value) };
+}
+
+/** Anneau de la jauge : part colorée = chance de réussite. */
+function ring(chance) {
+  const r = 42;
+  const len = 2 * Math.PI * r;
+  return `<span class="bento__gauge">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="${r}" class="bento__gauge-track"></circle>
+      <circle cx="50" cy="50" r="${r}" class="bento__gauge-fill" stroke-dasharray="${(len * chance).toFixed(1)} ${len.toFixed(1)}" transform="rotate(-90 50 50)"></circle>
+    </svg>
+    <strong>${pct(chance * 100)}</strong>
+  </span>`;
+}
+
+function extras() {
+  const { stake, target, chance } = evolutionExample();
+  const first = BADGES[0];
+  const last = BADGES[BADGES.length - 1];
+  return `<div class="bento">
+    <article class="bento__cell bento__cell--wide">
+      <p class="eyebrow">${icon('chevrons-up', { size: 15 })}Évolution</p>
+      <h3>Mise une carte, vise plus haut</h3>
+      <p class="muted">Choisis une carte de ton coffre et celle que tu vises : la jauge affiche ta chance exacte avant que tu joues.</p>
+      <div class="bento__evo" aria-hidden="true">
+        <span class="bento__evo-card">${cardImage(stake)}<small>${eur(stake.value)}</small></span>
+        ${ring(chance)}
+        <span class="bento__evo-card bento__evo-card--target">${cardImage(target)}<small>${eur(target.value)}</small></span>
+      </div>
+      <a class="link-more" href="#/evolution">Tenter une évolution${icon('arrow-right', { size: 15 })}</a>
+    </article>
+
+    <article class="bento__cell">
+      <p class="eyebrow">${icon('shield-check', { size: 15 })}Équité prouvable</p>
+      <h3>Chaque tirage se recalcule</h3>
+      <dl class="receipt" aria-label="Exemple de tirage">
+        <div><dt>Ticket</dt><dd>${num(695_677)} <span>/ ${num(1_000_000)}</span></dd></div>
+        <div><dt>Plage de la carte</dt><dd>${num(690_112)} – ${num(701_480)}</dd></div>
+        <div><dt>Vérification</dt><dd class="pos">${icon('check', { size: 14 })}Conforme</dd></div>
+      </dl>
+      <a class="link-more" href="#/equite">Voir comment${icon('arrow-right', { size: 15 })}</a>
+    </article>
+
+    <article class="bento__cell">
+      <p class="eyebrow">${icon('hand-coins', { size: 15 })}Cashback</p>
+      <h3>Une part de la marge te revient</h3>
+      <div class="bento__badges" aria-hidden="true">
+        ${BADGES.map((b) => `<span data-theme="${b.theme}">${icon(b.icon, { size: 16 })}</span>`).join('')}
+      </div>
+      <p class="muted small">De ${pct(first.cashback * 100)} à ${pct(last.cashback * 100)} de la marge du site sur tes mises : neuf badges la font grossir.</p>
+      <a class="link-more" href="#/recompenses">Voir le cashback${icon('arrow-right', { size: 15 })}</a>
+    </article>
+  </div>`;
+}
 
 export default {
   nav: 'home',
@@ -141,9 +197,7 @@ export default {
         ${STEPS.map(
           (s, i) => `<li class="step">
             <span class="step__num">${i + 1}</span>
-            <span class="step__ico">${icon(s.icon, { size: 24 })}</span>
-            <h3>${s.title}</h3>
-            <p>${s.text}</p>
+            <div><h3>${s.title}</h3><p>${s.text}</p></div>
           </li>`,
         ).join('')}
       </ol>
@@ -151,16 +205,7 @@ export default {
 
     <section class="section">
       ${sectionHead('Plus que des packs')}
-      <div class="grid-3">
-        ${FEATURES.map(
-          (d) => `<article class="panel panel--pad info-card">
-            <span class="info-card__ico">${icon(d.icon, { size: 22 })}</span>
-            <h3>${d.title}</h3>
-            <p>${d.text}</p>
-            <a class="btn btn--secondary btn--block" href="${d.href}">${d.cta}${icon('arrow-right', { size: 15 })}</a>
-          </article>`,
-        ).join('')}
-      </div>
+      ${extras()}
     </section>
 
     <section class="section">
