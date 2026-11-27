@@ -1532,3 +1532,7 @@ html[data-motion='off'] .trial__card.is-in { animation: none; }
 .pack-art__label--dark b { text-shadow: none; }
 .pack-art__label b { font-size: 8.4cqw; }
 .pack-art__label.is-long b { font-size: 6.6cqw; }
+
+.pack-art__label b { font-size: calc(8.4cqw * var(--s, 1)); }
+.pack-art__label.is-long b { font-size: calc(6.6cqw * var(--s, 1)); }
+.pack-art__label i { font-size: calc(2.9cqw * var(--s, 1)); }
