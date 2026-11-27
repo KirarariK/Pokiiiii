@@ -58,7 +58,7 @@ const THEMES = {
     glyph: 'M0-38C6-22 26-12 26 10a26 26 0 0 1-52 0c0-12 8-20 14-28 2 10 8 12 10 6 2-8-2-16 2-26Z',
     glow: '#ff7a1a',
   },
-  evoli: {
+  prisme: {
     body: ['#3a2314', '#a9683a', '#f3d3a2'],
     band: '#27160b',
     ink: '#ffffff',
@@ -68,7 +68,7 @@ const THEMES = {
     glyph: 'M-26 16 0-10 26 16 18 24 0 6-18 24ZM-26-8 0-34 26-8 18 0 0-18-18 0Z',
     glow: '#e6a368',
   },
-  retro: {
+  millesime: {
     body: ['#fbf2d6', '#f0cf7a', '#d9485c'],
     band: '#7a1f2b',
     ink: '#3b0d14',
@@ -78,7 +78,7 @@ const THEMES = {
     glyph: 'M0-34 9-11 34-11 14 4 21 28 0 14-21 28-14 4-34-11-9-11Z',
     glow: '#f0c36b',
   },
-  legende: {
+  joyau: {
     body: ['#0b0620', '#3a1f86', '#d06bff'],
     band: '#f0d98a',
     ink: '#ffffff',
@@ -113,14 +113,14 @@ function zigzag(y, fromX, toX, amplitude) {
  * Un pack sans illustration est dessiné en SVG (voir drawnPack).
  */
 const ART = {
-  starter: [506, 960],
-  evoli: [498, 960],
-  pro: [492, 960],
-  retro: [502, 960],
+  rosee: [506, 960],
+  prisme: [498, 960],
+  orage: [492, 960],
+  millesime: [502, 960],
   brasier: [471, 960],
-  master: [477, 960],
-  expert: [468, 960],
-  legende: [468, 960],
+  canopee: [477, 960],
+  zenith: [468, 960],
+  joyau: [468, 960],
 };
 
 /** Proportions du cadre réservé à un booster dans la mise en page (largeur / hauteur). */

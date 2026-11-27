@@ -1,7 +1,7 @@
 # Rapport 11 — Tests navigateur et accessibilité
 
 27 novembre 2026. Site testé sur `http://127.0.0.1:4173/`, Chromium (Playwright), dépôt en lecture seule.
-Dossier (scripts, journaux, 267 captures) : `/tmp/claude-0/-home-user-Pokiiiii/4c2aad56-14f0-5b30-a750-dc20450d2f29/scratchpad/agents/11-qa-accessibilite`
+Les scripts, journaux et captures de cette campagne ne sont pas versés au dépôt.
 
 ## 1. Verdict
 

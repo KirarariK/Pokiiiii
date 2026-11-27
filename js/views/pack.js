@@ -1,13 +1,13 @@
 // Page d'un pack : visuel, répartitions, achat, plus grosses cartes, dernières ouvertures.
 
 import { RULES } from '../config.js';
-import { cardRef, dropTable, expectedValue, packAvailable, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
+import { cardRef, dropTable, expectedValue, packAvailable, packEdge, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
 import { recentOpenings } from '../data/community.js';
 import { giveawayById, isActive } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
 import { esc, eur, num, pctFine, plural } from '../format.js';
 import { icon } from '../icons.js';
-import { buyPacks, getState, giveawayEntry, isLoggedIn, setSetting } from '../store.js';
+import { bonusStatus, buyPacks, getState, giveawayEntry, isLoggedIn, setSetting, wagerWeight } from '../store.js';
 import { emptyState, oddsGrid, openingItem, packRange, sectionHead } from '../ui/blocks.js';
 import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
 import { countdownInline } from '../ui/countdown.js';
@@ -66,6 +66,7 @@ function buyPanel(pack, qty) {
           ${icon('package-open', { size: 20 })}<span data-buy-label></span>
         </button>
         <p class="small center"><strong>${pctFine(1 - profitChance(pack))}</strong> des tirages donnent une carte cotée moins que le prix du pack.</p>
+        ${isLoggedIn() && bonusStatus().active && wagerWeight(packEdge(pack)) < 1 ? `<p class="small muted center">Bonus en cours : ce pack compte pour ${Math.round(wagerWeight(packEdge(pack)) * 100)} % de son prix dans tes mises.</p>` : ''}
         <p class="small muted center">${isLoggedIn() ? `Solde <strong>${eur(getState().balance)}</strong> · ` : ''}Rachat ${Math.round(RULES.buybackRate * 100)} % pendant ${RULES.buybackLockMinutes} min, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite · <a href="#/equite">tirage vérifiable</a></p>`;
 }
 

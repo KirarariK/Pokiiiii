@@ -152,8 +152,8 @@ export default {
     return `
     <section class="hero">
       <div class="hero__copy">
-        <p class="eyebrow">${icon('sparkles', { size: 15 })}Packs mystère · vraies cartes</p>
-        <h1>Ouvre en ligne.<br><em>Reçois en vrai.</em></h1>
+        <p class="eyebrow">${icon('sparkles', { size: 15 })}Packs mystère · table de tirage publique</p>
+        <h1>Chaque carte est au coffre.<br><em>Chaque chance est affichée.</em></h1>
         <div class="hero__cta">
           <a class="btn btn--primary btn--lg" href="#/packs">Ouvrir un pack${icon('arrow-right', { size: 18 })}</a>
           <a class="btn btn--secondary btn--lg" href="#/cartes">Voir le coffre</a>
@@ -171,7 +171,7 @@ export default {
         <span class="hero__card hero__card--l">${cardImage(b, { lazy: false })}</span>
         <span class="hero__card hero__card--r">${cardImage(c, { lazy: false })}</span>
         <span class="hero__card hero__card--c" data-tilt>${cardImage(a, { hi: true, lazy: false })}</span>
-        <span class="hero__pack">${packArt(packBySlug('legende'), { lazy: false })}</span>
+        <span class="hero__pack">${packArt(packBySlug('joyau'), { lazy: false })}</span>
       </div>
     </section>
 

@@ -6,7 +6,7 @@ import './shim-storage.mjs';
 import crypto from 'node:crypto';
 import { adminConfigured, isAdmin, loginAdmin, logoutAdmin, setupAdmin } from '../js/admin.js';
 import { RULES } from '../js/config.js';
-import { CARDS, dropTable, expectedValue, packAvailable, packReturn, packTable, resolveTicket, stockCards } from '../js/catalog.js';
+import { CARDS, dropTable, expectedValue, packAvailable, packEdge, packReturn, packTable, resolveTicket, stockCards } from '../js/catalog.js';
 import { BADGES, progress } from '../js/data/badges.js';
 import { giveawayPool, listGiveaways } from '../js/data/giveaways.js';
 import { DEFAULTS, blendedEdge, expectedMonth, levers, packEconomics, simulateMonths } from '../js/economics.js';
@@ -16,7 +16,7 @@ import { THEMES } from '../js/data/themes.js';
 import { drawFromPack } from '../js/draw.js';
 import { TICKETS, hmacHex, sha256Hex, ticketFor } from '../js/fair.js';
 import { imgUrl } from '../js/format.js';
-import { adjustStock, clearStock, drawableQty, exportStock, importStock, qtyOf, reservedOf, resetStock, setStock, usingDemoStock } from '../js/stock.js';
+import { adjustStock, clearStock, drawableQty, exportStock, importStock, qtyOf, reservedOf, resetStock, setPrice, setStock, usingDemoStock } from '../js/stock.js';
 import * as store from '../js/store.js';
 import fs from 'node:fs';
 
@@ -207,6 +207,12 @@ console.log('\nModèle économique (hypothèses par défaut)');
   check(expectedMonth({ ...DEFAULTS, vat: 0 }).result > m.result && expectedMonth({ ...DEFAULTS, cost: 1 }).result < m.result && expectedMonth({ ...DEFAULTS, rtpShift: -0.01 }).result < m.result, 'le modèle réagit dans le bon sens à la TVA, au prix des cartes et au retour des packs');
 }
 
+{
+  // TVA : le modèle par défaut retient la lecture la plus favorable ; les deux autres doivent rester chiffrées.
+  const byRegime = [1, 2, 3].map((vat) => expectedMonth({ ...DEFAULTS, vat }));
+  check(byRegime[0].vat < byRegime[1].vat && byRegime[1].vat < byRegime[2].vat && byRegime[2].result < 0, `TVA selon le régime : ${byRegime.map((m) => Math.round(m.vat / 100) + ' €').join(' / ')} ; résultat ${byRegime.map((m) => Math.round(m.result / 100) + ' €').join(' / ')}`);
+}
+
 console.log('\nCompte : bonus, argent du joueur, livraison');
 {
   resetStock();
@@ -223,16 +229,30 @@ console.log('\nCompte : bonus, argent du joueur, livraison');
   check(first.ok && first.bonus === 100_00 * firstDepositRate && store.withdrawable() === 100_00, 'premier dépôt : bonus à part, argent déposé retirable en entier');
   check(store.deposit(20_00).bonus === 0 && store.withdrawable() === 120_00, 'les dépôts suivants ne donnent pas de bonus');
 
+  const price = (slug) => PACKS.find((p) => p.slug === slug).price;
   const bonusBefore = st().bonus.balance;
-  const real = store.buyPacks('master', 2);
-  check(real.ok && st().bonus.balance === bonusBefore && real.pulls.every((c) => !c.bonusShare) && store.withdrawable() === 120_00 - 2 * 49_95, "achat : l'argent du joueur part en premier, la carte lui appartient sans condition");
+  const real = store.buyPacks('orage', 2);
+  const left = 120_00 - 2 * price('orage');
+  check(real.ok && st().bonus.balance === bonusBefore && real.pulls.every((c) => !c.bonusShare) && store.withdrawable() === left, "achat : l'argent du joueur part en premier, la carte lui appartient sans condition");
 
-  const mixed = store.buyPacks('pro', 1);
+  // Achat plus cher que l'argent restant : le bonus paie la différence.
+  const mixed = store.buyPacks('zenith', 1);
   const card = mixed.pulls[0];
-  const share = (24_95 - 20_10) / 24_95;
-  check(mixed.ok && Math.abs(card.bonusShare - share) < 1e-9 && st().bonus.balance === bonusBefore - 4_85 && store.withdrawable() === 0 && sound(), 'achat mixte : le bonus complète, la carte garde sa part de bonus');
+  const fromBonus = price('zenith') - left;
+  const share = fromBonus / price('zenith');
+  check(left > 0 && fromBonus > 0 && mixed.ok && Math.abs(card.bonusShare - share) < 1e-9 && st().bonus.balance === bonusBefore - fromBonus && store.withdrawable() === 0 && sound(), 'achat mixte : le bonus complète, la carte garde sa part de bonus');
   check(!store.canShip(card) && store.requestShipment({ uids: [card.uid], zone: 'fr', address: { name: 'A', line1: 'B', zip: '75001', city: 'Paris' } }).code === 'bonus', "une carte payée avec un bonus ne s'expédie pas avant la fin du bonus");
 
+  {
+    // Dix packs payés presque entièrement avec de l'argent déposé : le bonus ne retient qu'une carte.
+    const before = JSON.stringify(st());
+    store.deposit(10 * price('rosee') - 2_00);
+    const order = store.buyPacks('rosee', 10);
+    const held = order.pulls.filter((c) => c.bonusShare > 0);
+    check(order.ok && held.length === 1 && Math.abs(held[0].bonusShare - 2_00 / price('rosee')) < 1e-9, 'bonus : sa part est portée par le moins de cartes possible, pas par toute la commande');
+    store.sellCards(order.pulls.map((c) => c.uid));
+    Object.assign(st(), JSON.parse(before));
+  }
   const ownCard = real.pulls[0];
   const address = { name: 'A', line1: 'B', zip: '75001', city: 'Paris' };
   check(store.canShip(ownCard) && store.requestShipment({ uids: [ownCard.uid], zone: 'fr', address }).code === 'balance', 'frais de livraison : jamais payés avec des fonds de bonus');
@@ -247,7 +267,7 @@ console.log('\nCompte : bonus, argent du joueur, livraison');
   const cash = store.withdrawable();
   const ship = store.requestShipment({ uids: [ownCard.uid], zone: 'fr', address });
   check(ship.ok && ship.fee === fee && store.withdrawable() === cash - fee && sound(), `livraison d'une carte à ${(ownCard.value / 100).toFixed(2)} € : ${(fee / 100).toFixed(2)} € de frais, payés hors bonus`);
-  check(st().points.total === Math.floor(2 * 49.95) + Math.floor(24.95), 'classement : seuls les achats donnent des points');
+  check(st().points.total === Math.floor((2 * price('orage')) / 100) + Math.floor(price('zenith') / 100), 'classement : seuls les achats donnent des points');
 
   // Un bonus se clôt toujours. On joue le crédit de bienvenue sans rien déposer,
   // en revendant chaque carte aussitôt : c'est la façon la moins coûteuse de le jouer.
@@ -259,9 +279,9 @@ console.log('\nCompte : bonus, argent du joueur, livraison');
     store.resetDemo();
     store.signup('Testeur');
     for (let i = 0; i < 600 && store.bonusStatus().active; i++) {
-      const qty = Math.min(RULES.maxPacksPerOrder, Math.floor(st().balance / 9_95));
+      const qty = Math.min(RULES.maxPacksPerOrder, Math.floor(st().balance / price('rosee')));
       if (qty < 1) break;
-      store.buyPacks('starter', qty);
+      store.buyPacks('rosee', qty);
       store.sellCards(st().cards.filter((c) => c.status === 'coffre').map((c) => c.uid));
       ok = ok && sound();
     }
@@ -349,6 +369,19 @@ console.log('\nGarde-fous et robustesse');
   const lastRoll = st().rolls.find((r) => r.game.startsWith('pack:'));
   check(Boolean(lastRoll?.outcome.digest), 'le journal garde l’empreinte complète de la table de chaque tirage');
   check(store.wheelFactor(0) === RULES.cashback.wheel[0][0] && store.wheelFactor(TICKETS - 1) === RULES.cashback.wheel.at(-1)[0], 'barème de la roue lisible par la page de vérification');
+
+  // Règles économiques fermées par l'audit.
+  const { wagering, fullWeightEdge } = RULES.bonus;
+  const open = PACKS.filter(packAvailable);
+  check(open.every((p) => (wagering * packEdge(p)) / store.wagerWeight(packEdge(p)) >= wagering * Math.min(packEdge(p), fullWeightEdge) - 1e-9 && (wagering * packEdge(p)) / store.wagerWeight(packEdge(p)) >= 1 - 1e-9), `bonus : jouer ${wagering} fois coûte au moins le bonus sur chaque pack (mises pondérées par la marge)`);
+  const sample = stockCards().find((c) => c.value >= 20_00);
+  const lockMs = RULES.buybackLockMinutes * 60_000;
+  const fresh = { cardId: sample.id, value: sample.value, at: Date.now() };
+  const old = { cardId: sample.id, value: sample.value, at: Date.now() - 2 * lockMs };
+  setPrice(sample.id, Math.round(sample.value / 2));
+  check(store.buybackOf(fresh) === Math.round(sample.value * RULES.buybackRate) && store.buybackOf(old) === Math.round(Math.round(sample.value / 2) * RULES.buybackLaterRate), 'cote retenue : celle du tirage pendant la garantie, ensuite la plus basse (tirage ou jour)');
+  setPrice(sample.id, null);
+  check(store.lockEnd({ at: Date.now(), lockAt: 1000 }) === 1000 + lockMs, "Évolution : la carte gagnée hérite de la garantie de la carte misée (pas de détour par un rachat à plein taux)");
 
   // Inventaire importé : rien d'autre que les champs attendus n'entre.
   check(imgUrl('https://images.pokemontcg.io/base1/4.png') !== '' && imgUrl('https://images.pokemontcg.io/base1/4.png\'"><img src=x onerror=alert(1)>').includes('<') === false && imgUrl('https://evil.example/x.png') === '' && imgUrl('javascript:alert(1)') === '', "adresses d'image : hôte attendu seulement, rien d'injectable");

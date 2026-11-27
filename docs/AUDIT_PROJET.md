@@ -104,7 +104,24 @@ Laissé en l'état, à décider : le mode d'ouverture rapide, l'achat jusqu'à d
 
 ## 5. Économie et failles de jeu
 
-Rapport : [`audit/12-economie.md`](audit/12-economie.md). Voir la section « Compléments » en fin de document.
+Rapport : [`audit/12-economie.md`](audit/12-economie.md).
+
+Les packs ne se battent pas : sur 11 027 tables et 1 497 états du coffre, le retour reste sur la cible (93 % au plus), et attendre une table favorable ne rapporte rien. Six portes étaient ouvertes ailleurs :
+
+| Faille | Gravité | État |
+|---|---|---|
+| Cote figée au tirage, sans échéance : une carte dont la cote baisse restait rachetable à l'ancien prix | élevé | corrigé : passé la garantie, la plus basse des deux cotes |
+| Bonus sans dépôt joué sur le pack le plus cher : 50 à 58 € retirables par compte | élevé | propre à la démonstration ; `welcomeCredit` à 0 pour tout usage réel |
+| Bonus de premier dépôt gagnant sur les gros packs (+9 € par compte) | moyen | corrigé : mises pondérées par la marge du pack |
+| Détour par l'Évolution meilleur que le rachat différé (85,07 % contre 85 %) | faible | corrigé : la carte gagnée hérite de la garantie de la carte misée |
+| Classement : « coûte toujours plus qu'il ne rapporte » était faux | faible | texte corrigé |
+| Giveaway : gros lot hors d'atteinte (2 466 packs pour 500 vendus par mois) | faible | corrigé : sept lots dimensionnés sur les ventes attendues |
+
+Le compte de résultat est reproduit à l'euro, mais il reposait sur trois hypothèses favorables :
+
+- **la TVA** : 4 111 € par mois dans la lecture retenue, 10 952 € vente par vente (résultat : 950 € au lieu de 7 791 €), 28 067 € sur tout le prix (perte de 16 165 €). Le pilotage affiche désormais les trois ;
+- **le prix d'achat des cartes** à 75 % de la cote : le résultat s'annule vers 95 % ;
+- **le stock et sa trésorerie**, absents du compte : environ 80 000 € immobilisés pour le coffre d'exemple.
 
 ## 6. Originalité
 
@@ -112,9 +129,9 @@ Rapport : [`audit/13-originalite.md`](audit/13-originalite.md).
 
 Ni code, ni image, ni marque du concurrent n'ont été copiés. Mais la gamme (noms et prix de quatre packs, paliers, pack événement), une partie de la FAQ, le slogan et le squelette des pages en venaient encore, de façon reconnaissable. Corrigé :
 
-- **gamme refaite** : huit packs renommés, à prix ronds, avec leurs propres paliers (voir `js/data/packs.js`) ;
+- **gamme refaite** : huit packs renommés (Rosée, Prisme, Orage, Millésime, Brasier, Canopée, Zénith, Joyau), à prix ronds de 8 à 300 €, avec leurs propres paliers ;
 - **FAQ réécrite** : elle décrit la démonstration, plus un service à venir ;
-- **accroche d'accueil** remplacée.
+- **accroche d'accueil** remplacée par les deux atouts propres au site : « Chaque carte est au coffre. Chaque chance est affichée. »
 
 Ce qui reste commun relève du genre (un pack, une carte, un rachat) et non d'un concurrent.
 

@@ -137,38 +137,37 @@ Ce sont leurs affirmations, pas un avis juridique. Elles montrent toutefois où
 passe la ligne qu'ils défendent : un bien physique dans chaque pack, des
 probabilités publiées, un rachat présenté comme une vente.
 
-**Conséquence pour notre projet.** À ma connaissance, en France, les jeux de
-casino en ligne ne sont pas ouverts à l'agrément : seuls les paris sportifs, les
-paris hippiques et le poker le sont (une ouverture a été discutée ; l'état du
-droit est à vérifier). Se présenter comme « casino » et viser une certification
-de jeu d'argent, ou se présenter comme vendeur de packs mystère, sont deux
-projets différents, avec des obligations différentes. C'est à trancher avec un
-avocat avant d'écrire le moindre texte commercial.
+**Conséquence pour notre projet.** L'audit du 27 novembre 2026
+(`docs/AUDIT_JURIDIQUE.md`) a tranché : en France, les jeux de casino en ligne
+ne sont pas ouverts à l'agrément, et un pack tiré au sort dont le lot se
+rachète contre un solde retirable est un jeu d'argent interdit, quel que soit
+le nom qu'on lui donne. La présentation retenue par le site de référence
+(« vente de produit à caractère aléatoire ») n'est pas une position sûre, et
+l'absence de sanction publiée n'est pas une autorisation.
 
-## 7. Ce que la maquette reprend, et ce qu'elle change
+## 7. Ce qui est commun au genre, et ce qui est propre à la maquette
 
-Repris du site de référence :
+Commun à tous les sites de ce genre, et gardé :
 
 - le parcours choisir → ouvrir → garder, livrer ou revendre ;
-- le menu latéral et la page d'un pack (visuel, répartitions, achat, gros lots,
-  dernières ouvertures) ;
-- les règles : rachat à 90 %, prix garanti 10 minutes, 10 packs maximum, points
-  du classement, délais de livraison et de retrait ;
-- les giveaways et le classement mensuel.
+- un rachat de la carte par le site, des giveaways, un classement.
 
-Refait autrement, parce que le site de référence s'arrête là où un opérateur
-de métier commence (détail dans `docs/CONCEPTION.md`) :
+Propre à la maquette (détail dans `docs/CONCEPTION.md`) :
 
-- **la gamme** : huit packs dont le retour théorique (86 % à 92 %) est affiché,
-  au lieu d'une grille dont la marge ne se lit nulle part ;
-- **le tirage** : vérifiable par le joueur (graines, tickets), avec la table
-  complète de chaque pack publiée carte par carte ;
+- **la gamme** : huit packs à prix ronds, avec leurs noms, leurs paliers et
+  leur retour théorique affiché (86 % à 92 %). L'audit d'originalité avait
+  relevé que les noms et les prix de quatre packs et plusieurs paliers venaient
+  encore du site de référence : la gamme a été refaite ;
+- **le stock réel** : un pack ne donne que des cartes au coffre, et sa table de
+  tirage, carte par carte, est recalculée à chaque mouvement ;
+- **la recherche d'une carte** : de quels packs elle sort, et à quelle chance ;
+- **le tirage** : vérifiable par le joueur (graines, tickets, empreinte de table) ;
 - **l'ouverture** : une roulette, dont la bande est tirée honnêtement ;
 - **les jeux** : Évolution, cashback, badges ;
 - **l'économie** : chaque récompense indexée sur ce que le joueur rapporte
   (détail dans `docs/GERANT.md`) ;
-- **l'habillage** : neuf thèmes par type, choisis à la première visite ;
-- **la marque, les visuels et les textes**, propres à la maquette.
+- **l'habillage** : neuf thèmes, choisis à la première visite ;
+- **la marque, les visuels, l'accroche, la FAQ et les textes**.
 
-Non repris pour l'instant : marketplace entre joueurs, pack gratuit, espace
-créateurs, guides de référencement, back-office, paiement et KYC.
+Les règles chiffrées qui restent proches (rachat à 90 %, dix packs par achat)
+sont celles du genre : on les retrouve chez la plupart des acteurs.

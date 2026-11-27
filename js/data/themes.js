@@ -15,15 +15,15 @@ export const LIGHT_DEFAULT = 'glace';
  * `packs` les packs dont la page suggère ce thème à un nouveau visiteur.
  */
 export const THEMES = [
-  { id: 'electrik', name: 'Électrik', mood: 'Orage', line: 'Nuit d’orage et éclairs dorés', icon: 'zap', match: { types: ['Lightning'], names: /Pikachu/ }, packs: ['pro', 'retro'] },
+  { id: 'electrik', name: 'Électrik', mood: 'Orage', line: 'Nuit d’orage et éclairs dorés', icon: 'zap', match: { types: ['Lightning'], names: /Pikachu/ }, packs: ['orage', 'millesime'] },
   { id: 'feu', name: 'Feu', mood: 'Brasier', line: 'Braises rouges, flammes vives', icon: 'flame', match: { types: ['Fire'], names: /Charizard/ }, packs: ['brasier'] },
   { id: 'eau', name: 'Eau', mood: 'Abysses', line: 'Bleu profond, reflets turquoise', icon: 'droplet', match: { types: ['Water'], names: /Blastoise|Gyarados|Suicune/ }, packs: [] },
-  { id: 'plante', name: 'Plante', mood: 'Canopée', line: 'Sous-bois sombre, feuillage clair', icon: 'leaf', match: { types: ['Grass'], names: /Venusaur|Celebi|Leafeon/ }, packs: ['master'] },
+  { id: 'plante', name: 'Plante', mood: 'Canopée', line: 'Sous-bois sombre, feuillage clair', icon: 'leaf', match: { types: ['Grass'], names: /Venusaur|Celebi|Leafeon/ }, packs: ['canopee'] },
   { id: 'psy', name: 'Psy', mood: 'Psyché', line: 'Prune et rose néon', icon: 'eye', match: { types: ['Psychic'], names: /Mewtwo|Mew|Espeon/ }, packs: [] },
-  { id: 'tenebres', name: 'Ténèbres', mood: 'Nocturne', line: 'Noir profond, rouge et or', icon: 'moon', match: { types: ['Darkness'], names: /Umbreon/ }, packs: ['expert'] },
-  { id: 'dragon', name: 'Dragon', mood: 'Céleste', line: 'Indigo et écailles dorées', icon: 'crown', match: { types: ['Dragon'], names: /Rayquaza|Dragonite/ }, packs: ['legende'] },
-  { id: 'glace', name: 'Glace', mood: 'Givre', line: 'Clair, net, bleu glacier', icon: 'snowflake', match: { names: /Glaceon|Articuno|Kyurem|Lapras/ }, packs: ['starter'] },
-  { id: 'fee', name: 'Fée', mood: 'Féerie', line: 'Clair, rose poudré et lilas', icon: 'sparkles', match: { names: /Sylveon|Gardevoir|Clefairy|Togekiss/ }, packs: ['evoli'] },
+  { id: 'tenebres', name: 'Ténèbres', mood: 'Nocturne', line: 'Noir profond, rouge et or', icon: 'moon', match: { types: ['Darkness'], names: /Umbreon/ }, packs: ['zenith'] },
+  { id: 'dragon', name: 'Dragon', mood: 'Céleste', line: 'Indigo et écailles dorées', icon: 'crown', match: { types: ['Dragon'], names: /Rayquaza|Dragonite/ }, packs: ['joyau'] },
+  { id: 'glace', name: 'Glace', mood: 'Givre', line: 'Clair, net, bleu glacier', icon: 'snowflake', match: { names: /Glaceon|Articuno|Kyurem|Lapras/ }, packs: ['rosee'] },
+  { id: 'fee', name: 'Fée', mood: 'Féerie', line: 'Clair, rose poudré et lilas', icon: 'sparkles', match: { names: /Sylveon|Gardevoir|Clefairy|Togekiss/ }, packs: ['prisme'] },
 ];
 
 export const themeById = (id) => THEMES.find((t) => t.id === id) || null;

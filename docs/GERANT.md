@@ -1,5 +1,9 @@
 # Le site vu par son gérant
 
+> **À lire d'abord.** L'audit du 27 novembre 2026 ([`AUDIT_JURIDIQUE.md`](AUDIT_JURIDIQUE.md)) conclut que ce modèle
+> (tirage payant, rachat contre un solde retirable) est un jeu d'argent interdit en France et qu'aucun agrément
+> n'existe pour lui. Ce document décrit donc l'économie d'une **démonstration** : il ne vaut pas plan de lancement.
+
 Ce document passe chaque fonctionnalité au crible d'une seule question : **où
 le site gagne-t-il, où peut-il perdre, et qu'est-ce qui l'en empêche ?** Chaque
 réglage cité se change dans `js/config.js` ou `js/data/packs.js`, et chaque
@@ -21,8 +25,8 @@ document sont relevés sur le stock de démonstration : ils bougent avec le coff
 - Tout ce qui est rendu au joueur (cashback, classement, giveaways, bonus) est
   **indexé sur ce que le joueur rapporte**. Aucune récompense n'est un montant
   fixe sorti de la caisse.
-- Aucun détour ne rend plus que la revente directe d'une carte, et un bonus ne
-  peut pas ressortir sans avoir été joué. Les tests le vérifient.
+- Aucun détour ne rend plus que la revente directe d'une carte, et un bonus
+  joué coûte au moins son montant, quel que soit le pack. Les tests le vérifient.
 - **Le site ne vend que ce qu'il possède.** Une carte qui n'est pas au coffre
   ne peut sortir d'aucun pack, et un pack que le coffre ne permet pas de
   composer n'est pas en vente.
@@ -38,49 +42,66 @@ leur cote, 3 % de frais sur les dépôts, 4 nouveaux déposants pour 100 packs,
 
 | Poste | Montant | Part des ventes |
 | --- | ---: | ---: |
-| Ventes de packs | 151 854 € | 100 % |
-| Coût des cartes (rachats versés, cartes sorties du stock) | −129 478 € | 85,3 % |
-| **Marge de jeu** | **22 375 €** | **14,7 %** |
-| Cashback | −958 € | 0,6 % |
-| Dotation du classement | −798 € | 0,5 % |
-| Cagnotte des giveaways | −855 € | 0,6 % |
-| Bonus de premier dépôt | −1 200 € | 0,8 % |
-| **Marge après fidélité** | **18 564 €** | **12,2 %** |
-| Frais de paiement et fraude | −2 402 € | 1,6 % |
-| TVA sur la marge | −3 729 € | 2,5 % |
-| **Résultat avant frais fixes** | **12 433 €** | **8,2 %** |
-| Frais fixes (équipe, coffre, assurance, outils, publicité) | −6 000 € | 4,0 % |
-| **Résultat du mois** (avant impôt sur les sociétés) | **6 433 €** | **4,2 %** |
+| Ventes de packs | 168 400 € | 100 % |
+| Coût des cartes (rachats versés, cartes sorties du stock) | −143 732 € | 85,4 % |
+| **Marge de jeu** | **24 668 €** | **14,6 %** |
+| Cashback | −1 052 € | 0,6 % |
+| Dotation du classement | −877 € | 0,5 % |
+| Cagnotte des giveaways | −965 € | 0,6 % |
+| Bonus de premier dépôt | −1 200 € | 0,7 % |
+| **Marge après fidélité** | **20 574 €** | **12,2 %** |
+| Frais de paiement et fraude | −2 672 € | 1,6 % |
+| TVA sur la marge | −4 111 € | 2,4 % |
+| **Résultat avant frais fixes** | **13 791 €** | **8,2 %** |
+| Frais fixes (équipe, coffre, assurance, outils, publicité) | −6 000 € | 3,6 % |
+| **Résultat du mois** (avant impôt sur les sociétés) | **7 791 €** | **4,6 %** |
 
-Seuil de rentabilité : **2 413 packs par mois**. Chaque pack vendu laisse
-2,49 € en moyenne avant frais fixes.
+Seuil de rentabilité : **2 176 packs par mois**. Chaque pack vendu laisse
+2,76 € en moyenne avant frais fixes.
 
 Ce que ce compte ne dit pas : les frais fixes sont une hypothèse à remplacer
-par les tiens, et la TVA suppose le régime de la marge (voir « Points à faire
-valider »).
+par les tiens, et **la TVA est comptée dans sa lecture la plus favorable**.
+
+### La TVA décide du résultat
+
+Le compte ci-dessus suppose le régime de la marge, calculée globalement sur le
+mois : les ventes à perte (carte qui a coûté plus que le prix du pack)
+compensent les autres. Ce n'est pas la méthode par défaut.
+
+| Régime de TVA | TVA du mois | Résultat du mois |
+| --- | ---: | ---: |
+| Marge, calcul global du mois (hypothèse du modèle) | 4 111 € | 7 791 € |
+| Marge, vente par vente (méthode par défaut) | 10 952 € | 950 € |
+| TVA sur tout le prix | 28 067 € | −16 165 € |
+
+Sous la méthode par défaut, le modèle est à peine à l'équilibre ; sur le prix
+entier, il perd de l'argent à chaque vente. Le régime applicable dépend de la
+façon dont le rachat est qualifié (achat d'occasion à un particulier, annulation
+de vente, ou jeu) : c'est la première question à poser à l'expert-comptable.
+Le pilotage affiche les trois lectures côte à côte.
 
 ### Ce que change chaque hypothèse
 
 | Scénario | Résultat avant frais fixes | Résultat du mois | Seuil |
 | --- | ---: | ---: | ---: |
-| Hypothèses par défaut | 12 434 € (8,2 %) | 6 434 € | 2 413 packs |
-| Cartes achetées à 60 % de la cote | 17 190 € (11,3 %) | 11 190 € | 1 746 packs |
-| Cartes achetées à 90 % de la cote | 7 678 € (5,1 %) | 1 678 € | 3 908 packs |
-| Cartes achetées à la cote | 4 507 € (3,0 %) | −1 493 € | 6 657 packs |
-| Toutes les cartes revendues aussitôt | 7 777 € (5,1 %) | 1 777 € | 3 858 packs |
-| Toutes les cartes gardées | 23 913 € (15,7 %) | 17 913 € | 1 255 packs |
-| Sans TVA sur la marge | 16 163 € (10,6 %) | 10 163 € | 1 857 packs |
+| Hypothèses par défaut | 13 791 € (8,2 %) | 7 791 € | 2 176 packs |
+| Cartes achetées à 60 % de la cote | 19 071 € (11,3 %) | 13 071 € | 1 574 packs |
+| Cartes achetées à 90 % de la cote | 8 510 € (5,1 %) | 2 510 € | 3 526 packs |
+| Cartes achetées à la cote | 4 990 € (3,0 %) | −1 010 € | 6 012 packs |
+| Toutes les cartes revendues aussitôt | 8 616 € (5,1 %) | 2 616 € | 3 482 packs |
+| Toutes les cartes gardées | 26 547 € (15,8 %) | 20 547 € | 1 131 packs |
+| Sans TVA sur la marge | 17 902 € (10,6 %) | 11 902 € | 1 676 packs |
 
 ### Les leviers, du plus rentable au moins rentable
 
 | Mouvement | Effet sur le résultat du mois |
 | --- | ---: |
-| Acheter les cartes 5 points moins cher | +1 585 € |
-| Vendre 10 % de packs en plus | +1 243 € |
-| Baisser d'un point le retour de tous les packs | +1 022 € |
-| 5 points de cartes gardées en plus, plutôt que revendues aussitôt | +807 € |
-| Un point de frais de paiement en moins | +800 € |
-| Un point de cashback moyen en moins | +160 € |
+| Acheter les cartes 5 points moins cher | +1 760 € |
+| Vendre 10 % de packs en plus | +1 379 € |
+| Baisser d'un point le retour de tous les packs | +1 133 € |
+| 5 points de cartes gardées en plus, plutôt que revendues aussitôt | +897 € |
+| Un point de frais de paiement en moins | +891 € |
+| Un point de cashback moyen en moins | +175 € |
 
 À lire ainsi : le retour et le cashback sont les leviers les plus faciles à
 actionner et les moins intéressants. Baisser le retour d'un point rapporte
@@ -94,15 +115,17 @@ le rouge même si le modèle est sain.
 
 | Packs par mois | Résultat moyen | Mauvais mois (1 sur 20) | Mois déficitaires |
 | ---: | ---: | ---: | ---: |
-| 1 000 | −3 494 € | −5 505 € | presque tous |
-| 2 000 | −1 054 € | −3 556 € | 3 sur 4 |
-| 3 000 | 1 443 € | −1 920 € | 1 sur 4 |
-| 5 000 | 6 293 € | 2 047 € | 1 sur 100 |
-| 10 000 | 18 684 € | 12 872 € | aucun |
+| 1 000 | −3 188 € | −5 355 € | presque tous |
+| 2 000 | −463 € | −3 456 € | plus de 1 sur 2 |
+| 3 000 | 2 253 € | −1 474 € | 1 sur 5 |
+| 5 000 | 7 660 € | 2 783 € | moins de 1 sur 100 |
+| 10 000 | 21 349 € | 14 812 € | aucun |
 
 Conséquence pratique : prévoir une réserve qui couvre plusieurs mauvais mois,
-et ne pas lancer le Booster Légende (lot de 1 600 €) avant d'avoir le volume
-qui l'absorbe.
+et ne pas lancer le Pack Joyau (lot de 1 500 €) avant d'avoir le volume
+qui l'absorbe. Ces simulations supposent des tables fixes et des cotes
+immobiles ; le stock (environ 80 000 € immobilisés pour le coffre d'exemple) et
+son réassort n'apparaissent pas dans le compte : il faut les financer à part.
 
 ## Fonctionnalité par fonctionnalité
 
@@ -131,21 +154,21 @@ c'est là que le joueur regarde le retour.
 
 | Pack | Prix | Retour affiché | Marge de jeu | Résultat par pack | Si tout est revendu aussitôt |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Booster Starter | 9,95 € | 88,0 % | 16,1 % | 1,06 € (10,6 %) | 0,76 € (7,7 %) |
-| Pack Évoli | 19,90 € | 89,0 % | 15,2 % | 1,93 € (9,7 %) | 1,31 € (6,6 %) |
-| Booster Pro | 24,95 € | 90,0 % | 14,2 % | 2,29 € (9,2 %) | 1,52 € (6,1 %) |
-| Pack Rétro | 29,90 € | 89,0 % | 15,2 % | 2,91 € (9,7 %) | 1,99 € (6,7 %) |
-| Pack Brasier | 39,90 € | 86,0 % | 18,1 % | 3,04 € (7,6 %) | 1,80 € (4,5 %) |
-| Booster Master | 49,95 € | 90,0 % | 14,2 % | 4,59 € (9,2 %) | 3,06 € (6,1 %) |
-| Booster Expert | 99,95 € | 91,0 % | 13,3 % | 8,56 € (8,6 %) | 5,48 € (5,5 %) |
-| Booster Légende | 249,00 € | 92,0 % | 12,3 % | 19,77 € (7,9 %) | 12,05 € (4,8 %) |
+| Pack Rosée | 8,00 € | 88,0 % | 16,2 % | 0,86 € (10,7 %) | 0,62 € (7,8 %) |
+| Pack Prisme | 18,00 € | 89,0 % | 15,2 % | 1,75 € (9,7 %) | 1,19 € (6,6 %) |
+| Pack Orage | 28,00 € | 90,0 % | 14,2 % | 2,57 € (9,2 %) | 1,71 € (6,1 %) |
+| Pack Millésime | 35,00 € | 89,0 % | 15,2 % | 3,42 € (9,8 %) | 2,35 € (6,7 %) |
+| Pack Brasier | 45,00 € | 86,0 % | 18,1 % | 3,41 € (7,6 %) | 2,00 € (4,5 %) |
+| Pack Canopée | 60,00 € | 90,0 % | 14,2 % | 5,51 € (9,2 %) | 3,68 € (6,1 %) |
+| Pack Zénith | 120,00 € | 91,0 % | 13,3 % | 10,25 € (8,5 %) | 6,55 € (5,5 %) |
+| Pack Joyau | 300,00 € | 92,0 % | 12,3 % | 23,72 € (7,9 %) | 14,40 € (4,8 %) |
 
 Le Pack Brasier affiche le retour le plus bas parce que 5 % de son prix
 financent son giveaway : lots compris, il rend autant que les autres.
 
 **Garde-fou.** Même dans le pire cas testé (tout revendu aussitôt, cashback au
 plus haut, cartes achetées à la cote, 6 % de frais), chaque pack reste
-bénéficiaire : 2,6 % au plus bas.
+bénéficiaire : 2,4 % au plus bas (TVA comptée dans sa lecture la plus favorable).
 
 **À surveiller en production.** Les tables se recalculent seules quand le
 stock bouge, mais sur les cotes enregistrées. Si le marché monte et que les
@@ -164,9 +187,12 @@ numéro est déjà noté avec chaque tirage).
   sur les joueurs qui revendent : c'est le retour affiché qui la fixe. À retour
   égal, un taux de rachat plus bas oblige même à mettre plus de cote dans le
   pack, donc renchérit les cartes gardées.
-- **En production.** Racheter sur la plus basse des deux moyennes (7 jours,
-  30 jours) pour ne pas payer une cote qui vient de chuter, plafonner les
-  rachats par carte et par jour, et valider à la main au-delà d'un seuil.
+- **Fuite fermée : la cote figée.** Une carte gardée restait rachetable à sa
+  cote du jour du tirage, sans limite de durée : une option de vente gratuite
+  dès que le marché baisse. Passé la garantie, rachat et mise en Évolution se
+  comptent sur la plus basse des deux cotes, celle du tirage ou celle du jour.
+- **En production.** Flux de cotes quotidien, rachats plafonnés par carte et
+  par jour, validation à la main au-delà d'un seuil, durée de garde limitée.
 
 ### Évolution
 
@@ -175,8 +201,10 @@ numéro est déjà noté avec chaque tirage).
   haut, plus le site est exposé à un gros lot, plus il se rémunère.
 - Aucun mouvement d'argent : en moyenne, le site doit moins de cartes après
   qu'avant. C'est le seul jeu qui réduit ce que le site doit sans sortie de caisse.
-- **Pas d'arbitrage.** Faire évoluer une carte puis revendre le résultat rend
-  au mieux 84,6 % de la cote de départ, contre 85 % en revente directe.
+- **Fuite fermée : le détour par l'Évolution.** Une carte gagnée ouvrait une
+  garantie neuve à 90 % : hors garantie, miser puis revendre rendait 85,07 % de
+  la cote, contre 85 % en revente directe. La carte gagnée hérite désormais de
+  la garantie de la carte misée : le détour rend au mieux 79,9 %.
 - L'Évolution ne fait pas avancer le déblocage d'un bonus : elle coûte trop peu
   pour cela.
 
@@ -195,24 +223,32 @@ numéro est déjà noté avec chaque tirage).
 
 ### Bonus
 
-- Premier dépôt : 10 % du montant, 50 € au plus, **à jouer 10 fois** avant retrait.
-- Pourquoi 10 fois : à 10,4 % de marge moyenne, jouer un bonus 10 fois en fait
-  reperdre 104 % en moyenne (81 % sur le pack le plus généreux). Le bonus offre
-  du temps de jeu, pas de l'argent. Le compte de résultat le retient quand même
-  en entier, comme un coût d'acquisition.
+- Premier dépôt : 10 % du montant, 50 € au plus, **à jouer 10 fois**.
+- **Fuite fermée : le bonus gagnant sur les gros packs.** À 10,4 % de marge
+  moyenne, jouer un bonus 10 fois le fait reperdre en moyenne ; mais sur le pack
+  le plus généreux (8 % de marge) il n'en reperdait que 80 %, et l'audit a
+  mesuré un gain de 9 € par compte. Les mises sont désormais pondérées par la
+  marge : un pack compte en entier à partir de 12 % de marge, au prorata en
+  dessous. Jouer un bonus coûte au moins 120 % de son montant, sur tous les
+  packs. Le compte de résultat le retient quand même en entier, comme un coût
+  d'acquisition.
 - **Fuite fermée : le bonus qui ressort.** Les fonds de bonus sont suivis à
   part. L'argent du joueur est joué en premier ; une carte payée en partie avec
   un bonus garde cette part, sa revente retourne aux fonds de bonus dans la
-  même proportion, et elle ne peut pas être expédiée avant la fin du bonus. Les
-  frais de livraison ne se paient pas avec un bonus.
-- **L'argent déposé n'est jamais bloqué.** Seul le bonus est soumis à
-  condition : un dépôt reste retirable à tout moment.
+  même proportion, et elle ne peut pas être expédiée avant la fin du bonus. La
+  part de bonus d'une commande est portée par le moins de cartes possible : un
+  reste de bonus ne retient plus toute une commande. Les frais de livraison ne
+  se paient pas avec un bonus.
+- **Un bonus ne bloque jamais le reste du solde.** Seul le bonus est soumis à
+  condition.
 - Un bonus se clôt toujours : joué, épuisé (moins d'un euro et plus de carte
   payée avec), ou bloqué (plus de quoi acheter un pack, coffre vide).
-- **Le crédit de bienvenue de la démo est à couper.** Simulé sur 150 comptes
-  qui le jouent au mieux, un bonus sans dépôt de 100 € laisse encore une
-  vingtaine d'euros retirables par compte en moyenne, et il attire les comptes
-  multiples. `welcomeCredit` doit valoir 0 en production.
+- **Le crédit de bienvenue de la démo est à couper.** Un bonus sans dépôt de
+  100 € laisse une vingtaine d'euros par compte quand il est joué prudemment,
+  mais **50 à 58 €** quand il est joué sur le pack le plus cher que le solde
+  permet (mesuré sur 1 200 comptes), et il attire les comptes multiples.
+  `welcomeCredit` doit valoir 0. Tout bonus devrait aussi être annulé par un
+  retrait avant la fin des mises, et son gain plafonné.
 
 ### Giveaways
 
@@ -223,8 +259,10 @@ numéro est déjà noté avec chaque tirage).
 - Seuls les lots débloqués à la clôture sont tirés au sort. C'est affiché, avec
   le nombre de packs qui manque pour le suivant. Ce qui reste dans la cagnotte
   est reporté sur le giveaway suivant : les 5 % annoncés sont bien reversés.
-- **À respecter.** Dimensionner la liste des lots sur les ventes attendues. Un
-  gros lot que le volume ne peut pas atteindre est un appât, même affiché
+- **Corrigé.** La liste des lots est dimensionnée sur les ventes attendues
+  (environ 500 packs événement par mois, soit 1 100 € de cagnotte) : sept lots
+  de 130 à 200 €. Avant l'audit, le premier lot (1 509 €) demandait 2 466 packs :
+  un gros lot que le volume ne peut pas atteindre est un appât, même affiché
   honnêtement.
 
 ### Classement
@@ -233,29 +271,33 @@ numéro est déjà noté avec chaque tirage).
   marge du mois, partagés entre les dix premiers. Un mois creux coûte peu.
 - Seuls les achats de packs donnent des points. Les rachats en donnaient aussi,
   ce qui récompensait l'opération qui coûte le plus au site.
-- Le premier touche 35 % de la dotation, soit moins de 2 % de la marge du mois :
-  acheter sa place coûte toujours plus qu'elle ne rapporte, et la page le dit.
+- Le premier touche 35 % de la dotation, soit moins de 2 % de la marge du mois.
+  Acheter sa place coûte presque toujours plus qu'elle ne rapporte ; ce n'est
+  faux que si le classement est très peu disputé, et sans coût pour le site.
 
 ### Livraison
 
-- Forfait par envoi, supplément par carte, et **1 % d'assurance** sur la cote
-  expédiée au-delà de 50 €. Sans elle, envoyer une carte à 1 000 € pour 4,90 €
-  aurait coûté bien plus que le forfait.
+- Forfait par envoi, supplément par carte, et **1 % d'envoi en valeur déclarée**
+  sur la cote expédiée au-delà de 50 €. Sans lui, envoyer une carte à 1 000 €
+  pour 4,90 € aurait coûté bien plus que le forfait. Le risque de perte ou de
+  casse reste au vendeur jusqu'à la remise : ce n'est pas une assurance vendue
+  au client.
 - Objectif : ni gain ni perte. Le barème est à caler sur les tarifs réels du
   transporteur.
 
-### Retrait
+### Solde et retrait
 
-- Minimum 20 €, après vérification d'identité, vers un compte au nom du joueur.
-- En production : retrait uniquement vers le moyen de paiement d'origine,
-  délai de quelques jours sur le premier retrait, et aucune condition ajoutée
-  au moment de retirer.
+- **À revoir entièrement.** Un solde rechargé par carte, gardé par le site et
+  retirable en euros est une activité réservée aux établissements agréés. La
+  démonstration ne propose donc aucun retrait.
+- Schéma le plus simple pour un vrai service : pas de solde, paiement à chaque
+  achat, identité vérifiée avant le premier paiement.
 
 ## Ce que le site s'interdit
 
 Chaque point ci-dessous rapporterait à court terme. Tous exposent à une
-sanction, à des impayés ou à la perte d'un agrément, et le compte de résultat
-montre qu'aucun n'est nécessaire.
+sanction ou à des impayés, et le compte de résultat montre qu'aucun n'est
+nécessaire.
 
 - Fabriquer des « presque-victoires » sur la roulette, ou présenter une perte
   comme un gain.
@@ -263,6 +305,7 @@ montre qu'aucun n'est nécessaire.
 - Afficher de faux gagnants, de faux compteurs ou de fausses urgences.
 - Bloquer l'argent déposé derrière un bonus.
 - Relancer un joueur en pause, ou lui laisser lever sa pause.
+- Fêter une carte cotée sous le prix du pack comme si c'était un gain.
 - Rendre un retrait plus difficile qu'un dépôt.
 - Accepter un joueur sans avoir vérifié son âge.
 
@@ -274,8 +317,8 @@ Ce sont eux qui évitent les pertes qu'aucune règle de jeu ne couvre.
   bougé de plus de quelques points.
 - **Stock** : inventaire tenu côté serveur et partagé par tous les joueurs,
   rapproché du coffre physique à intervalle fixe ; chaque version de table archivée.
-- **Fraude au paiement** : authentification forte sur chaque dépôt, retrait
-  vers le moyen de paiement d'origine, suivi du taux d'impayés.
+- **Fraude au paiement** : authentification forte sur chaque paiement, suivi
+  du taux d'impayés et de litiges.
 - **Comptes multiples** : un bonus par personne et par moyen de paiement,
   identité vérifiée avant qu'un bonus devienne retirable.
 - **Réserve** : de quoi couvrir plusieurs mauvais mois et le plus gros lot en jeu.
@@ -288,34 +331,23 @@ Ce sont eux qui évitent les pertes qu'aucune règle de jeu ne couvre.
 
 ## Points à faire valider
 
-Ce qui suit n'est pas un avis juridique ou comptable : ces points sont à
-trancher avec un avocat et un expert-comptable avant toute ouverture.
+Ils ont été instruits le 27 novembre 2026 : voir [`AUDIT_JURIDIQUE.md`](AUDIT_JURIDIQUE.md)
+(jeux d'argent, consommation, paiements, fiscalité, données, propriété
+intellectuelle, autres pays) et [`AUDIT_PROJET.md`](AUDIT_PROJET.md) (code,
+sécurité, accessibilité, économie, originalité). En résumé : le modèle décrit
+ici ne peut pas être exploité en argent réel en France ; la voie défendable est
+une boutique à prix fixe avec tirages promotionnels.
 
-- **Qualification du jeu.** Un pack au contenu aléatoire est une vente ; le
-  rachat immédiat en argent le rapproche d'un jeu d'argent, que seuls des
-  opérateurs autorisés peuvent proposer en France. La réponse conditionne
-  tout le reste, à commencer par le maintien du rachat en argent.
-- **Droit de rétractation.** La carte est tirée à l'achat. Il faut recueillir
-  l'accord exprès du joueur pour une exécution immédiate et sa renonciation à
-  se rétracter, sans quoi chaque mauvais tirage peut devenir une demande de
-  remboursement.
-- **Solde et retraits.** Garder l'argent des joueurs et le leur reverser relève
-  des services de paiement : cela passe par un prestataire agréé.
-- **TVA.** Le compte de résultat suppose le régime de la marge sur des biens
-  d'occasion. S'il ne s'applique pas, la TVA porte sur tout le prix de vente
-  et le modèle ne tient plus à ces niveaux de retour.
-- **Giveaways.** Règlement publié, lots réellement attribués, et vérifier si
-  une voie de participation gratuite est requise.
-- **Marques.** Les cartes vendues sont authentiques, mais l'usage des visuels
-  et des noms pour la promotion reste à cadrer.
+## Pistes suivantes
 
-## Pistes suivantes, par ordre d'intérêt pour le site
+1. **Boutique à prix fixe avec tirages promotionnels.** Le client choisit sa
+   carte et la paie au prix du marché ; des tirages accessoires, dotés par le
+   budget marketing, animent le site. C'est la seule piste qui a un ancrage
+   légal en France, et elle réutilise le stock, le catalogue, l'admin et le
+   tirage vérifiable.
+2. **Collections à compléter.** Elles donnent une raison de garder les cartes.
+3. **Vente entre joueurs.** Le site encaisserait pour le compte d'un tiers :
+   c'est un service de paiement, à ne faire qu'avec un établissement agréé.
 
-1. **Vente entre joueurs.** Une carte revendue à un autre joueur plutôt qu'au
-   site lui rapporte une commission au lieu de lui coûter 90 % de la cote.
-   C'est le levier le plus fort après l'approvisionnement.
-2. **Duels de packs.** Les joueurs misent les uns contre les autres ; le site
-   prélève une commission et ne porte aucun risque de gros lot. La nature
-   juridique du jeu change : à valider d'abord.
-3. **Collections à compléter.** Elles donnent une raison de garder les cartes,
-   et une carte gardée rapporte plus qu'une carte revendue.
+Écartés : les duels de packs (mises entre joueurs, donc jeu d'argent
+caractérisé) et toute variante qui garde un rachat en argent.

@@ -92,7 +92,7 @@ function renderFooter() {
     <div class="footer__grid">
       <div class="footer__brand">
         ${logo()}
-        <p>${esc(BRAND.baseline)}<br>Une vraie carte dans chaque pack : à garder au coffre, à recevoir chez toi ou à revendre.</p>
+        <p>${esc(BRAND.baseline)}<br>Un pack ne donne que des cartes du coffre, et chaque carte affiche sa probabilité.</p>
       </div>
       <div>
         <h2 class="footer__title">Jouer</h2>

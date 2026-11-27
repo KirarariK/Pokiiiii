@@ -52,7 +52,7 @@ export function faq() {
     },
     {
       q: 'À quel prix puis-je revendre ma carte ?',
-      a: `<p><strong>${rate} % de sa cote</strong> pendant les ${RULES.buybackLockMinutes} minutes qui suivent l'ouverture. Passé ce délai, le rachat se fait à <strong>${later} %</strong>. La cote retenue est celle affichée au moment du tirage.</p>
+      a: `<p><strong>${rate} % de sa cote</strong> pendant les ${RULES.buybackLockMinutes} minutes qui suivent l'ouverture. Passé ce délai, le rachat se fait à <strong>${later} %</strong>. La cote retenue est celle du tirage pendant la garantie ; ensuite, c'est la plus basse des deux, celle du tirage ou celle du jour.</p>
           <p>Le montant est crédité sur ton solde fictif. Tu peux aussi garder ta carte dans ta collection.</p>`,
     },
     {
@@ -68,7 +68,7 @@ export function faq() {
     {
       q: "Qu'est-ce qu'un bonus à jouer ?",
       a: `<p>Un bonus (premier dépôt, crédit de bienvenue) s'ajoute à ton solde tout de suite. Tes achats sont payés avec tes crédits d'abord, avec le bonus ensuite.</p>
-          <p>Le bonus, et ce qu'il t'a rapporté, restent à part tant que tu n'as pas misé <strong>${RULES.bonus.wagering} fois son montant</strong> en packs. D'ici là, une carte payée avec un bonus peut être gardée ou revendue, mais pas expédiée.</p>
+          <p>Le bonus, et ce qu'il t'a rapporté, restent à part tant que tu n'as pas misé <strong>${RULES.bonus.wagering} fois son montant</strong> en packs. Un pack compte en entier si sa marge atteint ${Math.round(RULES.bonus.fullWeightEdge * 100)} %, au prorata sinon : les packs les plus généreux comptent donc moins. D'ici là, une carte payée avec un bonus peut être gardée ou revendue, mais pas expédiée.</p>
           <p>Un bonus ne bloque jamais le reste de ton solde : la page <a href="#/solde">Solde</a> sépare les deux.</p>
           <p class="muted">Un bonus prend fin quand il a été joué, ou quand il n'en reste rien à jouer : moins d'un euro de bonus et plus de carte payée avec, ou un solde qui ne permet plus d'acheter un pack avec une collection vide. Le reliquat est alors repris.</p>`,
     },
