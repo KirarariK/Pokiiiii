@@ -1,7 +1,7 @@
 // Accueil : le lobby. Les packs, les jeux, le coffre et les ouvertures en direct.
 
 import { RULES } from '../config.js';
-import { CARDS, packAvailable, packReturn, stockCards } from '../catalog.js';
+import { CARDS, packAvailable, packReturn, profitChance, stockCards } from '../catalog.js';
 import { giveawayTickets, recentOpenings } from '../data/community.js';
 import { giveawayPool, isActive, listGiveaways } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
@@ -145,7 +145,9 @@ export default {
   render() {
     const [a, b, c] = heroCards();
     const vault = stockCards();
-    const returns = PACKS.filter(packAvailable).map(packReturn);
+    const open = PACKS.filter(packAvailable);
+    const returns = open.map(packReturn);
+    const below = open.map((p) => 1 - profitChance(p));
     const top = vault.slice(0, 6);
     return `
     <section class="hero">
@@ -157,9 +159,10 @@ export default {
           <a class="btn btn--secondary btn--lg" href="#/cartes">Voir le coffre</a>
         </div>
         <ul class="hero__chips">
-          ${returns.length ? `<li><strong>${pct(Math.min(...returns) * 100)} – ${pct(Math.max(...returns) * 100)}</strong>retour affiché</li>` : ''}
+          ${returns.length ? `<li><strong>${pct(Math.min(...returns) * 100)} – ${pct(Math.max(...returns) * 100)}</strong>retour moyen</li>
+          <li><strong>${pct(Math.min(...below) * 100)} – ${pct(Math.max(...below) * 100)}</strong>des tirages sous le prix</li>` : ''}
           <li><strong>${num(vault.length)}</strong>cartes au coffre</li>
-          <li><strong>${rate} %</strong>rachat immédiat</li>
+          <li><strong>${rate} %</strong>de la cote au rachat</li>
           <li><a href="#/equite"><strong>${icon('shield-check', { size: 16 })}</strong>tirage vérifiable</a></li>
         </ul>
       </div>

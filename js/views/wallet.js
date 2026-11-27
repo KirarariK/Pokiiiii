@@ -23,14 +23,9 @@ function openWithdraw() {
     size: 'sm',
     body: `
       <p>Montant retirable aujourd'hui : <strong>${eur(withdrawable())}</strong>.</p>
-      ${bonus.active ? `<p class="muted">${eur(bonus.balance)} de fonds de bonus restent en jeu : encore ${eur(bonus.wagerLeft)} de mises avant qu'ils deviennent retirables. Ton argent, lui, n'est jamais bloqué.</p>` : ''}
-      <p>En production, le virement se fait :</p>
-      <ul class="list">
-        <li>${icon('scan-face', { size: 16 })}après vérification d'identité (KYC), vers un compte à ton nom</li>
-        <li>${icon('banknote', { size: 16 })}à partir de ${eur(RULES.withdrawal.minimum)}</li>
-        <li>${icon('clock', { size: 16 })}sous ${RULES.withdrawal.delay}, sans frais</li>
-      </ul>
-      ${note('Le retrait est désactivé en démonstration : le solde est fictif.', 'demo')}`,
+      ${bonus.active ? `<p class="muted">${eur(bonus.balance)} de fonds de bonus restent en jeu : encore ${eur(bonus.wagerLeft)} de mises avant qu'ils rejoignent le reste de ton solde.</p>` : ''}
+      ${note('Aucun retrait : le solde est fait de crédits fictifs, il ne représente pas de l\'argent.', 'demo')}
+      <p class="muted small">Un solde en euros rechargé puis retiré ne peut être tenu que par un établissement agréé : la démonstration montre le parcours, pas un service de paiement.</p>`,
     footer: `<button class="btn btn--primary" type="button" data-close>Compris</button>`,
   });
 }
@@ -59,13 +54,13 @@ export default {
     </section>
 
     <div class="stats stats--4">
-      ${statTile({ iconName: 'landmark', label: 'Retirable', value: eur(withdrawable()), hint: bonus.active ? 'ton argent, hors bonus en jeu' : 'tout ton solde' })}
+      ${statTile({ iconName: 'landmark', label: 'Retirable', value: eur(withdrawable()), hint: bonus.active ? 'tes crédits, hors bonus en jeu' : 'tout ton solde' })}
       ${statTile({ iconName: 'gift', label: 'Bonus en jeu', value: eur(bonus.balance), hint: bonus.active ? `encore ${eur(bonus.wagerLeft)} de mises (${Math.floor(bonus.progress * 100)}\u00a0% fait)` : 'aucun bonus en cours' })}
       ${statTile({ iconName: 'calendar', label: "Dépensé aujourd'hui", value: eur(today), hint: limits.daily != null ? `limite : ${eur(limits.daily)}` : 'aucune limite fixée' })}
       ${statTile({ iconName: 'shield', label: 'Limite quotidienne', value: limits.daily != null ? eur(limits.daily) : '—', hint: '<a href="#/parametres">Régler ma limite</a>' })}
     </div>
 
-    ${bonus.active ? note(`Tes achats sont payés avec ton argent d'abord, avec le bonus ensuite. Le bonus, et ce qu'il t'a rapporté, deviennent retirables une fois que tu as misé ${RULES.bonus.wagering} fois son montant en packs. Ton argent, lui, reste retirable à tout moment.`, 'info') : ''}
+    ${bonus.active ? note(`Tes achats sont payés avec ton argent d'abord, avec le bonus ensuite. Le bonus, et ce qu'il t'a rapporté, rejoignent le reste de ton solde une fois que tu as misé ${RULES.bonus.wagering} fois son montant en packs. Un bonus ne bloque jamais tes autres crédits.`, 'info') : ''}
 
     <section class="panel panel--pad">
       <div class="section__head"><h2>${icon('receipt', { size: 22 })}<span>Mouvements</span></h2></div>
@@ -80,7 +75,7 @@ export default {
                     const type = TYPES[t.type] || { label: t.type, icon: 'receipt' };
                     return `<tr>
                       <td class="nowrap muted">${dateTimeFr(t.at)}</td>
-                      <td><span class="tx-type">${icon(type.icon, { size: 16 })}${type.label}</span></td>
+                      <td><span class="tx-type">${icon(type.icon, { size: 16 })}${esc(type.label)}</span></td>
                       <td>${esc(t.label)}</td>
                       <td class="num ${t.amount >= 0 ? 'pos' : 'neg'}">${t.amount >= 0 ? '+' : '−'}${eur(Math.abs(t.amount))}</td>
                     </tr>`;

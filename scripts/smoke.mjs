@@ -15,11 +15,14 @@ import { PACKS, RARITIES } from '../js/data/packs.js';
 import { THEMES } from '../js/data/themes.js';
 import { drawFromPack } from '../js/draw.js';
 import { TICKETS, hmacHex, sha256Hex, ticketFor } from '../js/fair.js';
+import { imgUrl } from '../js/format.js';
 import { adjustStock, clearStock, drawableQty, exportStock, importStock, qtyOf, reservedOf, resetStock, setStock, usingDemoStock } from '../js/stock.js';
 import * as store from '../js/store.js';
 import fs from 'node:fs';
 
 let failures = 0;
+/** Lots de giveaway déjà mis de côté au chargement, avant tout appel de ce script. */
+const reservedAtStart = CARDS.filter((c) => reservedOf(c.id) > 0).length;
 const check = (ok, message) => {
   if (!ok) failures++;
   console.log(`${ok ? '  ok ' : 'ÉCHEC'}  ${message}`);
@@ -285,6 +288,76 @@ for (const g of listGiveaways()) {
   check(steps.every((p, i) => i === 0 || p.unlocked >= steps[i - 1].unlocked) && steps[0].unlocked === 0 && steps[steps.length - 1].unlocked === g.lots.length, `${g.id} : les lots se débloquent au fil des ventes`);
   const funded = steps.every((p) => g.lots.filter((c) => p.need.get(c.id) <= p.tickets).reduce((s, c) => s + c.value, 0) <= p.tickets * p.perTicket + 1);
   check(funded, `${g.id} : la valeur des lots débloqués ne dépasse jamais la cagnotte`);
+}
+
+console.log('\nGarde-fous et robustesse');
+{
+  const st = () => store.getState();
+  resetStock();
+  store.resetDemo();
+  store.signup('Gardien');
+  check(reservedAtStart > 0, `lots de giveaway mis de côté dès le chargement (${reservedAtStart} cartes)`);
+
+  // Compteurs durables : le journal est plafonné, il ne sert plus de source de vérité.
+  const d1 = store.deposit(100_00);
+  st().tx.length = 0;
+  const d2 = store.deposit(100_00);
+  check(d1.bonus > 0 && d2.bonus === 0, 'bonus de premier dépôt versé une seule fois, même journal vidé');
+  const cheap = PACKS.filter(packAvailable).sort((a, b) => a.price - b.price)[0];
+  store.buyPacks(cheap.slug, 2);
+  st().tx.length = 0;
+  check(store.spentToday() === cheap.price * 2 && store.stats().spent === cheap.price * 2, 'dépense du jour et cumul des achats tenus hors du journal');
+
+  // Limite : une baisse est immédiate, un relèvement ou un retrait est différé.
+  store.setDailyLimit(50_00);
+  const raise = store.setDailyLimit(100_00);
+  check(st().limits.daily === 50_00 && raise.from > Date.now() && st().limits.pending?.daily === 100_00, `relèvement de limite différé de ${RULES.limitRaiseDelayHours} h`);
+  const lower = store.setDailyLimit(20_00);
+  check(st().limits.daily === 20_00 && lower.from === null && st().limits.pending === null, 'baisse de limite immédiate, relèvement en attente annulé');
+  const removal = store.setDailyLimit(null);
+  check(st().limits.daily === 20_00 && removal.from > Date.now(), 'retrait de limite différé');
+  check(store.buyPacks(cheap.slug, 3).code === 'limit' || cheap.price * 5 <= 20_00, "la limite en vigueur bloque l'achat qui la dépasserait");
+  st().limits.pending.from = Date.now() - 1;
+  check(store.dailyLimit().daily === null && st().limits.pending === null, 'le changement différé prend effet à son échéance');
+
+  // Pause : elle bloque aussi recharges, roue et participations, et ne se lève pas.
+  store.setPause(24);
+  const until = st().limits.pauseUntil;
+  check(store.deposit(10_00).code === 'pause' && store.buyPacks(cheap.slug, 1).code === 'pause' && store.updateGiveaway('brasier', { joined: true }).code === 'pause', 'pause : recharges, achats et participations suspendus');
+  check(store.setPause(0).ok === false && st().limits.pauseUntil === until, 'une pause ne se lève pas avant son terme');
+  store.resetDemo();
+  check(st().limits.pauseUntil === until, 'réinitialiser la démo ne lève pas la pause');
+  st().limits.pauseUntil = 0;
+
+  // Tickets de giveaway : ceux d'un mois passé ne comptent plus.
+  store.signup('Gardien');
+  const event = PACKS.find((p) => p.giveaway && packAvailable(p));
+  if (event) {
+    store.deposit(200_00);
+    store.buyPacks(event.slug, 1);
+    check(store.giveawayEntry(event.giveaway).tickets === 1, 'un pack événement donne un ticket');
+    st().giveaways[event.giveaway].period = '2000-01';
+    check(store.giveawayEntry(event.giveaway).tickets === 0, "les tickets d'un mois passé ne comptent plus");
+  }
+
+  // Tirage vérifiable : la graine serveur suivante est engagée avant le choix de la graine client.
+  const committed = st().fair.next.serverHash;
+  store.rotateSeeds('graine-du-joueur');
+  check(st().fair.serverHash === committed && st().fair.next.serverHash !== committed && sha256Hex(st().fair.serverSeed) === committed, 'après renouvellement, la graine serveur est celle dont l’empreinte était déjà affichée');
+  const table = packTable(cheap);
+  check(/^[0-9a-f]{64}$/.test(table.digest) && table.version === table.digest.slice(0, 12), 'empreinte complète de la table, la version affichée en est le début');
+  const lastRoll = st().rolls.find((r) => r.game.startsWith('pack:'));
+  check(Boolean(lastRoll?.outcome.digest), 'le journal garde l’empreinte complète de la table de chaque tirage');
+  check(store.wheelFactor(0) === RULES.cashback.wheel[0][0] && store.wheelFactor(TICKETS - 1) === RULES.cashback.wheel.at(-1)[0], 'barème de la roue lisible par la page de vérification');
+
+  // Inventaire importé : rien d'autre que les champs attendus n'entre.
+  check(imgUrl('https://images.pokemontcg.io/base1/4.png') !== '' && imgUrl('https://images.pokemontcg.io/base1/4.png\'"><img src=x onerror=alert(1)>').includes('<') === false && imgUrl('https://evil.example/x.png') === '' && imgUrl('javascript:alert(1)') === '', "adresses d'image : hôte attendu seulement, rien d'injectable");
+  const hostile = { format: 'pokiiiii-stock', version: 1, date: '2026-01-01', items: { 'zz-1': { q: 2, c: { id: 'autre', name: 'x'.repeat(500), nameEn: 'Test', set: 'S', value: '12', img: 'https://evil.example/a.png"><script>', imgHi: 'javascript:alert(1)', extra: '<b>' } }, 'zz-2': null, 'zz-3': { q: 5 } } };
+  importStock(hostile);
+  const kept = exportStock().items['zz-1'];
+  check(kept && kept.c.id === 'zz-1' && kept.c.name.length === 80 && kept.c.img === '' && kept.c.imgHi === '' && kept.c.value === 12 && !('extra' in kept.c) && !exportStock().items['zz-2'] && !exportStock().items['zz-3'], 'inventaire importé : fiche réduite aux champs attendus, entrées invalides écartées');
+  resetStock();
+  store.resetDemo();
 }
 
 console.log('\nIllustrations');

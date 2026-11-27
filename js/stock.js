@@ -10,6 +10,7 @@
 // (js/data/cards.js). En production, l'inventaire fait foi côté serveur.
 
 import { STOCK_KEY } from './config.js';
+import { imgUrl } from './format.js';
 import { CARDS as BASE } from './data/cards.js';
 import { PUBLISHED_STOCK } from './data/stock.js';
 
@@ -40,8 +41,43 @@ const BASE_VALUE = new Map(BASE.map(([id, , value, , type]) => [id, [value, type
  *           p = cote retenue par le site quand elle diffère de la cote du catalogue
  */
 function fresh() {
-  if (PUBLISHED_STOCK) return { v: VERSION, demo: false, items: structuredClone(PUBLISHED_STOCK.items || {}) };
+  if (PUBLISHED_STOCK) return { v: VERSION, demo: false, items: cleanItems(PUBLISHED_STOCK.items) };
   return { v: VERSION, demo: true, items: {} };
+}
+
+const text = (v, max = 80) => String(v ?? '').slice(0, max);
+
+/** Fiche d'une carte hors fonds, réduite aux champs attendus : rien d'autre n'entre dans l'inventaire. */
+function cleanCard(id, c) {
+  if (!c || typeof c !== 'object') return null;
+  return {
+    id,
+    name: text(c.name),
+    nameEn: text(c.nameEn),
+    setId: text(c.setId, 24),
+    set: text(c.set),
+    code: text(c.code, 24),
+    number: text(c.number, 16),
+    value: Math.max(0, Math.round(Number(c.value)) || 0),
+    type: text(c.type, 24),
+    tcgRarity: text(c.tcgRarity, 40),
+    img: imgUrl(c.img),
+    imgHi: imgUrl(c.imgHi),
+  };
+}
+
+/** Lignes d'inventaire venues d'un fichier : quantités bornées, fiches nettoyées, entrées inconnues écartées. */
+function cleanItems(raw) {
+  const items = {};
+  if (!raw || typeof raw !== 'object') return items;
+  for (const [id, item] of Object.entries(raw)) {
+    if (!item || typeof item !== 'object') continue;
+    const c = cleanCard(id, item.c);
+    if (!BASE_VALUE.has(id) && !c) continue;
+    const q = Math.max(0, Math.min(999, Math.round(item.q) || 0));
+    items[id] = { q, ...(c ? { c } : {}), ...(Number.isFinite(item.p) ? { p: Math.max(1, Math.round(item.p)) } : {}) };
+  }
+  return items;
 }
 
 function load() {
@@ -71,6 +107,13 @@ function changed({ persist = true } = {}) {
   }
   [...listeners].forEach((fn) => fn());
 }
+
+// Un autre onglet a modifié l'inventaire : on le relit au lieu de l'écraser.
+globalThis.addEventListener?.('storage', (e) => {
+  if (e.key !== STOCK_KEY || e.newValue == null) return;
+  state = load();
+  changed({ persist: false });
+});
 
 /** Compteur qui avance à chaque changement du stock : sert de clé de cache aux tables de tirage. */
 export const stockVersion = () => version;
@@ -197,12 +240,7 @@ export function exportStock() {
 /** Remplace l'inventaire par le contenu d'un fichier exporté. @returns {number} références au coffre */
 export function importStock(data) {
   if (!data || data.format !== 'pokiiiii-stock' || !data.items || typeof data.items !== 'object') throw new Error("Ce fichier n'est pas un inventaire exporté par le site.");
-  const items = {};
-  for (const [id, item] of Object.entries(data.items)) {
-    const q = Math.max(0, Math.min(999, Math.round(item?.q) || 0));
-    if (!BASE_VALUE.has(id) && !item?.c) continue;
-    items[id] = { q, ...(item.c ? { c: item.c } : {}), ...(Number.isFinite(item.p) ? { p: Math.max(1, Math.round(item.p)) } : {}) };
-  }
+  const items = cleanItems(data.items);
   state = { v: VERSION, demo: false, items };
   changed();
   return Object.values(items).filter((item) => item.q > 0).length;

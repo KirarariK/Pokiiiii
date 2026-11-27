@@ -50,8 +50,8 @@ function tileFor(owned) {
       livraison: `<span class="tile__status">${icon('truck', { size: 14 })}En préparation</span>`,
     }[owned.status] || '';
   return `<div class="tile-wrap ${checked ? 'is-selected' : ''}">
-    ${selectable ? `<label class="tile-check" title="Sélectionner"><input type="checkbox" data-select="${owned.uid}" ${checked ? 'checked' : ''}><span class="sr-only">Sélectionner ${esc(card.name)}</span></label>` : ''}
-    ${cardTile(card, { rarity: owned.rarity, value: owned.value, tag: 'button', attrs: `type="button" data-detail="${owned.uid}"`, extra })}
+    ${selectable ? `<label class="tile-check" title="Sélectionner"><input type="checkbox" data-select="${esc(owned.uid)}" ${checked ? 'checked' : ''}><span class="sr-only">Sélectionner ${esc(card.name)}</span></label>` : ''}
+    ${cardTile(card, { rarity: owned.rarity, value: owned.value, tag: 'button', attrs: `type="button" data-detail="${esc(owned.uid)}"`, extra })}
   </div>`;
 }
 
@@ -79,7 +79,7 @@ function openDetail(uid, rerender) {
   openModal({
     title: card.name,
     size: 'lg',
-    body: `<div class="detail" data-rarity="${owned.rarity}">
+    body: `<div class="detail" data-rarity="${esc(owned.rarity)}">
       <div class="detail__art"><span class="detail__card" data-tilt>${cardImage(card, { hi: true, lazy: false })}<span class="holo" aria-hidden="true"></span></span></div>
       <div class="detail__info">
         ${rarityBadge(owned.rarity, 'badge--lg')}
@@ -156,6 +156,7 @@ function openShipping(uids, rerender) {
     title: 'Demander la livraison',
     body: `<form class="form" data-ship-form novalidate>
       <p class="muted">${plural(picked.length, 'carte sera retirée', 'cartes seront retirées')} du coffre, emballée${picked.length > 1 ? 's' : ''} et envoyée${picked.length > 1 ? 's' : ''} en suivi.</p>
+      <p class="note note--demo">${icon('info', { size: 16 })}<span><strong>Démonstration :</strong> rien n'est expédié. N'entre pas ta vraie adresse : elle resterait en clair dans ce navigateur.</span></p>
       <div class="field">
         <label for="ship-zone">Destination</label>
         <select class="input" id="ship-zone" name="zone">
@@ -170,7 +171,8 @@ function openShipping(uids, rerender) {
         <div class="field"><label for="ship-city">Ville</label><input class="input" id="ship-city" name="city" autocomplete="address-level2" required maxlength="80"></div>
       </div>
       <p class="fee">${icon('truck', { size: 16 })}<span>Frais et délai : <strong data-fee>${feeLine(zones[0][0])}</strong></span></p>
-      ${insurance ? `<p class="small muted">Dont ${eur(insurance)} d'assurance : ${pct(RULES.shippingInsurance.rate * 100)} de la cote expédiée au-delà de ${eurShort(RULES.shippingInsurance.from)}.</p>` : ''}
+      ${insurance ? `<p class="small muted">Dont ${eur(insurance)} d'envoi en valeur déclarée : ${pct(RULES.shippingInsurance.rate * 100)} de la cote expédiée au-delà de ${eurShort(RULES.shippingInsurance.from)}.</p>` : ''}
+      <p class="small muted">Dans tous les cas, la perte et la casse restent à la charge du vendeur jusqu'à la remise du colis.</p>
       <p class="form__error" data-error role="alert" hidden></p>
     </form>`,
     footer: `<button class="btn btn--secondary" type="button" data-close>Annuler</button>

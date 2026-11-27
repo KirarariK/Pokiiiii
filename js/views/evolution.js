@@ -182,7 +182,6 @@ export default {
     // Après une tentative : l'aiguille tourne jusqu'à la position du ticket, puis le verdict s'affiche.
     if (ui.last && !ui.last.shown) {
       const last = ui.last;
-      last.shown = true;
       const needle = root.querySelector('[data-needle]');
       root.querySelector('.evo')?.scrollIntoView({ block: 'center' });
       const animated = motionOk();
@@ -190,6 +189,7 @@ export default {
       const angle = (last.ticket / TICKETS) * 360;
       const duration = !animated ? 0 : fast ? 1200 : 4200;
       const settle = () => {
+        last.shown = true;
         root.querySelector('[data-gauge]')?.classList.add(last.win ? 'is-win' : 'is-fail');
         root.querySelectorAll('[data-verdict], [data-ticket], [data-after]').forEach((el) => {
           el.hidden = false;

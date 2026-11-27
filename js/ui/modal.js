@@ -35,6 +35,8 @@ export function openModal({ title, body, footer = '', size = 'md', onMount, onCl
     current = null;
     document.removeEventListener('keydown', onKey);
     wrap.classList.add('is-leaving');
+    // Pendant le fondu de sortie, la fenêtre ne reçoit plus de clic (pas de double validation).
+    wrap.inert = true;
     document.documentElement.classList.remove('has-modal');
     setTimeout(() => wrap.remove(), 180);
     onClose?.();

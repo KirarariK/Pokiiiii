@@ -16,7 +16,7 @@ import { PACKS, RARITIES } from '../data/packs.js';
 import { dateTimeFr, esc, eur, eurShort, num, pct, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { clearStock, exportStock, importStock, priceOverride, qtyOf, resetStock, setPrice, setStock, setStockMany, usingDemoStock } from '../stock.js';
-import { getState, houseLedger, ownedByUid, updateShipment } from '../store.js';
+import { getState, holdBackOwnedCards, houseLedger, ownedByUid, updateShipment } from '../store.js';
 import { emptyState, note, pageHead, statTile } from '../ui/blocks.js';
 import { confirmDialog, toast } from '../ui/modal.js';
 import pilotage from './pilotage.js';
@@ -480,6 +480,8 @@ export default {
           const ok = await confirmDialog({ title: 'Revenir au stock de départ ?', confirm: 'Revenir', body: `<p>L'inventaire saisi sur cet appareil sera remplacé par le stock livré avec le site.</p>` });
           if (!ok) return;
           resetStock();
+          // Les cartes que le joueur de cet appareil détient déjà ne redeviennent pas disponibles.
+          holdBackOwnedCards();
           paint();
         }
       });

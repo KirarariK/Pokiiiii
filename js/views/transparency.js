@@ -4,6 +4,7 @@
 import { PRICES_DATE, RULES } from '../config.js';
 import { dropTable, expectedValue, packAvailable, packReturn, profitChance } from '../catalog.js';
 import { BADGES } from '../data/badges.js';
+import { belowPriceRange } from '../data/faq.js';
 import { listGiveaways } from '../data/giveaways.js';
 import { PACKS } from '../data/packs.js';
 import { dateFr, esc, eur, num, pct, pctFine } from '../format.js';
@@ -29,10 +30,10 @@ function packRows() {
 
 const TODO = [
   ['landmark', 'Société', 'Immatriculation, mentions légales, CGV et CGU rédigées par un juriste.'],
-  ['scale', 'Qualification juridique', "Faire valider le modèle : vente d'un bien à contenu aléatoire, ou jeu d'argent soumis à autorisation. La réponse conditionne tout le reste."],
-  ['dices', 'Tirage certifié', "Graine serveur gardée côté serveur, chaque version de table archivée et datée, générateur d'aléa audité par un laboratoire agréé, journal infalsifiable."],
-  ['credit-card', 'Paiement', 'Prestataire de paiement agréé, lutte contre la fraude et les impayés.'],
-  ['scan-face', 'Identité et majorité', "Vérification de l'âge à l'inscription et de l'identité (KYC) avant tout retrait."],
+  ['scale', 'Modèle à refondre', "En France, payer pour un tirage dont le lot se revend contre de l'argent est un jeu d'argent, interdit hors des opérateurs autorisés, et aucun agrément n'existe pour ce type de jeu. Le modèle montré ici ne peut donc pas ouvrir tel quel : il doit être refondu, puis validé par un avocat."],
+  ['dices', 'Tirage tenu côté serveur', "Graine serveur gardée côté serveur, chaque version de table archivée et datée, journal infalsifiable. Un audit du générateur d'aléa est une garantie technique : il ne vaut pas autorisation."],
+  ['credit-card', 'Paiement', "Aucun solde retirable tenu par le site : cela relève d'un établissement agréé. Prestataire de paiement informé du modèle réel, lutte contre la fraude et les impayés."],
+  ['scan-face', 'Identité et majorité', "Vérification de l'âge et de l'identité avant le premier paiement, pas au moment d'un retrait."],
   ['vault', 'Stock et logistique', "Inventaire tenu côté serveur et partagé par tous les joueurs, coffre assuré, expédition suivie, gestion des retours."],
   ['shield', 'Protection des joueurs', 'Limites de dépenses, rappels de session, pauses et auto-exclusion appliqués côté serveur.'],
   ['lock', 'Données personnelles', 'Registre des traitements, politique de confidentialité, bandeau cookies conforme.'],
@@ -45,6 +46,7 @@ export default {
     const low = Math.min(...PACKS.map((p) => p.target));
     const high = Math.max(...PACKS.map((p) => p.target));
     const fund = listGiveaways().find((g) => g.fundRate)?.fundRate ?? 0;
+    const below = belowPriceRange();
     return `
     ${pageHead({ icon: 'scale', title: 'Transparence et jeu responsable' })}
 
@@ -55,7 +57,8 @@ export default {
         <thead><tr><th>Pack</th><th class="num">Prix</th><th class="num">Cote moyenne</th><th class="num">Retour théorique</th><th class="num">Carte ≥ prix</th><th class="num">Cartes</th></tr></thead>
         <tbody>${packRows()}</tbody>
       </table></div>
-      <p class="small muted">« Carte ≥ prix » : part des tirages où la carte vaut au moins le prix du pack. Revendue après la garantie, une carte est reprise à ${percent(RULES.buybackLaterRate)} : le retour baisse d'autant. Cotes indicatives relevées le ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())} (Cardmarket, moyenne 30 jours, via pokemontcg.io).</p>
+      ${below ? `<p><strong>La moyenne cache l'essentiel :</strong> dans ${pct(below.low * 100)} à ${pct(below.high * 100)} des tirages selon le pack, la carte vaut moins que le prix payé.</p>` : ''}
+      <p class="small muted">« Carte ≥ prix » : part des tirages où la carte vaut au moins le prix du pack. Revendue après la garantie, une carte est reprise à ${percent(RULES.buybackLaterRate)} : le retour baisse d'autant. Cotes indicatives relevées le ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())} (Cardmarket, moyenne 30 jours, via pokemontcg.io) : un prix observé entre vendeurs tiers, qui ne distingue ni l'état ni la langue de l'exemplaire.</p>
       ${note("Une moyenne ne dit rien d'un tirage isolé : la plupart des cartes sortent dans les premiers paliers, et les gros lots sont rares. Ne compte jamais sur un pack pour te refaire.", 'warn')}
     </section>
 
@@ -64,10 +67,10 @@ export default {
       <ul>
         <li><strong>Évolution</strong> : chance de réussite = cote misée ÷ cote visée × (1 − marge). La marge va de ${percent(edgeMin)} à ${percent(edgeMax)} selon l'écart visé ; le retour théorique de chaque cible est affiché avant de jouer.</li>
         <li><strong>Cashback</strong> : de ${pct(BADGES[0].cashback * 100)} à ${pct(BADGES[BADGES.length - 1].cashback * 100)} de la marge du site sur tes mises, selon ton badge. La roue qui permet de le multiplier a une moyenne de ×1 : elle ne te fait ni gagner ni perdre sur la durée.</li>
-        <li><strong>Bonus</strong> : crédités tout de suite, retirables après avoir misé ${RULES.bonus.wagering} fois leur montant en packs. L'argent que tu déposes n'est jamais bloqué par un bonus.</li>
+        <li><strong>Bonus</strong> : crédités tout de suite, tenus à part tant que tu n'as pas misé ${RULES.bonus.wagering} fois leur montant en packs. Un bonus ne bloque jamais le reste de ton solde.</li>
         <li><strong>Giveaways</strong> : financés par ${pct(fund * 100)} du prix de chaque pack événement vendu ; les lots se débloquent au fil des ventes et seuls les lots débloqués sont tirés au sort.</li>
         <li><strong>Classement</strong> : les dix premiers se partagent ${pct(RULES.leaderboardShare * 100)} de la marge du mois. Seuls les achats de packs donnent des points.</li>
-        <li><strong>Livraison</strong> : forfait par envoi, plus ${pct(RULES.shippingInsurance.rate * 100)} d'assurance sur la cote expédiée au-delà de ${eur(RULES.shippingInsurance.from)}.</li>
+        <li><strong>Livraison</strong> : forfait par envoi, plus ${pct(RULES.shippingInsurance.rate * 100)} d'envoi en valeur déclarée sur la cote expédiée au-delà de ${eur(RULES.shippingInsurance.from)}. La perte et la casse restent à la charge du vendeur jusqu'à la remise.</li>
       </ul>
     </section>
 
@@ -84,6 +87,7 @@ export default {
 
     <section class="panel panel--pad prose">
       <h2>${icon('info', { size: 22 })}Ce que la démonstration ne fait pas</h2>
+      <p><strong>Ce site est une maquette sans argent.</strong> Aucune autorité ne l'a autorisé, agréé ni certifié, et il ne sera pas ouvert en argent réel sous cette forme.</p>
       <ul>
         <li><strong>Aucun paiement</strong> : le solde est fait de crédits fictifs, et aucun retrait n'est possible.</li>
         <li><strong>Un coffre d'exemple</strong> : l'inventaire est un stock de démonstration, tenu dans ton navigateur. Il n'est pas partagé entre appareils.</li>

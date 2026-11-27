@@ -10,10 +10,10 @@
 // passé près.
 
 import { RULES } from '../config.js';
-import { cardById, cardRef } from '../catalog.js';
+import { cardById, cardRef, packAvailable } from '../catalog.js';
 import { RARITIES, packBySlug } from '../data/packs.js';
 import { drawFromPack } from '../draw.js';
-import { esc, eur, num, plural } from '../format.js';
+import { esc, eur, imgUrl, num, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { intFrom, seeded } from '../rng.js';
 import { buybackOf, getState, markRevealed, ownedByUid, sellCards, setSetting } from '../store.js';
@@ -109,7 +109,7 @@ function summaryHtml(session, pack, order, lockUntil) {
   return `
   <section class="summary">
     <header class="page-head">
-      <span class="page-head__ico">${icon('party-popper', { size: 24 })}</span>
+      <span class="page-head__ico">${icon(diff >= 0 ? 'party-popper' : 'package-open', { size: 24 })}</span>
       <div class="page-head__text">
         <h1>Ton ouverture</h1>
         <p class="page-head__lead">${plural(order.qty, 'pack', 'packs')} ${esc(pack.name)} · payé ${eur(order.total)}</p>
@@ -141,8 +141,8 @@ function summaryHtml(session, pack, order, lockUntil) {
 
     <div class="summary__actions">
       ${kept.length > 1 ? `<button class="btn btn--secondary" type="button" data-sell-all>${icon('hand-coins', { size: 18 })}Tout revendre — ${eur(keptBuyback)}</button>` : ''}
-      <a class="btn btn--secondary" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>
-      <a class="btn btn--primary" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Rouvrir un ${esc(pack.short)}</a>
+      <a class="btn btn--primary" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>
+      <a class="btn btn--secondary" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Retour au ${esc(pack.short)}</a>
     </div>
     <p class="center small muted">${icon('shield-check', { size: 14 })} Chaque tirage est vérifiable : <a href="#/equite">voir mes tickets</a></p>
   </section>`;
@@ -204,7 +204,7 @@ export default {
       const single = queue.length === 1;
       const locked = Date.now() < lockUntil;
       const next = single
-        ? `<a class="btn btn--primary btn--lg" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Rouvrir un ${esc(pack.short)}</a>`
+        ? `<a class="btn btn--primary btn--lg" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>`
         : `<button class="btn btn--primary btn--lg" type="button" data-next>${last ? 'Voir le récapitulatif' : 'Carte suivante'}${icon('arrow-right', { size: 18 })}</button>`;
       return `
         ${rarityBadge(owned.rarity, 'badge--lg')}
@@ -229,7 +229,7 @@ export default {
       $('[data-strip]').innerHTML = tiles
         .map(
           (t, i) => `<span class="reel__tile" data-rarity="${t.rarity}" ${i === REEL_WIN ? 'data-win' : ''}>
-            <img src="${t.card.img}" alt="" width="245" height="342" draggable="false">
+            <img src="${esc(imgUrl(t.card.img))}" alt="" width="245" height="342" draggable="false">
           </span>`,
         )
         .join('');
@@ -286,8 +286,10 @@ export default {
     function reveal(owned, card) {
       scene.dataset.rarity = owned.rarity;
       setPhase('revealed');
-      sfx.reveal(owned.rarity);
-      if (BURST[owned.rarity]) {
+      // On ne fête que ce qui vaut au moins le prix payé : une carte sous le prix n'est pas un gain.
+      const won = owned.value >= pack.price;
+      sfx.reveal(won ? owned.rarity : 'commune');
+      if (won && BURST[owned.rarity]) {
         burst($('.opening__fx'), {
           color: getComputedStyle(scene).getPropertyValue('--rc').trim() || '#ffc83d',
           count: BURST[owned.rarity],
@@ -322,7 +324,7 @@ export default {
       front.innerHTML = '';
       const ready = preload(card.imgHi);
       const showCard = () => {
-        front.innerHTML = `<img src="${card.imgHi}" alt="${esc(card.name)} — ${esc(card.set)}" width="734" height="1024" draggable="false">`;
+        front.innerHTML = `<img src="${esc(imgUrl(card.imgHi))}" alt="${esc(card.name)} — ${esc(card.set)}" width="734" height="1024" draggable="false">`;
         $('[data-card]').hidden = false;
       };
 
@@ -334,7 +336,8 @@ export default {
         return;
       }
 
-      if (fast) {
+      // Pack passé en rupture avec cet achat : plus de table pour garnir la roulette, on révèle directement.
+      if (fast || !packAvailable(pack)) {
         // Ouverture rapide : le pack se déchire, la carte se retourne.
         sfx.tear();
         setPhase('burst');

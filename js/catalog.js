@@ -239,8 +239,9 @@ function buildTable(pack) {
     const message = ret > pack.target ? 'Les cartes au coffre sont trop cotées pour le prix de ce pack : ajoute des cartes dans les petits paliers.' : 'Il manque de grosses cartes au coffre pour atteindre le retour annoncé.';
     return fail('calibrage', message);
   }
-  const version = sha256Hex(drops.map((d) => `${d.card.id}:${d.from}-${d.to}`).join('|')).slice(0, 12);
-  return { ok: true, reason: '', message: '', tiers: view(), drops, ev: mean, version };
+  // Empreinte de la table : cartes, cotes et plages de tickets. La version affichée en est le début.
+  const digest = sha256Hex(drops.map((d) => `${d.card.id}:${d.card.value}:${d.from}-${d.to}`).join('|'));
+  return { ok: true, reason: '', message: '', tiers: view(), drops, ev: mean, version: digest.slice(0, 12), digest };
 }
 
 const tables = new Map();

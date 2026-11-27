@@ -50,7 +50,7 @@ function buildGiveaways(now) {
     withTotal({
       id: 'brasier',
       title: 'Giveaway Brasier',
-      intro: 'Douze cartes de type Feu à gagner, douze gagnants. Chaque Pack Brasier ouvert pendant le mois donne un ticket.',
+      intro: "Jusqu'à douze cartes de type Feu à gagner. Un lot n'est tiré au sort que s'il est débloqué à la clôture. Chaque Pack Brasier ouvert pendant le mois donne un ticket.",
       pack: 'brasier',
       start: startOfMonth(d),
       end: endOfMonth,

@@ -119,19 +119,55 @@ Rapport détaillé : [`audit/04-paiements.md`](audit/04-paiements.md).
 
 ## 5. Fiscalité et comptabilité
 
-Rapport détaillé : [`audit/05-fiscalite.md`](audit/05-fiscalite.md). Synthèse plus bas, section « Compléments ».
+Rapport détaillé : [`audit/05-fiscalite.md`](audit/05-fiscalite.md).
+
+- **TVA** : le modèle économique du dépôt ne chiffre que la lecture la plus favorable (régime de la marge, marge calculée globalement sur le mois, rachat traité comme un achat d'occasion) : 3 729 € par mois sur 151 854 € de ventes. Si la marge se calcule vente par vente, qui est la méthode par défaut, la TVA passe à **9 818 € par mois** et le résultat du mois tombe de 6 433 € à **345 €**. Sur le prix entier, le modèle est en perte (de −10 428 à −15 146 € par mois). Il ne supporte pas plus de 10 162 € de TVA par mois.
+- **Le rachat d'une carte jamais sortie du coffre** n'est pas qualifié : achat d'occasion à un particulier (seule lecture qui sauve le modèle fiscal), annulation de vente, ou jeu d'argent. Le site ne peut pas dire « achat » pour la TVA et « avoir » dans ses conditions de vente.
+- **Registre des objets mobiliers** (code pénal, art. 321-7 : six mois d'emprisonnement et 30 000 €) : il s'applique à qui achète des biens d'occasion à des particuliers, donc à chaque rachat. Déclaration en préfecture, identité du vendeur et prix inscrits, avant le premier rachat. Le stock est tenu en quantités, pas en exemplaires : ni registre ni marge par vente ne sont possibles en l'état.
+- **Exonération des jeux** (code général des impôts, art. 261 E) : réservée aux jeux autorisés. Elle ne joue pas ici.
+- **Caisse et factures** : logiciel d'encaissement certifié sauf si tous les paiements passent par une banque (douteux avec un solde interne) ; réception des factures électroniques obligatoire depuis le 1er septembre 2026, émission au 1er septembre 2027 pour les petites entreprises.
+- **Côté joueur** : revente exonérée jusqu'à 5 000 € par objet ; au-delà, plus-value ou taxe forfaitaire.
+
+À valider en premier par l'expert-comptable : la qualification unique du couple vente du pack et rachat, puis l'accès au calcul global de la marge.
 
 ## 6. Données personnelles
 
-Rapport détaillé : [`audit/06-rgpd.md`](audit/06-rgpd.md). Synthèse plus bas, section « Compléments ».
+Rapport détaillé, avec une politique de confidentialité prête à coller : [`audit/06-rgpd.md`](audit/06-rgpd.md).
+
+- **Site actuel : pas de bandeau de consentement à prévoir.** Mesuré dans un navigateur : aucun cookie, rien d'écrit avant une action du visiteur, stockage local strictement fonctionnel.
+- **Images de cartes chargées chez un tiers** : dès la première page, vingt images sont demandées à `images.pokemontcg.io`, qui reçoit l'adresse IP du visiteur. Même question de principe que l'affaire des polices Google en Allemagne. La politique de confidentialité disait le contraire ; elle est corrigée, et le site n'envoie plus l'adresse de la page visitée.
+- **Version réelle** : l'architecture actuelle ne peut pas porter de vraies données. Tout l'état est dans le navigateur, et l'espace admin s'ouvre sans mot de passe en deux écritures dans le stockage. Il faudra un serveur, une analyse d'impact avant le lancement, un délégué à la protection des données, une vérification d'identité sobre, un classement public activé par le joueur et non par défaut, et aucune décision automatique de blocage sans intervention humaine.
+- **Données de jeu** : dépenses, limites et auto-exclusion sont des données très sensibles. On garde le fait, jamais le motif, et on n'en fait aucun usage commercial.
 
 ## 7. Propriété intellectuelle
 
-Rapport détaillé : [`audit/07-propriete-intellectuelle.md`](audit/07-propriete-intellectuelle.md). Synthèse plus bas, section « Compléments ».
+Rapport détaillé : [`audit/07-propriete-intellectuelle.md`](audit/07-propriete-intellectuelle.md).
+
+Revendre des cartes authentiques et les nommer est licite en principe (épuisement du droit, usage de la marque pour désigner le produit). Le projet sort de ce cadre sur trois points.
+
+1. **Le nom** (élevé, bloquant pour un dépôt de marque) : un nom en « Pok… » n'a de sens que par Pokémon, sur des produits identiques, face à une marque de très grande renommée. Il est aussi presque celui d'une plateforme européenne de jeux en ligne. Il faut un nom inventé, sans « Pok », « mon », « dex » ni « ball », une recherche d'antériorités, puis un dépôt en France et dans l'Union.
+2. **Les illustrations des cartes** (élevé) : l'épuisement couvre la revente de l'exemplaire, pas la reproduction de son image. Le site affiche 20 811 visuels, cartes hors stock comprises, et s'en sert en décor (accueil, choix du thème). La tolérance dont bénéficie un revendeur vaut pour montrer ce qu'il vend réellement. À terme : photos maison des seules cartes en stock.
+3. **Une marque pour enfants associée à un jeu de hasard payant** (élevé, structurel) : un tirage payant n'est pas un mode usuel de revente ; le titulaire peut s'y opposer. Ce risque dépend d'abord de la qualification en jeu d'argent.
+
+Autres points :
+
+- **Données** : l'API pokemontcg.io annonce sa fermeture au 1er mars 2027 ; les conditions de TCGplayer et de Cardmarket n'autorisent pas la réutilisation commerciale de leurs prix. Une cote qui fixe un rachat demande une source sous licence, nommée et datée.
+- **Illustrations des packs et logo générés par IA** : propres (ni Poké Ball, ni personnage, ni logo, ni symbole officiel), mais probablement pas protégeables par le droit d'auteur.
+- **Gamme reprise du concurrent** : noms et prix de quatre packs, paliers, règles. Risque de parasitisme ; la gamme a été refaite (voir [`AUDIT_PROJET.md`](AUDIT_PROJET.md)).
+- **Licences** : polices sous licence OFL, conformes ; texte de la licence ISC des icônes ajouté ; mention d'indépendance complétée.
 
 ## 8. Autres pays et montages des concurrents
 
-Rapport détaillé : [`audit/08-international.md`](audit/08-international.md). Synthèse plus bas, section « Compléments ».
+Rapport détaillé : [`audit/08-international.md`](audit/08-international.md).
+
+- **Aucun pays francophone n'offre de licence pour ce produit.** Belgique : jeu de hasard dès qu'il y a enjeu, gain « de quelque nature » et hasard même accessoire ; licences en ligne réservées aux opérateurs terrestres ; loot boxes payantes qualifiées de jeux de hasard dès 2018. Suisse : mise contre l'espoir d'un gain ou d'un « avantage appréciable en argent », offre en ligne réservée aux concessionnaires, blocage. Luxembourg et Québec : interdit sans licence.
+- **Royaume-Uni** : une carte revendable est un gain « en argent ou valeur équivalente » ; une licence de jeu à distance est possible en théorie, pour un autre marché et au prix d'une conformité de casino.
+- **États-Unis** : le modèle « sweepstakes » est désormais interdit par la loi dans plusieurs États, dont la Californie depuis le 1er janvier 2026 ; des actions sont en cours contre des plateformes d'ouverture de packs.
+- **Licence étrangère** (Malte, Curaçao, île de Man, Anjouan) : aucun droit de viser la France. La Cour de justice de l'Union l'a rappelé en avril 2026 : un État peut interdire une offre en ligne autorisée ailleurs dans l'Union, et les contrats sont annulables.
+- **Les concurrents ne sont pas un précédent.** Le concurrent de référence est une société française récente, sans licence, qui se présente comme une « vente de produit à caractère aléatoire » ; ses propres textes se contredisent sur le retrait des avoirs. Les grands sites de boîtes mystère opèrent depuis l'étranger, sans licence affichée. L'absence de sanction publiée traduit une absence de contrôle, pas une validation.
+- **Union européenne** : la proposition de règlement du 11 novembre 2026 (« Digital Fairness Act ») viserait les récompenses variables payantes : probabilités publiées, désactivation possible, interdiction aux mineurs.
+
+Classement des montages : boutique à contenu connu en société française (faible) ; pack surprise sans aucune monétisation par le site, France seule (moyen à élevé) ; avoir non retirable (élevé) ; projet actuel, modèle « sweepstakes » ou société étrangère visant la France (bloquant).
 
 ## Ce qui a été corrigé dans le site
 

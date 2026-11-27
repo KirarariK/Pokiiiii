@@ -175,7 +175,7 @@ export function openThemeChooser({ first = false } = {}) {
         ${THEMES.map((t) => themeCard(t, { selected: t.id === selected, suggested: t.id === suggestion })).join('')}
       </div>
       <footer class="chooser__foot">
-        ${first ? `<p class="small muted"><span class="age-pill">${RULES.minAge}+</span>En entrant, tu confirmes avoir ${RULES.minAge} ans ou plus.</p>` : `<button class="btn btn--secondary btn--lg" type="button" data-chooser-cancel>Annuler</button>`}
+        ${first ? `<p class="small"><span class="age-pill">${RULES.minAge}+</span><strong>Réservé aux majeurs.</strong> En entrant, tu confirmes avoir ${RULES.minAge} ans ou plus.</p>` : `<button class="btn btn--secondary btn--lg" type="button" data-chooser-cancel>Annuler</button>`}
         <button class="btn btn--primary btn--lg" type="button" data-chooser-confirm>${first ? 'Entrer avec le thème' : 'Garder le thème'} <span data-chooser-name></span>${icon('arrow-right', { size: 18 })}</button>
       </footer>
     </div>`;
@@ -201,7 +201,8 @@ export function openThemeChooser({ first = false } = {}) {
     const onKey = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        close(first); // à la première visite, Échap valide la suggestion ; ensuite il annule
+        // À la première visite, entrer vaut déclaration de majorité : il faut le bouton, pas Échap.
+        if (!first) close(false);
         return;
       }
       if (e.key !== 'Tab') return;

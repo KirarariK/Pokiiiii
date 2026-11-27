@@ -38,7 +38,7 @@ function giveawayBox(pack) {
   return `<div class="buy__gw">
     <div class="buy__gw-row">
       <span>${icon('ticket', { size: 16 })}Tes tickets</span>
-      <strong>${tickets == null ? '–' : tickets}</strong>
+      <strong>${tickets == null ? '–' : num(Number(tickets) || 0)}</strong>
     </div>
     <div class="buy__gw-row">
       <span>${icon('clock', { size: 16 })}Clôture dans</span>
@@ -65,6 +65,7 @@ function buyPanel(pack, qty) {
         <button class="btn btn--primary btn--lg btn--block buy__cta" type="button" data-buy>
           ${icon('package-open', { size: 20 })}<span data-buy-label></span>
         </button>
+        <p class="small center"><strong>${pctFine(1 - profitChance(pack))}</strong> des tirages donnent une carte cotée moins que le prix du pack.</p>
         <p class="small muted center">${isLoggedIn() ? `Solde <strong>${eur(getState().balance)}</strong> · ` : ''}Rachat ${Math.round(RULES.buybackRate * 100)} % pendant ${RULES.buybackLockMinutes} min, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite · <a href="#/equite">tirage vérifiable</a></p>`;
 }
 
@@ -183,13 +184,13 @@ export default {
         openTopup({ need: total - balance, onDone: rerender });
         return;
       }
-      // Premier achat : on recueille l'accord pour une ouverture immédiate. Ensuite, un clic suffit.
+      // Premier achat : on rappelle que la carte est tirée dès la confirmation. Ensuite, un clic suffit.
       if (!getState().settings.instant) {
         const ok = await confirmDialog({
-          title: 'Ouverture immédiate',
+          title: "Confirmer l'ouverture",
           confirm: 'Ouvrir',
-          body: `<p><strong>${plural(qty, 'pack', 'packs')} ${esc(pack.name)}</strong> pour <strong>${eur(total)}</strong>.</p>
-                 <p class="muted small">La carte est tirée tout de suite : l'achat est définitif, sans droit de rétractation. Cet accord vaut pour tes prochains achats.</p>`,
+          body: `<p><strong>${plural(qty, 'pack', 'packs')} ${esc(pack.name)}</strong> pour <strong>${eur(total)}</strong> de crédits fictifs.</p>
+                 <p class="muted small">Démonstration : rien n'est vendu. La carte est tirée dès que tu confirmes ; ce rappel ne s'affichera plus.</p>`,
         });
         if (!ok) return;
         setSetting('instant', true);
@@ -202,7 +203,10 @@ export default {
       sfx.tap();
       if (res.short) toast(`Le coffre n'a permis d'ouvrir que ${plural(res.pulls.length, 'pack', 'packs')} : tu n'as payé que ceux-là.`, 'info');
       navigate('/ouverture');
+      return true;
     };
+    /** Vrai pendant un achat, et après un achat réussi jusqu'au changement de page : un double clic n'achète pas deux fois. */
+    let buying = false;
 
     const onClick = (e) => {
       const chip = e.target.closest('.bet__chip');
@@ -217,7 +221,17 @@ export default {
         more.remove();
         return;
       }
-      if (e.target.closest('[data-buy]')) buy();
+      if (e.target.closest('[data-buy]') && !buying) {
+        buying = true;
+        buy().then(
+          (done) => {
+            buying = done === true;
+          },
+          () => {
+            buying = false;
+          },
+        );
+      }
     };
     root.addEventListener('click', onClick);
     const untilt = attachTilt(root.querySelector('[data-tilt]'), 16);

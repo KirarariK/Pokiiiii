@@ -5,7 +5,7 @@ import { PACKS, packBySlug } from '../data/packs.js';
 import { TICKETS, isValidClientSeed, sha256Hex, ticketFor } from '../fair.js';
 import { dateTimeFr, esc, eur, num } from '../format.js';
 import { icon } from '../icons.js';
-import { getState, isLoggedIn, revealedSeed, rotateSeeds } from '../store.js';
+import { getState, isLoggedIn, revealedSeed, rotateSeeds, wheelFactor } from '../store.js';
 import { note, pageHead } from '../ui/blocks.js';
 import { confirmDialog, toast } from '../ui/modal.js';
 
@@ -28,7 +28,7 @@ function describe(game, ticket) {
 
 function outcome(roll) {
   const o = roll.outcome || {};
-  if (o.cardId) return `${esc(cardById(o.cardId)?.name || o.cardId)}${'from' in o ? ` <span class="muted small">· plage ${num(o.from)} – ${num(o.to - 1)} · table ${esc(o.table || '')}</span>` : ''}`;
+  if (o.cardId) return `${esc(cardById(o.cardId)?.name || o.cardId)}${'from' in o ? ` <span class="muted small" ${o.digest ? `title="Empreinte de la table : ${esc(o.digest)}"` : ''}>· plage ${num(o.from)} – ${num(o.to - 1)} · table ${esc(o.table || '')}</span>` : ''}`;
   if ('win' in o) return `${o.win ? 'Réussite' : 'Échec'} (seuil ${num(o.winBelow)})`;
   if ('amount' in o) return `+${eur(o.amount)}`;
   return '';
@@ -38,13 +38,18 @@ function outcome(roll) {
 function status(roll) {
   const seed = revealedSeed(roll.hash);
   if (!seed) return `<span class="muted">${icon('lock', { size: 14 })} Graine en cours</span>`;
-  // Le ticket se recalcule à partir des graines ; pour un pack, il doit aussi tomber dans la plage
-  // de tickets que la carte occupait sur la table du moment (la table change avec le coffre).
+  // Trois contrôles : la graine révélée a bien l'empreinte annoncée avant le tirage ; le ticket se
+  // recalcule à partir des graines ; le résultat découle du ticket (plage de la carte sur la table
+  // du moment, seuil de l'Évolution, barème de la roue).
   const o = roll.outcome || {};
-  const inRange = !('from' in o) || (roll.ticket >= o.from && roll.ticket < o.to);
-  const ok = ticketFor(seed, roll.clientSeed, roll.nonce, roll.game) === roll.ticket && inRange;
+  const committed = sha256Hex(seed) === roll.hash;
+  let consistent = true;
+  if ('from' in o) consistent = roll.ticket >= o.from && roll.ticket < o.to;
+  else if ('win' in o) consistent = o.win === roll.ticket < o.winBelow;
+  else if ('factor' in o) consistent = wheelFactor(roll.ticket) === o.factor;
+  const ok = committed && ticketFor(seed, roll.clientSeed, roll.nonce, roll.game) === roll.ticket && consistent;
   return ok
-    ? `<span class="pos">${icon('circle-check', { size: 15 })} Conforme</span> <button class="btn btn--ghost btn--sm" type="button" data-fill="${roll.id}">Détail</button>`
+    ? `<span class="pos">${icon('circle-check', { size: 15 })} Conforme</span> <button class="btn btn--ghost btn--sm" type="button" data-fill="${esc(roll.id)}">Détail</button>`
     : `<span class="neg">${icon('circle-alert', { size: 15 })} Écart</span>`;
 }
 
@@ -60,6 +65,7 @@ function seedsPanel() {
     <dl class="kv kv--stack seeds">
       <div><dt>${icon('fingerprint', { size: 15 })} Empreinte de la graine serveur (SHA-256)</dt><dd><code>${esc(f.serverHash)}</code></dd></div>
       <div><dt>${icon('user', { size: 15 })} Graine client</dt><dd><code>${esc(f.clientSeed)}</code></dd></div>
+      <div><dt>${icon('fingerprint', { size: 15 })} Empreinte de la graine serveur suivante</dt><dd><code>${esc(f.next.serverHash)}</code></dd></div>
       <div><dt>${icon('hash', { size: 15 })} Prochain tirage</dt><dd>n° ${num(f.nonce)} · ${num(f.nonce)} tirage${f.nonce > 1 ? 's' : ''} depuis le ${dateTimeFr(f.since)}</dd></div>
     </dl>
     <form class="form seeds__form" data-rotate novalidate>
@@ -70,7 +76,7 @@ function seedsPanel() {
       </div>
       <button class="btn btn--primary" type="submit">${icon('rotate-cw', { size: 16 })}Renouveler mes graines</button>
     </form>
-    <p class="small muted">Renouveler révèle la graine serveur en cours : tous les tirages faits avec elle deviennent vérifiables ci-dessous, et une nouvelle paire prend le relais.</p>
+    <p class="small muted">Renouveler révèle la graine serveur en cours : tous les tirages faits avec elle deviennent vérifiables ci-dessous. La graine serveur qui prend le relais est celle dont l'empreinte est affichée ci-dessus : elle est fixée avant que tu choisisses ta graine client.</p>
   </section>`;
 }
 
@@ -143,11 +149,11 @@ export default {
       <h2>${icon('dices', { size: 22 })}Le principe</h2>
       <ol>
         <li><strong>Avant de jouer</strong>, nous créons une graine serveur secrète et nous t'en montrons l'empreinte SHA-256. Une empreinte ne permet pas de retrouver la graine, mais elle nous empêche d'en changer.</li>
-        <li><strong>Tu choisis ta graine client</strong> (ou tu gardes celle tirée au hasard). Comme nous ne la connaissons pas à l'avance, nous ne pouvons pas préparer un résultat.</li>
+        <li><strong>Tu choisis ta graine client</strong> (ou tu gardes celle tirée au hasard). L'empreinte de la graine serveur suivante est déjà affichée à ce moment-là : elle ne peut pas être fabriquée après coup pour s'accorder à ton choix.</li>
         <li><strong>À chaque tirage</strong>, le ticket vaut <code>HMAC-SHA256(graine serveur, « graine client:numéro:jeu »)</code>, ramené à un nombre entre 0 et ${num(TICKETS - 1)}. La table publiée sur la page du pack dit quelle carte correspond à ce ticket.</li>
         <li><strong>Quand tu renouvelles tes graines</strong>, l'ancienne graine serveur est révélée : tu vérifies que son empreinte est bien celle annoncée, et tu recalcules tous tes tickets.</li>
       </ol>
-      ${note("Démonstration : la graine serveur est créée et gardée dans ton navigateur, donc lisible par qui sait où chercher. En production, elle reste sur nos serveurs jusqu'à son renouvellement, et les tables de tirage sont figées et datées.", 'demo')}
+      ${note("Démonstration : la graine serveur est créée et gardée dans ton navigateur, donc lisible par qui sait où chercher. Sur un vrai service, elle resterait côté serveur jusqu'à son renouvellement, et l'empreinte de chaque table serait publiée et datée avant le tirage : sans cela, rien n'empêche de modifier une table après avoir vu un ticket.", 'demo')}
     </section>
 
     ${seedsPanel()}

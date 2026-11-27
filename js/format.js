@@ -59,3 +59,19 @@ export const initials = (pseudo) => String(pseudo || '?').replace(/[^\p{L}\p{N}]
 
 /** « 1 carte » / « 3 cartes ». */
 export const plural = (n, one, many) => `${num(n)} ${n > 1 ? many : one}`;
+
+/** Hôte autorisé pour les visuels de cartes (le même que dans la politique CSP). */
+const IMAGE_HOST = 'images.pokemontcg.io';
+
+/**
+ * Adresse d'image sûre : https, hôte attendu, sinon chaîne vide (l'image est alors masquée).
+ * Une fiche de carte peut venir d'un inventaire importé : son adresse n'est jamais injectée telle quelle.
+ */
+export function imgUrl(u) {
+  try {
+    const url = new URL(String(u));
+    return url.protocol === 'https:' && url.hostname === IMAGE_HOST ? url.href : '';
+  } catch {
+    return '';
+  }
+}

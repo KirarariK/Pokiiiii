@@ -105,6 +105,8 @@ export const RULES = {
   shippingInsurance: { from: 50_00, rate: 0.01 },
   /** Virement : délai annoncé et montant minimum (à confirmer avec le prestataire). */
   withdrawal: { minimum: 20_00, delay: '7 à 14 jours ouvrés' },
+  /** Délai avant qu'un relèvement ou un retrait de la limite de dépenses prenne effet. */
+  limitRaiseDelayHours: 48,
   minAge: 18,
 };
 

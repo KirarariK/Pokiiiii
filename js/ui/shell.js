@@ -120,8 +120,8 @@ function renderFooter() {
       </div>
     </div>
     <div class="footer__legal">
-      <p><span class="age-pill">${RULES.minAge}+</span> Réservé aux personnes majeures. Jouer comporte des risques : endettement, isolement, dépendance. Pour être aidé, appelez le 09 74 75 13 13 (Joueurs Info Service, appel non surtaxé).</p>
-      <p>Site de démonstration, non affilié à Nintendo, Creatures Inc., GAME FREAK inc. ni The Pokémon Company. Pokémon et les noms des cartes sont des marques de leurs propriétaires respectifs. Visuels de cartes : pokemontcg.io. Cotes indicatives.</p>
+      <p><span class="age-pill">${RULES.minAge}+</span> Réservé aux personnes majeures. Les jeux d'argent et de hasard peuvent être dangereux : pertes d'argent, conflits familiaux, addiction… Retrouvez nos conseils sur <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener noreferrer">joueurs-info-service.fr</a> (09 74 75 13 13, appel non surtaxé).</p>
+      <p>Site de démonstration : aucun argent réel, rien n'est vendu. Site indépendant : ni édité, ni approuvé, ni parrainé par The Pokémon Company, Nintendo, Creatures Inc. ou GAME FREAK inc. Pokémon et les noms des cartes sont des marques de leurs titulaires, cités pour désigner les cartes. Les packs sont composés par le site : ce ne sont pas des produits officiels. Visuels : pokemontcg.io. Cotes indicatives.</p>
       <p>© ${year} ${esc(BRAND.name)} · ${esc(BRAND.company)} · <a href="mailto:${esc(BRAND.email)}">${esc(BRAND.email)}</a></p>
     </div>
   </footer>`;

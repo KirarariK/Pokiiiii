@@ -8,6 +8,7 @@
 import { RULES, STORAGE_KEY } from './config.js';
 import { cardById, packEdge, packTable, resolveTicket, stockCard } from './catalog.js';
 import { progress } from './data/badges.js';
+import { listGiveaways } from './data/giveaways.js';
 import { PACKS, packBySlug, rarityByValue } from './data/packs.js';
 import { TICKETS, isValidClientSeed, newClientSeed, newServerSeed, sha256Hex, ticketFor } from './fair.js';
 import { uid } from './rng.js';
@@ -23,10 +24,25 @@ const BONUS_DUST = 100;
 const CHEAPEST_PACK = Math.min(...PACKS.map((p) => p.price));
 
 export const monthKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+const dayKey = (ts = Date.now()) => {
+  const d = new Date(ts);
+  return `${monthKey(d)}-${String(d.getDate()).padStart(2, '0')}`;
+};
+/** Délai avant qu'un relèvement ou un retrait de limite prenne effet. */
+const LIMIT_DELAY_MS = RULES.limitRaiseDelayHours * 3600_000;
 
-function freshSeeds(clientSeed = newClientSeed()) {
+/** Une graine serveur et son empreinte. */
+function seedPair() {
   const serverSeed = newServerSeed();
-  return { serverSeed, serverHash: sha256Hex(serverSeed), clientSeed, nonce: 0, since: Date.now() };
+  return { serverSeed, serverHash: sha256Hex(serverSeed) };
+}
+
+/**
+ * Graines d'un nouveau cycle. `next` est la graine serveur du cycle suivant : son empreinte
+ * est affichée dès maintenant, donc AVANT que le joueur choisisse sa prochaine graine client.
+ */
+function freshSeeds(clientSeed = newClientSeed(), pair = seedPair()) {
+  return { ...pair, clientSeed, nonce: 0, since: Date.now(), next: seedPair() };
 }
 
 function fresh() {
@@ -46,10 +62,16 @@ function fresh() {
     xp: 0,
     /** Cagnotte de cashback (centimes, avec décimales) et total déjà versé. */
     cashback: { pot: 0, paid: 0 },
-    /** Cumuls pour la vue gérant : mises en packs, cotes misées en Évolution, marge théorique. */
-    totals: { wagered: 0, staked: 0, theo: 0 },
-    giveaways: {}, // { [id]: { joined, followed, tickets } }
-    limits: { daily: null, pauseUntil: 0 },
+    /**
+     * Cumuls durables : mises en packs, cotes misées en Évolution, marge théorique, achats, rachats,
+     * frais de livraison, nombre de recharges. Le journal `tx` est plafonné : il ne sert qu'à l'affichage.
+     */
+    totals: { wagered: 0, staked: 0, theo: 0, bought: 0, sold: 0, fees: 0, deposits: 0 },
+    /** Dépense en packs du jour (heure locale), pour la limite quotidienne. */
+    day: { key: dayKey(), spent: 0 },
+    giveaways: {}, // { [id]: { joined, followed, tickets, period } }
+    /** pending : relèvement ou retrait de limite demandé, qui ne prend effet qu'à l'échéance `from`. */
+    limits: { daily: null, pauseUntil: 0, pending: null },
     /** instant : le joueur a déjà accepté l'ouverture immédiate, on n'affiche plus la confirmation d'achat. */
     settings: { sound: true, motion: true, fast: false, realityCheck: 30, instant: false },
     fair: { ...freshSeeds(), archive: [] },
@@ -62,18 +84,34 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fresh();
     const data = JSON.parse(raw);
-    if (!data || data.v !== VERSION || !data.fair?.serverSeed) return fresh();
+    const lists = ['cards', 'tx', 'shipments', 'rolls', 'pending'];
+    if (!data || data.v !== VERSION || !data.fair?.serverSeed || !Number.isFinite(data.balance) || lists.some((k) => !Array.isArray(data[k]))) return fresh();
     const base = fresh();
-    return {
+    const merged = {
       ...base,
       ...data,
       bonus: { ...base.bonus, ...data.bonus },
       points: { ...base.points, ...data.points },
       cashback: { ...base.cashback, ...data.cashback },
       totals: { ...base.totals, ...data.totals },
+      day: { ...base.day, ...data.day },
       limits: { ...base.limits, ...data.limits },
       settings: { ...base.settings, ...data.settings },
     };
+    if (!merged.fair.next?.serverSeed) merged.fair = { ...merged.fair, next: seedPair() };
+    if (data.totals?.bought == null) {
+      // État enregistré avant les compteurs durables : on les reconstruit une fois depuis le journal.
+      const tx = Array.isArray(data.tx) ? data.tx : [];
+      const sum = (type, since = 0) => tx.filter((t) => t.type === type && t.at >= since).reduce((s, t) => s + Math.abs(t.amount), 0);
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      merged.totals.bought = sum('achat');
+      merged.totals.sold = sum('rachat');
+      merged.totals.fees = sum('livraison');
+      merged.totals.deposits = tx.filter((t) => t.type === 'depot').length;
+      merged.day = { key: dayKey(), spent: sum('achat', midnight.getTime()) };
+    }
+    return merged;
   } catch {
     return fresh();
   }
@@ -81,6 +119,8 @@ function load() {
 
 let state = load();
 const listeners = new Set();
+// Lots des giveaways en cours mis de côté dès le départ : les tables affichées et tirées sont les mêmes.
+listGiveaways();
 
 function commit() {
   try {
@@ -93,6 +133,13 @@ function commit() {
 }
 
 export const getState = () => state;
+
+// Un autre onglet a écrit : on relit son état au lieu de l'écraser à la prochaine action.
+globalThis.addEventListener?.('storage', (e) => {
+  if (e.key !== STORAGE_KEY || e.newValue == null) return;
+  state = load();
+  [...listeners].forEach((fn) => fn(state));
+});
 
 /** S'abonne aux changements d'état. Retourne la fonction de désabonnement. */
 export function subscribe(fn) {
@@ -124,11 +171,7 @@ export const buybackOf = (owned, now = Date.now()) => Math.round(owned.value * b
 const spentSince = (ts) => state.tx.filter((t) => t.type === 'achat' && t.at >= ts).reduce((sum, t) => sum - t.amount, 0);
 
 /** Dépenses en packs depuis minuit (heure locale), en centimes. */
-export function spentToday(now = Date.now()) {
-  const midnight = new Date(now);
-  midnight.setHours(0, 0, 0, 0);
-  return spentSince(midnight.getTime());
-}
+export const spentToday = (now = Date.now()) => (state.day.key === dayKey(now) ? state.day.spent : 0);
 
 /** Bilan depuis un instant donné (rappel de session) : dépensé, reçu en reventes, net. */
 export function activitySince(ts) {
@@ -150,8 +193,6 @@ export function shippingFee(zone, count, value = 0) {
   return z.base + z.perExtraCard * (count - 1) + shippingInsurance(value);
 }
 
-const sumTx = (type) => state.tx.filter((t) => t.type === type).reduce((s, t) => s + Math.abs(t.amount), 0);
-
 /** Chiffres clés du profil. */
 export function stats() {
   const best = state.cards.reduce((top, c) => (!top || c.value > top.value ? c : top), null);
@@ -159,8 +200,8 @@ export function stats() {
   const now = Date.now();
   return {
     packsOpened: state.cards.filter((c) => packBySlug(c.pack)).length,
-    spent: sumTx('achat'),
-    received: sumTx('rachat'),
+    spent: state.totals.bought,
+    received: state.totals.sold,
     best,
     vaultCount: vault.length,
     vaultValue: vault.reduce((s, c) => s + c.value, 0),
@@ -174,16 +215,16 @@ export function stats() {
  */
 export function houseLedger() {
   const value = (status) => state.cards.filter((c) => c.status === status).reduce((s, c) => s + c.value, 0);
-  const sales = sumTx('achat');
-  const buybacks = sumTx('rachat');
-  const cashback = sumTx('cashback');
+  const sales = state.totals.bought;
+  const buybacks = state.totals.sold;
+  const cashback = state.cashback.paid;
   return {
     sales,
     buybacks,
     cashback,
     bonuses: state.tx.filter((t) => t.type === 'bonus').reduce((sum, t) => sum + t.amount, 0),
     bonusLeft: state.bonus.balance,
-    shippingFees: sumTx('livraison'),
+    shippingFees: state.totals.fees,
     staked: state.totals.staked,
     theo: Math.round(state.totals.theo),
     /** Résultat de caisse : ventes − rachats − cashback (les cartes encore dues ne sont pas comptées). */
@@ -330,6 +371,14 @@ function logRoll(roll, label, outcome) {
 
 const paused = () => state.limits.pauseUntil > Date.now();
 
+/** Applique un relèvement de limite arrivé à échéance. */
+function settleLimits(now = Date.now()) {
+  const p = state.limits.pending;
+  if (!p || now < p.from) return;
+  state.limits.daily = p.daily;
+  state.limits.pending = null;
+}
+
 /* ------------------------------------------------------------------- compte */
 
 const PSEUDO = /^[\p{L}\p{N}_-]{3,16}$/u;
@@ -359,21 +408,33 @@ export function logout() {
   commit();
 }
 
+/** Après un retour au stock de départ : les cartes que le joueur détient n'y sont plus disponibles. */
+export function holdBackOwnedCards() {
+  state.cards.filter((c) => c.status === 'coffre').forEach((c) => adjustStock(c.cardId, -1));
+}
+
 /** Efface toutes les données locales du compte démo (le thème choisi est conservé à part). */
 export function resetDemo() {
   // Les cartes encore au coffre au nom du joueur redeviennent disponibles.
   state.cards.filter((c) => c.status === 'coffre').forEach((c) => adjustStock(c.cardId, 1));
-  state = fresh();
+  // Les garde-fous survivent : une pause ou une limite ne se lève pas en effaçant le compte.
+  const { limits } = state;
+  state = { ...fresh(), limits };
   commit();
 }
 
 /* -------------------------------------------------------------------- solde */
 
-/** Recharge fictive du solde. Le tout premier dépôt ouvre droit à un bonus, à jouer avant retrait. */
+/** Vrai tant qu'aucune recharge n'a été faite (compteur durable, indépendant du journal plafonné). */
+export const isFirstDeposit = () => state.totals.deposits === 0;
+
+/** Recharge fictive du solde. Le tout premier dépôt ouvre droit à un bonus à jouer. */
 export function deposit(cents) {
   if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour recharger ton solde.');
   if (!Number.isInteger(cents) || cents <= 0 || cents > 1000_00) return fail('amount', 'Montant de recharge invalide.');
-  const first = !state.tx.some((t) => t.type === 'depot');
+  if (paused()) return fail('pause', 'Ton compte est en pause : les recharges sont suspendues.');
+  const first = isFirstDeposit();
+  state.totals.deposits += 1;
   state.balance += cents;
   addTx('depot', cents, 'Recharge (crédit fictif)');
   let bonus = 0;
@@ -399,6 +460,9 @@ export function buyPacks(slug, qty) {
 
   const now = Date.now();
   if (paused()) return fail('pause', 'Ton compte est en pause : les achats sont suspendus.');
+  settleLimits(now);
+  // Les lots des giveaways en cours sont mis de côté avant tout tirage.
+  listGiveaways(now);
   const total = pack.price * qty;
   if (state.limits.daily != null && spentToday(now) + total > state.limits.daily) return fail('limit', 'Cet achat dépasserait ta limite de dépenses quotidienne.');
   if (state.balance < total) return fail('balance', 'Solde insuffisant.');
@@ -416,7 +480,7 @@ export function buyPacks(slug, qty) {
     const drop = resolveTicket(pack, roll.ticket);
     adjustStock(drop.card.id, -1);
     pulls.push({ uid: uid('c'), cardId: drop.card.id, pack: pack.slug, rarity: drop.rarity, value: drop.card.value, at: now + i, status: 'coffre', roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } });
-    logRoll(roll, pack.name, { cardId: drop.card.id, table: table.version, from: drop.from, to: drop.to });
+    logRoll(roll, pack.name, { cardId: drop.card.id, table: table.version, digest: table.digest, from: drop.from, to: drop.to });
   }
   const bought = pulls.length;
   const paid = pack.price * bought;
@@ -427,14 +491,16 @@ export function buyPacks(slug, qty) {
   state.pending = pulls.map((p) => p.uid);
   state.lastOrder = { pack: pack.slug, qty: bought, total: paid, at: now, uids: pulls.map((p) => p.uid) };
   addTx('achat', -paid, `${bought} × ${pack.name}`);
+  state.totals.bought += paid;
+  if (state.day.key !== dayKey(now)) state.day = { key: dayKey(now), spent: 0 };
+  state.day.spent += paid;
   addPoints(paid);
   recordWager(paid, edge, true);
   settleBonus();
 
   if (pack.giveaway) {
-    const g = state.giveaways[pack.giveaway] || { joined: false, followed: false, tickets: 0 };
-    g.tickets += bought;
-    state.giveaways[pack.giveaway] = g;
+    const g = giveawayEntry(pack.giveaway);
+    state.giveaways[pack.giveaway] = { ...g, tickets: g.tickets + bought, period: monthKey() };
   }
 
   commit();
@@ -473,6 +539,7 @@ export function sellCards(uids) {
     addTx('rachat', credit, `Rachat — ${card ? card.name : 'carte'}`);
   }
   state.balance += total;
+  state.totals.sold += total;
   state.bonus.balance += toBonus;
   state.pending = state.pending.filter((id) => !uids.includes(id));
   settleBonus();
@@ -496,6 +563,7 @@ export function requestShipment({ uids, zone, address }) {
   const id = uid('s');
   const now = Date.now();
   state.balance -= fee;
+  state.totals.fees += fee;
   targets.forEach((c) => {
     c.status = 'livraison';
     c.shipmentId = id;
@@ -548,6 +616,7 @@ export function evolutionChance(stakeValue, targetValue) {
 export function evolve(stakeUid, targetId) {
   if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour tenter une évolution.');
   if (paused()) return fail('pause', 'Ton compte est en pause : les évolutions sont suspendues.');
+  listGiveaways();
   const stake = ownedByUid(stakeUid);
   const target = stockCard(targetId);
   if (!stake || stake.status !== 'coffre') return fail('stake', "Cette carte n'est plus dans ton coffre.");
@@ -585,6 +654,18 @@ export function evolve(stakeUid, targetId) {
 
 /* ----------------------------------------------------------------- cashback */
 
+/** Multiplicateur de la roue pour un ticket donné (barème `RULES.cashback.wheel`). */
+export function wheelFactor(ticket) {
+  let cursor = 0;
+  let factor = 1;
+  for (const [mult, tickets] of RULES.cashback.wheel) {
+    cursor += tickets;
+    factor = mult;
+    if (ticket < cursor) break;
+  }
+  return factor;
+}
+
 /**
  * Encaisse la cagnotte de cashback.
  * mode 'cash'  : le montant de la cagnotte, tel quel ;
@@ -595,16 +676,12 @@ export function claimCashback(mode) {
   if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour encaisser ton cashback.');
   const base = cashbackPot();
   if (base < RULES.cashback.minimum) return fail('low', 'Ta cagnotte est encore trop petite pour être encaissée.');
+  if (mode === 'wheel' && paused()) return fail('pause', 'Ton compte est en pause : la roue est suspendue. Tu peux encaisser ta cagnotte telle quelle.');
   let factor = 1;
   let roll = null;
   if (mode === 'wheel') {
     roll = nextRoll('cashback');
-    let cursor = 0;
-    for (const [mult, tickets] of RULES.cashback.wheel) {
-      cursor += tickets;
-      factor = mult;
-      if (roll.ticket < cursor) break;
-    }
+    factor = wheelFactor(roll.ticket);
   }
   const amount = Math.round(base * factor);
   state.cashback.pot -= base;
@@ -619,15 +696,16 @@ export function claimCashback(mode) {
 /* ------------------------------------------------------------------- équité */
 
 /**
- * Renouvelle les graines : la graine serveur en cours est révélée (archivée)
- * et une nouvelle paire est créée. C'est le seul moyen de changer de graine
- * client, pour qu'on ne puisse pas la choisir en connaissant la graine serveur.
+ * Renouvelle les graines : la graine serveur en cours est révélée (archivée) et celle
+ * dont l'empreinte était déjà affichée (`fair.next`) prend le relais. Le site ne peut donc
+ * pas fabriquer une graine serveur après avoir vu la nouvelle graine client. C'est aussi le
+ * seul moyen de changer de graine client : on ne la choisit pas en connaissant la graine serveur.
  */
 export function rotateSeeds(clientSeed) {
   const next = String(clientSeed || '').trim() || newClientSeed();
   if (!isValidClientSeed(next)) return fail('seed', 'La graine client doit faire 4 à 64 caractères, sans espace ni deux-points.');
-  const { archive, ...current } = state.fair;
-  state.fair = { ...freshSeeds(next), archive: [{ ...current, until: Date.now() }, ...archive].slice(0, MAX_ARCHIVE) };
+  const { archive, next: committed, ...current } = state.fair;
+  state.fair = { ...freshSeeds(next, committed), archive: [{ ...current, until: Date.now() }, ...archive].slice(0, MAX_ARCHIVE) };
   commit();
   return { ok: true };
 }
@@ -637,13 +715,16 @@ export const revealedSeed = (hash) => state.fair.archive.find((a) => a.serverHas
 
 /* ---------------------------------------------------------------- giveaways */
 
+/** Participation au giveaway du mois : les tickets d'un mois passé ne comptent plus. */
 export function giveawayEntry(id) {
-  return state.giveaways[id] || { joined: false, followed: false, tickets: 0 };
+  const g = state.giveaways[id];
+  return g && g.period === monthKey() ? g : { joined: false, followed: false, tickets: 0 };
 }
 
 export function updateGiveaway(id, patch) {
   if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour participer.');
-  state.giveaways[id] = { ...giveawayEntry(id), ...patch };
+  if (paused()) return fail('pause', 'Ton compte est en pause : les participations sont suspendues.');
+  state.giveaways[id] = { ...giveawayEntry(id), ...patch, period: monthKey() };
   commit();
   return { ok: true };
 }
@@ -656,14 +737,40 @@ export function setSetting(key, value) {
   commit();
 }
 
-/** Limite de dépenses quotidienne en centimes, ou null pour la retirer. */
-export function setDailyLimit(cents) {
-  state.limits.daily = cents == null ? null : Math.max(0, Math.round(cents));
-  commit();
+/** Limite en vigueur et, s'il y en a un, le changement en attente. */
+export function dailyLimit(now = Date.now()) {
+  settleLimits(now);
+  return { daily: state.limits.daily, pending: state.limits.pending };
 }
 
-/** Met le compte en pause (achats bloqués) pendant `hours` heures ; 0 lève la pause. */
-export function setPause(hours) {
-  state.limits.pauseUntil = hours > 0 ? Date.now() + hours * 3600_000 : 0;
+/**
+ * Limite de dépenses quotidienne en centimes, ou null pour la retirer.
+ * Une baisse s'applique tout de suite. Un relèvement ou un retrait attend
+ * `RULES.limitRaiseDelayHours` : on ne lève pas un garde-fou sur un coup de tête.
+ * @returns {{ ok: true, from: number|null }} `from` : échéance du changement s'il est différé
+ */
+export function setDailyLimit(cents) {
+  const now = Date.now();
+  settleLimits(now);
+  const next = cents == null ? null : Math.max(0, Math.round(cents));
+  const current = state.limits.daily;
+  const looser = current != null && (next == null || next > current);
+  if (looser) state.limits.pending = { daily: next, from: now + LIMIT_DELAY_MS };
+  else {
+    state.limits.daily = next;
+    state.limits.pending = null;
+  }
   commit();
+  return { ok: true, from: looser ? state.limits.pending.from : null };
+}
+
+/**
+ * Met le compte en pause pendant `hours` heures : achats, recharges, Évolution, roue et
+ * participations sont suspendus. Une pause se prolonge mais ne se lève pas avant son terme.
+ */
+export function setPause(hours) {
+  if (!(hours > 0)) return fail('pause', "Une pause ne se lève pas avant son terme.");
+  state.limits.pauseUntil = Math.max(state.limits.pauseUntil, Date.now() + hours * 3600_000);
+  commit();
+  return { ok: true };
 }

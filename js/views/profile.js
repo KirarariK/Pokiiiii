@@ -55,7 +55,7 @@ export default {
       <div class="section__head"><h2>${icon('star', { size: 22 })}<span>Ma meilleure carte</span></h2></div>
       ${
         best
-          ? `<div class="best" data-rarity="${s.best.rarity}">
+          ? `<div class="best" data-rarity="${esc(s.best.rarity)}">
               <span class="best__img">${cardImage(best, { hi: true })}</span>
               <div>
                 ${rarityBadge(s.best.rarity, 'badge--lg')}
