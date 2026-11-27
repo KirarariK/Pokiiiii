@@ -7,7 +7,7 @@ import { badgeProgress, cashbackAvailable, getState, isLoggedIn } from '../store
 import { currentTheme } from '../theme.js';
 import { MARK_BOX, MARK_PATH } from './logo-mark.js';
 
-/** Logo : une carte inclinée avec un éclat découpé, à la couleur du thème. */
+/** Logo : un C en porte de coffre, une carte dans son ouverture, à la couleur du thème. */
 export function logoMark(size = 30) {
   const [x, y, w, h] = MARK_BOX;
   return `<svg class="logo__mark" viewBox="${x} ${y} ${w} ${h}" width="${Math.round((size * w) / h)}" height="${size}" aria-hidden="true">
