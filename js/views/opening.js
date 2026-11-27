@@ -83,7 +83,7 @@ function sceneHtml(pack, total) {
       <canvas class="opening__fx" aria-hidden="true"></canvas>
       <button class="opening__pack" type="button" data-open aria-label="Déchirer le pack pour l'ouvrir" style="--clip-top:${edge.top};--clip-body:${edge.body}">
         <span class="opening__pack-body">${packArt(pack, { lazy: false })}</span>
-        <span class="opening__slit" aria-hidden="true"></span>
+        <span class="opening__slit" aria-hidden="true"><span class="opening__slit-in"></span></span>
         <span class="opening__pack-top">${packArt(pack, { lazy: false })}</span>
         <span class="opening__tip" aria-hidden="true"></span>
       </button>
@@ -202,10 +202,35 @@ export default {
     let untilt = () => {};
     const packEl = scene.querySelector('[data-open]');
 
-    /** Avancement de la déchirure (0 à 1) : tout le visuel en découle par une variable CSS. */
+    const topEl = packEl.querySelector('.opening__pack-top');
+    const slitEl = packEl.querySelector('.opening__slit');
+    const slitIn = packEl.querySelector('.opening__slit-in');
+    const tipEl = packEl.querySelector('.opening__tip');
+    let frameW = packEl.offsetWidth;
+    let ripping = false;
+    let shown = 0;
+
+    /**
+     * Avancement de la déchirure (0 à 1). Seules des transformations et des opacités changent :
+     * pas de recalcul de mise en page ni de repeinte, l'animation reste fluide même sur mobile.
+     */
     const setRip = (p) => {
-      packEl.style.setProperty('--p', p.toFixed(3));
-      packEl.classList.toggle('is-ripping', p > 0.01);
+      shown = p;
+      topEl.style.transform = p ? `rotate(${(p * 24).toFixed(2)}deg) translate(${(-1.5 * p).toFixed(2)}%, ${(-4 * p).toFixed(2)}%)` : '';
+      slitIn.style.transform = `translateX(${((p - 1) * 100).toFixed(2)}%)`;
+      slitEl.style.opacity = Math.min(0.95, p * 3).toFixed(3);
+      tipEl.style.transform = `translate3d(${(frameW * (0.15 + 0.7 * p)).toFixed(1)}px, 0, 0)`;
+      tipEl.style.opacity = Math.max(0, Math.min(1, p * 30, (1 - p) * 10)).toFixed(3);
+      if (p > 0.01 !== ripping) {
+        ripping = !ripping;
+        packEl.classList.toggle('is-ripping', ripping);
+      }
+    };
+    /** Après la déchirure : les feuilles de style reprennent la main (envol du morceau, fondu de la fente). */
+    const releaseRip = () => {
+      topEl.style.transform = '';
+      slitEl.style.opacity = '';
+      tipEl.style.opacity = '';
     };
     const animateRip = (from, to, ms) =>
       new Promise((resolve) => {
@@ -267,6 +292,19 @@ export default {
         .join('');
       // Décalage d'arrêt à l'intérieur de la carte gagnée : purement visuel.
       return { tiles, jitter: (next() - 0.5) * 0.56 };
+    }
+
+    /**
+     * Prépare la roulette de la carte en cours dès que le pack s'affiche : ses images se chargent
+     * pendant que le joueur regarde le pack, pas après la déchirure.
+     */
+    let prepared = null;
+    function prepareReel() {
+      const owned = queue[index];
+      if (!owned || prepared?.index === index) return prepared;
+      const reel = buildReel(owned, cardById(owned.cardId));
+      prepared = { index, ...reel, thumbs: Promise.all(reel.tiles.map((t) => preload(t.card.img, 1500))) };
+      return prepared;
     }
 
     /** Fait défiler la bande jusqu'à la carte gagnée. Un clic termine l'animation. */
@@ -391,18 +429,19 @@ export default {
       }
 
       // Ouverture complète : le pack se charge, se déchire, puis la roulette tourne.
-      const { tiles, jitter } = buildReel(owned, card);
-      const thumbs = Promise.all(tiles.map((t) => preload(t.card.img, 1500)));
+      const { jitter, thumbs } = prepareReel();
       // Le sachet se déchire (à la main, ou tout seul après un toucher), puis la lumière jaillit.
       setPhase('ripping');
       if (!ripped) {
+        frameW = packEl.offsetWidth;
         sfx.rip(0.6);
         await animateRip(0, 1, 600);
       }
-      await thumbs;
+      await Promise.race([thumbs, wait(200)]);
       if (!alive) return;
       sfx.burst();
       setPhase('burst');
+      releaseRip();
       await wait(380);
       if (!alive) return;
       $('[data-reel]').hidden = false;
@@ -463,6 +502,7 @@ export default {
       }
       index += 1;
       resetScene();
+      prepareReel();
       // Les packs suivants s'ouvrent d'eux-mêmes : un seul geste par carte.
       setTimeout(() => alive && open(), 250);
     }
@@ -540,22 +580,32 @@ export default {
     // Geste de déchirure : on glisse de gauche à droite le long du haut du pack.
     let drag = null;
     let suppressClick = false;
+    let followRaf = 0;
+    /** Rapproche l'affichage de la position du doigt à chaque image : le geste reste souple même si les événements arrivent par à-coups. */
+    const follow = () => {
+      if (!drag) return;
+      const next = shown + (drag.p - shown) * 0.38;
+      setRip(Math.abs(drag.p - next) < 0.002 ? drag.p : next);
+      followRaf = requestAnimationFrame(follow);
+    };
     const finishDrag = async (force) => {
       const d = drag;
       if (!d) return;
       drag = null;
+      cancelAnimationFrame(followRaf);
       d.live?.stop();
       if (!d.moved) return; // simple toucher : le clic fera le reste
       suppressClick = true;
       setTimeout(() => (suppressClick = false), 80);
       if (d.p >= 0.6 || force) {
-        await animateRip(d.p, 1, 140);
+        await animateRip(shown, 1, 160);
         open({ ripped: true });
-      } else await animateRip(d.p, 0, 260);
+      } else await animateRip(shown, 0, 280);
     };
     const onDown = (e) => {
       if (busy || scene.dataset.phase !== 'idle' || !motionOk() || getState().settings.fast) return;
-      drag = { x: e.clientX, w: packEl.getBoundingClientRect().width, p: 0, last: e.clientX, t: performance.now(), moved: false, live: null };
+      frameW = packEl.offsetWidth;
+      drag = { x: e.clientX, w: frameW, p: 0, last: e.clientX, t: performance.now(), moved: false, live: null };
       packEl.setPointerCapture?.(e.pointerId);
     };
     const onMove = (e) => {
@@ -565,13 +615,13 @@ export default {
       if (!drag.moved) {
         drag.moved = true;
         drag.live = sfx.ripLive();
+        followRaf = requestAnimationFrame(follow);
       }
-      drag.p = Math.max(0, Math.min(1, dx / (drag.w * 0.6)));
+      drag.p = Math.max(0, Math.min(1, dx / (drag.w * 0.7)));
       const now = performance.now();
       drag.live.set((Math.abs(e.clientX - drag.last) / Math.max(1, now - drag.t)) / 1.6);
       drag.last = e.clientX;
       drag.t = now;
-      setRip(drag.p);
       if (drag.p >= 1) finishDrag(true);
     };
     const onUp = () => finishDrag(false);
@@ -583,11 +633,13 @@ export default {
     root.addEventListener('click', onClick);
     root.addEventListener('countdown:end', onLockEnd);
     paintProgress();
+    if (motionOk() && !getState().settings.fast) prepareReel();
 
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
       cancelAnimationFrame(ripRaf);
+      cancelAnimationFrame(followRaf);
       drag?.live?.stop();
       untilt();
       root.removeEventListener('click', onClick);

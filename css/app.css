@@ -1538,26 +1538,24 @@ html[data-motion='off'] .trial__card.is-in { animation: none; }
 .pack-art__label i { font-size: calc(2.9cqw * var(--s, 1)); }
 
 
-/* Déchirure du sachet : --p (0 à 1) vient du geste ou de l'animation automatique. */
+/* Déchirure du sachet. Le script ne touche qu'aux transformations et à l'opacité de trois éléments,
+   chacun sur son propre calque : la carte graphique déplace des images déjà peintes, sans repeinte. */
 .opening__pack { touch-action: none; cursor: grab; }
 .opening__pack:active { cursor: grabbing; }
-.opening[data-phase='idle'] .opening__pack-top, .opening[data-phase='ripping'] .opening__pack-top {
-  transform-origin: 100% 10.6%; transition: none;
-  transform: rotate(calc(var(--p, 0) * 24deg)) translate(calc(var(--p, 0) * -1.5%), calc(var(--p, 0) * -4%));
-}
-.opening[data-phase] .opening__pack.is-ripping { animation: none; }
-.opening__slit, .opening__tip { position: absolute; pointer-events: none; z-index: 2; }
-.opening__slit {
-  left: 15%; right: 15%; top: 9.2%; height: 2.8%; opacity: min(0.92, calc(var(--p, 0) * 3));
-  background: linear-gradient(90deg, #fff, #fff1bd 45%, #ffd166);
-  filter: blur(1.2px) drop-shadow(0 0 10px #ffd166) drop-shadow(0 0 22px color-mix(in srgb, var(--glow, #ffd166) 70%, transparent));
-  clip-path: inset(0 calc((1 - var(--p, 0)) * 100%) 0 0);
+.opening[data-phase='idle'] .opening__pack-top, .opening[data-phase='ripping'] .opening__pack-top { transform-origin: 100% 10.6%; transition: none; will-change: transform; }
+.opening[data-phase] .opening__pack.is-ripping { animation: none; scale: 1; }
+.opening__pack.is-ripping .pack-art__shine::before, .opening__pack.is-ripping .pack-art__foil { animation: none !important; }
+.opening__slit, .opening__tip { position: absolute; pointer-events: none; opacity: 0; will-change: opacity; }
+.opening__slit { z-index: 2; left: 15%; right: 15%; top: 8.4%; height: 4.4%; overflow: hidden; }
+.opening__slit-in {
+  position: absolute; inset: 0; transform: translateX(-100%); will-change: transform;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--glow, #ffd166) 45%, transparent) 22%, #ffe9a6 42%, #fff 50%, #ffe9a6 58%, color-mix(in srgb, var(--glow, #ffd166) 45%, transparent) 78%, transparent);
 }
 .opening__tip {
-  z-index: 3; top: 10.6%; left: calc(15% + var(--p, 0) * 70%); width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff;
+  z-index: 3; left: 0; top: 10.6%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff;
   box-shadow: 0 0 14px 7px #ffd166, 0 0 36px 14px color-mix(in srgb, var(--glow, #ffd166) 60%, transparent);
-  opacity: min(1, calc(var(--p, 0) * 30), calc((1 - var(--p, 0)) * 10));
+  will-change: transform, opacity;
 }
-.opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__slit, .opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__tip { opacity: 0; transition: opacity 0.3s; }
+.opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__slit, .opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__tip { opacity: 0 !important; transition: opacity 0.3s; }
 .opening[data-phase='ripping'] .opening__aura { opacity: 0.9; scale: 1.25; }
 @media (prefers-reduced-motion: reduce) { .opening__pack-top { transform: none !important; } }
