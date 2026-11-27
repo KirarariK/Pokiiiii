@@ -234,12 +234,12 @@ export function exportStock() {
   if (state.demo) for (const [id, [value, type]] of BASE_VALUE) items[id] = { q: demoQty(value, type) };
   for (const [id, item] of Object.entries(state.items)) items[id] = { q: item.q, ...(item.c ? { c: item.c } : {}), ...(item.p != null ? { p: item.p } : {}) };
   for (const id of Object.keys(items)) if (!items[id].q && !items[id].c) delete items[id];
-  return { format: 'pokiiiii-stock', version: VERSION, date: new Date().toISOString().slice(0, 10), items };
+  return { format: 'coffreo-stock', version: VERSION, date: new Date().toISOString().slice(0, 10), items };
 }
 
 /** Remplace l'inventaire par le contenu d'un fichier exporté. @returns {number} références au coffre */
 export function importStock(data) {
-  if (!data || data.format !== 'pokiiiii-stock' || !data.items || typeof data.items !== 'object') throw new Error("Ce fichier n'est pas un inventaire exporté par le site.");
+  if (!data || data.format !== 'coffreo-stock' || !data.items || typeof data.items !== 'object') throw new Error("Ce fichier n'est pas un inventaire exporté par le site.");
   const items = cleanItems(data.items);
   state = { v: VERSION, demo: false, items };
   changed();

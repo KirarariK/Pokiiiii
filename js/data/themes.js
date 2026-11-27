@@ -5,7 +5,7 @@
 // Les identifiants et la clé de stockage sont repris dans js/theme-init.js
 // (script minuscule chargé avant le premier affichage) : les garder alignés.
 
-export const THEME_KEY = 'pokiiiii.theme.v1';
+export const THEME_KEY = 'coffreo.theme.v1';
 export const DEFAULT_THEME = 'electrik';
 /** Thème proposé d'office aux visiteurs dont le système est réglé en clair. */
 export const LIGHT_DEFAULT = 'glace';
