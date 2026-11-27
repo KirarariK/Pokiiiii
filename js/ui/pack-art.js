@@ -113,15 +113,16 @@ function zigzag(y, fromX, toX, amplitude) {
  * Un pack sans illustration est dessiné en SVG (voir drawnPack).
  */
 const ART = {
-  // largeur, hauteur, haut du bandeau (%), hauteur du bandeau (%), encre du nom
-  rosee: [475, 960, 75.5, 12, 'dark'],
-  prisme: [475, 960, 78.5, 9.5, 'dark'],
-  orage: [477, 960, 75.5, 10.5, 'dark'],
-  millesime: [476, 960, 75, 12, 'light'],
-  brasier: [484, 960, 75.5, 11, 'dark'],
-  canopee: [474, 960, 75.5, 10.5, 'dark'],
-  zenith: [483, 960, 75.5, 11, 'light'],
-  joyau: [475, 960, 79, 10, 'light'],
+  // largeur, hauteur, haut du bandeau (%), hauteur du bandeau (%), encre du nom, échelle du texte
+  // Position et hauteur relevées sur chaque image : le nom est centré dans l'intérieur du bandeau.
+  rosee: [475, 960, 76.4, 11.5, 'dark', 1],
+  prisme: [475, 960, 78.8, 8.8, 'dark', 0.78],
+  orage: [477, 960, 77.3, 9.1, 'dark', 0.8],
+  millesime: [476, 960, 75.8, 10.8, 'light', 0.92],
+  brasier: [484, 960, 75.8, 11.8, 'dark', 1],
+  canopee: [474, 960, 75.3, 10.9, 'dark', 0.95],
+  zenith: [483, 960, 79.6, 9.1, 'light', 0.8],
+  joyau: [475, 960, 79.3, 10.3, 'light', 0.85],
 };
 
 /** Proportions du cadre réservé à un booster dans la mise en page (largeur / hauteur). */
@@ -136,7 +137,7 @@ const FRAME = 240 / 340;
 export function packArt(pack, opts = {}) {
   const art = ART[pack.slug];
   if (!art) return drawnPack(pack, opts);
-  const [w, h, top, height, ink] = art;
+  const [w, h, top, height, ink, scale] = art;
   const src = `assets/packs/${pack.slug}.webp`;
   const label = esc((pack.short || pack.name).toUpperCase());
   // Le booster occupe toute la hauteur du cadre ; sa largeur s'en déduit.
@@ -145,7 +146,7 @@ export function packArt(pack, opts = {}) {
     <span class="pack-art__in" style="width:${width}%;aspect-ratio:${w}/${h}">
       <img src="${src}" alt="" width="${w}" height="${h}" ${opts.lazy === false ? '' : 'loading="lazy"'} decoding="async" draggable="false">
       <span class="pack-art__shine" aria-hidden="true" style="-webkit-mask-image:url(${src});mask-image:url(${src})"></span>
-      <span class="pack-art__label pack-art__label--${ink} ${label.length > 6 ? 'is-long' : ''}" style="top:${top}%;height:${height}%" aria-hidden="true"><b>${label}</b><i>1 carte mystère</i></span>
+      <span class="pack-art__label pack-art__label--${ink} ${label.length > 6 ? 'is-long' : ''}" style="top:${top}%;height:${height}%;--s:${scale}" aria-hidden="true"><b>${label}</b><i>1 carte mystère</i></span>
     </span>
   </span>`;
 }
