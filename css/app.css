@@ -1525,3 +1525,10 @@ button.tile:hover .tile__stage::after, a.tile:hover .tile__stage::after { opacit
 @keyframes trial-in { from { transform: rotateY(90deg) scale(0.9); opacity: 0.2; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .trial__card.is-in, button.tile:hover .tile__stage::after, a.tile:hover .tile__stage::after { animation: none; } }
 html[data-motion='off'] .trial__card.is-in { animation: none; }
+
+/* Nom du pack sur le bandeau de l'illustration : encre sombre sur bandeau clair, claire sur bandeau sombre. */
+.pack-art__label { left: 14%; right: 14%; }
+.pack-art__label--dark { color: #1a1430; }
+.pack-art__label--dark b { text-shadow: none; }
+.pack-art__label b { font-size: 8.4cqw; }
+.pack-art__label.is-long b { font-size: 6.6cqw; }
