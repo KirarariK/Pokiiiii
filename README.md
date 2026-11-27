@@ -15,8 +15,19 @@ ouvertures, participants) est simulée. Tout est enregistré dans le navigateur
 du visiteur, y compris le stock et l'accès admin : rien n'est partagé entre
 appareils tant qu'il n'y a pas de serveur.
 
-« Pokiiiii » est un nom de travail repris du dépôt : la marque définitive se
-change dans `js/config.js`.
+**Ce modèle ne peut pas être exploité en argent réel en France.** Payer pour un
+tirage au sort dont le lot se revend contre de l'argent est un jeu d'argent,
+interdit hors des opérateurs autorisés, et aucun agrément n'existe pour ce type
+de jeu. L'audit du 27 novembre 2026 le détaille, avec la voie défendable (une
+boutique à prix fixe et des tirages promotionnels) :
+
+- [`docs/AUDIT_JURIDIQUE.md`](docs/AUDIT_JURIDIQUE.md) : jeux d'argent, consommation, paiements, fiscalité, données, propriété intellectuelle, autres pays ;
+- [`docs/AUDIT_PROJET.md`](docs/AUDIT_PROJET.md) : code, sécurité, accessibilité, économie, originalité ;
+- [`docs/audit/`](docs/audit/) : les treize rapports détaillés.
+
+« Pokiiiii » est un nom de travail repris du dépôt. L'audit recommande de le
+remplacer avant toute communication (nom dérivé de « Poké », difficile à
+dicter) : il se change dans `js/config.js`.
 
 ## Lancer le site
 
@@ -28,7 +39,7 @@ npm run smoke        # contrôle les données, le stock, les tables de tirage et
 ```
 
 Le site peut être déposé tel quel sur n'importe quel hébergement statique. La
-navigation passe par l'ancre de l'adresse (`#/packs/starter`), donc aucune règle
+navigation passe par l'ancre de l'adresse (`#/packs/rosee`), donc aucune règle
 de réécriture n'est nécessaire.
 
 ## Ce qu'on y trouve
@@ -36,7 +47,7 @@ de réécriture n'est nécessaire.
 | Page | Adresse |
 | --- | --- |
 | Accueil : packs, jeux, coffre, ouvertures en direct | `#/` |
-| Packs, page d'un pack avec sa table de tirage du moment | `#/packs`, `#/packs/starter` |
+| Packs, page d'un pack avec sa table de tirage du moment | `#/packs`, `#/packs/rosee` |
 | Cartes : le coffre en direct et tout le catalogue, où sort chaque carte | `#/cartes` |
 | Ouverture en roulette et récapitulatif | `#/ouverture` |
 | Évolution (miser une carte pour en obtenir une meilleure) | `#/evolution` |

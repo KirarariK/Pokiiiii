@@ -12,7 +12,7 @@ import { listGiveaways } from './data/giveaways.js';
 import { PACKS, packBySlug, rarityByValue } from './data/packs.js';
 import { TICKETS, isValidClientSeed, newClientSeed, newServerSeed, sha256Hex, ticketFor } from './fair.js';
 import { uid } from './rng.js';
-import { adjustStock, drawableQty } from './stock.js';
+import { adjustStock, drawableQty, priceOverride } from './stock.js';
 
 const VERSION = 4;
 const MAX_TX = 500;
@@ -158,14 +158,25 @@ export const vaultCards = () => state.cards.filter((c) => c.status === 'coffre')
 
 export const ownedByUid = (id) => state.cards.find((c) => c.uid === id) || null;
 
-/** Fin de la garantie de prix d'une carte (horodatage). */
-export const lockEnd = (owned) => owned.at + LOCK_MS;
+/** Fin de la garantie de prix d'une carte (horodatage). Une carte gagnée en Évolution hérite de celle de la carte misée. */
+export const lockEnd = (owned) => (owned.lockAt ?? owned.at) + LOCK_MS;
+
+/**
+ * Cote retenue pour une carte du joueur. Pendant la garantie : celle du tirage. Ensuite : la plus
+ * basse des deux, tirage ou cote du jour. Sans cela, une carte dont la cote baisse resterait
+ * rachetable à son ancien prix sans limite de durée : une option de vente gratuite.
+ */
+export function heldValue(owned, now = Date.now()) {
+  if (now < lockEnd(owned)) return owned.value;
+  const current = priceOverride(owned.cardId) ?? cardById(owned.cardId)?.value;
+  return current > 0 ? Math.min(owned.value, current) : owned.value;
+}
 
 /** Taux de rachat applicable : plein tarif pendant la garantie, tarif différé ensuite. */
 export const buybackRate = (owned, now = Date.now()) => (now < lockEnd(owned) ? RULES.buybackRate : RULES.buybackLaterRate);
 
 /** Montant crédité si la carte est revendue maintenant, en centimes. */
-export const buybackOf = (owned, now = Date.now()) => Math.round(owned.value * buybackRate(owned, now));
+export const buybackOf = (owned, now = Date.now()) => Math.round(heldValue(owned, now) * buybackRate(owned, now));
 
 /** Dépenses en packs depuis un instant donné, en centimes. */
 const spentSince = (ts) => state.tx.filter((t) => t.type === 'achat' && t.at >= ts).reduce((sum, t) => sum - t.amount, 0);
@@ -291,6 +302,9 @@ function addPoints(cents) {
   state.points.total += pts;
 }
 
+/** Part d'une mise qui compte pour jouer un bonus, selon la marge du jeu (1 = en entier). */
+export const wagerWeight = (edge) => Math.min(1, edge / RULES.bonus.fullWeightEdge);
+
 /**
  * Enregistre une mise. Tout ce que le site rend au joueur (XP, cashback) est
  * calculé sur la MARGE théorique de cette mise, jamais sur son montant brut :
@@ -306,7 +320,7 @@ function recordWager(cents, edge, money) {
   state.totals.theo += margin;
   if (money) {
     state.totals.wagered += cents;
-    if (state.bonus.wagerLeft > 0) state.bonus.wagerLeft = Math.max(0, state.bonus.wagerLeft - cents);
+    if (state.bonus.wagerLeft > 0) state.bonus.wagerLeft = Math.max(0, state.bonus.wagerLeft - Math.round(cents * wagerWeight(edge)));
   } else state.totals.staked += cents;
 }
 
@@ -485,8 +499,14 @@ export function buyPacks(slug, qty) {
   const bought = pulls.length;
   const paid = pack.price * bought;
 
-  const fromBonus = debit(paid);
-  if (fromBonus > 0) pulls.forEach((p) => (p.bonusShare = fromBonus / paid));
+  // La part payée en bonus est portée par le moins de cartes possible (les dernières tirées) :
+  // un petit reste de bonus ne retient pas toute une commande au coffre.
+  let fromBonus = debit(paid);
+  for (let i = pulls.length - 1; i >= 0 && fromBonus > 0; i--) {
+    const part = Math.min(pack.price, fromBonus);
+    pulls[i].bonusShare = part / pack.price;
+    fromBonus -= part;
+  }
   state.cards.push(...pulls);
   state.pending = pulls.map((p) => p.uid);
   state.lastOrder = { pack: pack.slug, qty: bought, total: paid, at: now, uids: pulls.map((p) => p.uid) };
@@ -621,13 +641,14 @@ export function evolve(stakeUid, targetId) {
   const target = stockCard(targetId);
   if (!stake || stake.status !== 'coffre') return fail('stake', "Cette carte n'est plus dans ton coffre.");
   if (!target || drawableQty(targetId) < 1) return fail('target', "La carte visée n'est plus au coffre : choisis-en une autre.");
-  if (target.value < stake.value * RULES.evolution.minRatio) return fail('target', 'La carte visée doit valoir nettement plus que la carte misée.');
+  const now = Date.now();
+  const staked = heldValue(stake, now);
+  if (target.value < staked * RULES.evolution.minRatio) return fail('target', 'La carte visée doit valoir nettement plus que la carte misée.');
 
-  const chance = evolutionChance(stake.value, target.value);
+  const chance = evolutionChance(staked, target.value);
   const winBelow = Math.round(chance * TICKETS);
   const roll = nextRoll('evolution');
   const win = roll.ticket < winBelow;
-  const now = Date.now();
   let gained = null;
 
   // Dans les deux cas, la carte misée retourne au coffre du site.
@@ -636,7 +657,7 @@ export function evolve(stakeUid, targetId) {
     adjustStock(target.id, -1);
     stake.status = 'evoluee';
     stake.endedAt = now;
-    gained = { uid: uid('c'), cardId: target.id, pack: 'evolution', rarity: rarityByValue(target.value), value: target.value, at: now, status: 'coffre', from: stake.uid, roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } };
+    gained = { uid: uid('c'), cardId: target.id, pack: 'evolution', rarity: rarityByValue(target.value), value: target.value, at: now, status: 'coffre', from: stake.uid, lockAt: stake.lockAt ?? stake.at, roll: { nonce: roll.nonce, ticket: roll.ticket, hash: roll.hash } };
     // La carte obtenue hérite de la part de bonus de la carte misée.
     if (stake.bonusShare > 0) gained.bonusShare = stake.bonusShare;
     state.cards.push(gained);
@@ -645,7 +666,7 @@ export function evolve(stakeUid, targetId) {
     stake.endedAt = now;
   }
   state.pending = state.pending.filter((id) => id !== stake.uid);
-  recordWager(stake.value, evolutionEdge(target.value / stake.value), false);
+  recordWager(staked, evolutionEdge(target.value / staked), false);
   logRoll(roll, 'Évolution', { win, winBelow, stakeId: stake.cardId, targetId: target.id });
   settleBonus();
   commit();

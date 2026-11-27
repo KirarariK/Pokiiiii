@@ -9,7 +9,7 @@ import { cardById, cardRef, stockCard, stockCards } from '../catalog.js';
 import { TICKETS } from '../fair.js';
 import { esc, eur, num, pctFine } from '../format.js';
 import { icon } from '../icons.js';
-import { evolutionChance, evolutionEdge, evolve, getState, ownedByUid, vaultCards } from '../store.js';
+import { evolutionChance, evolutionEdge, evolve, getState, heldValue, ownedByUid, vaultCards } from '../store.js';
 import { drawableQty } from '../stock.js';
 import { emptyState, pageHead } from '../ui/blocks.js';
 import { cardImage, cardTile } from '../ui/card.js';
@@ -25,17 +25,17 @@ const ui = { stakeUid: null, targetId: null, last: null };
 
 /** Cartes visées proposées : pour chaque multiplicateur, la carte dont la cote s'en approche le plus. */
 function targetsFor(stake) {
-  const floor = stake.value * RULES.evolution.minRatio;
+  const floor = heldValue(stake) * RULES.evolution.minRatio;
   const pool = stockCards().filter((c) => c.value >= floor && c.id !== stake.cardId && drawableQty(c.id) > 0);
   const seen = new Set();
   const out = [];
   for (const m of MULTIPLIERS) {
-    const want = stake.value * m;
+    const want = heldValue(stake) * m;
     const best = pool.filter((c) => !seen.has(c.id)).reduce((top, c) => (!top || Math.abs(c.value - want) < Math.abs(top.value - want) ? c : top), null);
     if (!best) continue;
     seen.add(best.id);
-    const multiplier = best.value / stake.value;
-    out.push({ card: best, multiplier, chance: evolutionChance(stake.value, best.value), edge: evolutionEdge(multiplier) });
+    const multiplier = best.value / heldValue(stake);
+    out.push({ card: best, multiplier, chance: evolutionChance(heldValue(stake), best.value), edge: evolutionEdge(multiplier) });
   }
   return out.sort((a, b) => a.card.value - b.card.value);
 }
@@ -112,7 +112,7 @@ export default {
          <p class="evo__name">${esc(cardById(last.stakeId).name)}</p><p class="muted">${last.win ? 'Carte consommée' : 'Carte perdue'}</p>`
       : stakeOk
         ? `<span class="evo__card">${cardImage(stakeCard, { hi: true })}</span>
-           <p class="evo__name">${esc(stakeCard.name)}</p><p class="evo__value">${eur(stake.value)}</p>
+           <p class="evo__name">${esc(stakeCard.name)}</p><p class="evo__value">${eur(heldValue(stake))}</p>
            <button class="btn btn--secondary btn--sm" type="button" data-choose>${icon('refresh-cw', { size: 15 })}Changer de carte</button>`
         : `<button class="evo__empty" type="button" data-choose>${icon('plus', { size: 28 })}<span>Choisir une carte</span></button>
            <p class="muted small">${num(vault.length)} carte${vault.length > 1 ? 's' : ''} au coffre</p>`;
@@ -233,11 +233,11 @@ export default {
         const target = stockCard(ui.targetId) || cardById(ui.targetId);
         if (!stake || !target) return;
         const stakeCard = cardById(stake.cardId);
-        const chance = evolutionChance(stake.value, target.value);
+        const chance = evolutionChance(heldValue(stake), target.value);
         const ok = await confirmDialog({
           title: "Tenter l'évolution ?",
           confirm: `Miser ${stakeCard.name}`,
-          body: `<p>Tu mises <strong>${esc(stakeCard.name)}</strong> (${eur(stake.value)}) pour tenter d'obtenir <strong>${esc(target.name)}</strong> (${eur(target.value)}).</p>
+          body: `<p>Tu mises <strong>${esc(stakeCard.name)}</strong> (${eur(heldValue(stake))}) pour tenter d'obtenir <strong>${esc(target.name)}</strong> (${eur(target.value)}).</p>
                  <p>Chance de réussite : <strong>${pctFine(chance)}</strong>.</p>
                  <p class="muted small">En cas d'échec, ta carte est définitivement perdue.</p>`,
         });

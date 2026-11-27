@@ -67,7 +67,7 @@ export default {
       <ul>
         <li><strong>Évolution</strong> : chance de réussite = cote misée ÷ cote visée × (1 − marge). La marge va de ${percent(edgeMin)} à ${percent(edgeMax)} selon l'écart visé ; le retour théorique de chaque cible est affiché avant de jouer.</li>
         <li><strong>Cashback</strong> : de ${pct(BADGES[0].cashback * 100)} à ${pct(BADGES[BADGES.length - 1].cashback * 100)} de la marge du site sur tes mises, selon ton badge. La roue qui permet de le multiplier a une moyenne de ×1 : elle ne te fait ni gagner ni perdre sur la durée.</li>
-        <li><strong>Bonus</strong> : crédités tout de suite, tenus à part tant que tu n'as pas misé ${RULES.bonus.wagering} fois leur montant en packs. Un bonus ne bloque jamais le reste de ton solde.</li>
+        <li><strong>Bonus</strong> : crédités tout de suite, tenus à part tant que tu n'as pas misé ${RULES.bonus.wagering} fois leur montant en packs. Un pack compte en entier si sa marge atteint ${percent(RULES.bonus.fullWeightEdge)}, au prorata sinon. Un bonus ne bloque jamais le reste de ton solde.</li>
         <li><strong>Giveaways</strong> : financés par ${pct(fund * 100)} du prix de chaque pack événement vendu ; les lots se débloquent au fil des ventes et seuls les lots débloqués sont tirés au sort.</li>
         <li><strong>Classement</strong> : les dix premiers se partagent ${pct(RULES.leaderboardShare * 100)} de la marge du mois. Seuls les achats de packs donnent des points.</li>
         <li><strong>Livraison</strong> : forfait par envoi, plus ${pct(RULES.shippingInsurance.rate * 100)} d'envoi en valeur déclarée sur la cote expédiée au-delà de ${eur(RULES.shippingInsurance.from)}. La perte et la casse restent à la charge du vendeur jusqu'à la remise.</li>

@@ -105,10 +105,10 @@ export function openingItem({ at, pseudo, pack, card, rarity }, now = Date.now()
 }
 
 /** État vide. */
-export function emptyState({ iconName = 'package-open', title, text = '', action = '' }) {
+export function emptyState({ iconName = 'package-open', title, text = '', action = '', level = 2 }) {
   return `<div class="empty">
     <span class="empty__ico">${icon(iconName, { size: 30 })}</span>
-    <h2>${esc(title)}</h2>
+    <h${level}>${esc(title)}</h${level}>
     ${text ? `<p>${text}</p>` : ''}
     ${action}
   </div>`;

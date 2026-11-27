@@ -22,7 +22,7 @@ import { TICKETS } from './fair.js';
 import { seeded } from './rng.js';
 
 /** Hypothèse de travail : part de chaque pack dans le nombre de packs vendus. */
-export const SALES_MIX = { starter: 0.34, evoli: 0.12, pro: 0.2, retro: 0.08, brasier: 0.1, master: 0.1, expert: 0.045, legende: 0.015 };
+export const SALES_MIX = { rosee: 0.34, prisme: 0.12, orage: 0.2, millesime: 0.08, brasier: 0.1, canopee: 0.1, zenith: 0.045, joyau: 0.015 };
 
 /**
  * Hypothèses par défaut du simulateur.
@@ -35,15 +35,25 @@ export const SALES_MIX = { starter: 0.34, evoli: 0.12, pro: 0.2, retro: 0.08, br
  *   fees         frais de paiement et fraude, en part des dépôts
  *   newPer100    nouveaux déposants pour 100 packs vendus (chacun touche le bonus de premier dépôt)
  *   fixed        frais fixes du mois, en centimes : équipe, coffre, assurance, outils, publicité
- *   vat          1 si la TVA sur la marge s'applique, 0 sinon
+ *   vat          régime de TVA : 0 aucune ; 1 sur la marge, calculée globalement sur le mois (lecture la
+ *                plus favorable) ; 2 sur la marge, vente par vente (méthode par défaut du régime) ;
+ *                3 sur tout le prix. Le régime réellement applicable est à faire valider (docs/AUDIT_JURIDIQUE.md).
  */
 export const DEFAULTS = { packs: 5000, rtpShift: 0, instant: 0.65, later: 0.1, cost: 0.75, cashbackRate: 0.06, fees: 0.03, newPer100: 4, fixed: 6000_00, vat: 1 };
 
 /** Premier dépôt moyen retenu pour chiffrer le bonus (hypothèse). */
 export const AVERAGE_FIRST_DEPOSIT = 60_00;
 
-/** TVA sur la marge : 20 % hors taxe, soit 20/120 de la marge encaissée. */
+/** TVA au taux normal : 20 % hors taxe, soit 20/120 de la base toutes taxes comprises. */
 export const VAT_ON_MARGIN = 20 / 120;
+
+/** Régimes de TVA du simulateur, du plus favorable au plus lourd. */
+export const VAT_REGIMES = [
+  [1, 'Marge, calcul global du mois'],
+  [2, 'Marge, vente par vente'],
+  [3, 'Sur tout le prix'],
+  [0, 'Aucune'],
+];
 
 const kept = (h) => Math.max(0, 1 - h.instant - h.later);
 
@@ -78,6 +88,23 @@ function shortfall(pack, rate) {
 function depositPerPack(pack, h) {
   const scale = valueScale(pack, h);
   return kept(h) * pack.price + h.instant * shortfall(pack, RULES.buybackRate * scale) + h.later * shortfall(pack, RULES.buybackLaterRate * scale);
+}
+
+/**
+ * Marge taxable moyenne d'un pack quand elle se calcule vente par vente : une vente à perte
+ * (carte qui a coûté plus que le prix du pack) ne vient en déduction d'aucune autre.
+ */
+function perSaleMargin(pack, h) {
+  const scale = valueScale(pack, h);
+  return h.instant * shortfall(pack, RULES.buybackRate * scale) + h.later * shortfall(pack, RULES.buybackLaterRate * scale) + kept(h) * shortfall(pack, h.cost * scale);
+}
+
+/** TVA d'un pack vendu selon le régime retenu (centimes). */
+function vatPerPack(pack, h, gross) {
+  if (!h.vat) return 0;
+  if (h.vat === 3) return pack.price * VAT_ON_MARGIN;
+  if (h.vat === 2) return perSaleMargin(pack, h) * VAT_ON_MARGIN;
+  return Math.max(0, gross) * VAT_ON_MARGIN;
 }
 
 /** Packs que le coffre permet de vendre en ce moment. */
@@ -115,7 +142,7 @@ export function packEconomics(pack, h) {
   const leaderboard = theo * RULES.leaderboardShare;
   const giveaway = price * fundRate(pack) * cardCost(h);
   const fees = depositPerPack(pack, h) * h.fees;
-  const vat = h.vat ? Math.max(0, gross) * VAT_ON_MARGIN : 0;
+  const vat = vatPerPack(pack, h, gross);
   const net = gross - cashback - leaderboard - giveaway - fees - vat;
   return { price, theo, cards, gross, cashback, leaderboard, giveaway, fees, vat, net, rate: net / price, grossRate: gross / price };
 }
@@ -123,6 +150,7 @@ export function packEconomics(pack, h) {
 /** Compte de résultat attendu d'un mois, par le calcul (sans tirage). */
 export function expectedMonth(h) {
   const sum = { revenue: 0, cards: 0, gross: 0, cashback: 0, leaderboard: 0, giveaway: 0, fees: 0 };
+  let vatBySale = 0;
   for (const pack of sellablePacks()) {
     const sold = h.packs * (SALES_MIX[pack.slug] || 0);
     const e = packEconomics(pack, h);
@@ -133,10 +161,12 @@ export function expectedMonth(h) {
     sum.leaderboard += sold * e.leaderboard;
     sum.giveaway += sold * e.giveaway;
     sum.fees += sold * e.fees;
+    vatBySale += sold * e.vat;
   }
   const bonus = firstDepositBonus(h);
   const loyalty = sum.cashback + sum.leaderboard + sum.giveaway + bonus;
-  const vat = h.vat ? Math.max(0, sum.gross) * VAT_ON_MARGIN : 0;
+  // Marge globale : les ventes à perte du mois compensent les autres. Sinon, la TVA se somme vente par vente.
+  const vat = h.vat === 1 || h.vat === true ? Math.max(0, sum.gross) * VAT_ON_MARGIN : vatBySale;
   const contribution = sum.gross - loyalty - sum.fees - vat;
   const result = contribution - h.fixed;
   // Tout est proportionnel au nombre de packs, sauf les frais fixes : le seuil s'en déduit.
@@ -194,6 +224,7 @@ export function simulateMonths(h, { runs = 200, seed = 'pilotage' } = {}) {
   for (let r = 0; r < runs; r++) {
     let gross = 0;
     let other = 0;
+    let margins = 0;
     for (let i = 0; i < h.packs; i++) {
       const pick = next() * total;
       const { pack, scale, fixed } = mix.find((m) => pick < m.upTo) || mix[mix.length - 1];
@@ -201,11 +232,13 @@ export function simulateMonths(h, { runs = 200, seed = 'pilotage' } = {}) {
       const u = next();
       const cost = value * (u < h.instant ? RULES.buybackRate : u < sold ? RULES.buybackLaterRate : h.cost);
       gross += pack.price - cost;
+      margins += Math.max(0, pack.price - cost);
       // Un rachat remet de l'argent en jeu : seul le reste a dû être déposé, et supporte les frais.
       other += fixed + Math.max(0, pack.price - (u < sold ? cost : 0)) * h.fees;
       revenue += pack.price;
     }
-    results.push(gross - other - bonus - (h.vat ? Math.max(0, gross) * VAT_ON_MARGIN : 0) - h.fixed);
+    const vat = !h.vat ? 0 : h.vat === 2 ? margins * VAT_ON_MARGIN : h.vat === 3 ? revenue * VAT_ON_MARGIN : Math.max(0, gross) * VAT_ON_MARGIN;
+    results.push(gross - other - bonus - vat - h.fixed);
   }
   results.sort((a, b) => a - b);
   const at = (q) => results[Math.min(results.length - 1, Math.floor(q * results.length))];

@@ -168,7 +168,7 @@ export function openThemeChooser({ first = false } = {}) {
     <div class="chooser__panel">
       <header class="chooser__head">
         <p class="eyebrow">${icon('palette', { size: 15 })}${first ? 'Bienvenue' : 'Apparence'}</p>
-        <h1 id="chooser-title">${first ? 'Choisis ton univers' : 'Changer de thème'}</h1>
+        <h2 id="chooser-title">${first ? 'Choisis ton univers' : 'Changer de thème'}</h2>
         <p class="muted">Neuf ambiances, une par type : essaie-les. ${first ? 'Ton choix est gardé sur cet appareil et tu pourras en changer quand tu veux.' : 'Ton choix est gardé sur cet appareil.'}</p>
       </header>
       <div class="chooser__grid" role="radiogroup" aria-label="Thèmes">

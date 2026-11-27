@@ -5,8 +5,8 @@
 export const BRAND = {
   /** Nom de travail (repris du dépôt) : à remplacer par la marque définitive. */
   name: 'Pokiiiii',
-  tagline: 'Ouvre en ligne. Reçois en vrai.',
-  baseline: 'Packs mystère, vraies cartes.',
+  tagline: 'Chaque carte est au coffre. Chaque chance est affichée.',
+  baseline: 'Packs mystère à table de tirage publique.',
   /** Coordonnées provisoires : à compléter une fois la société immatriculée. */
   email: 'contact@exemple.fr',
   supportEmail: 'support@exemple.fr',
@@ -83,7 +83,11 @@ export const RULES = {
    * temps de jeu, pas de l'argent. L'argent déposé, lui, reste toujours retirable.
    * Premier dépôt : firstDepositRate du montant, plafonné à firstDepositMax.
    */
-  bonus: { wagering: 10, firstDepositRate: 0.1, firstDepositMax: 50_00 },
+  /**
+   * fullWeightEdge : marge à partir de laquelle un pack compte en entier dans les mises d'un bonus.
+   * En dessous, il compte au prorata : sans cela, un bonus joué sur les packs les plus généreux serait gagnant.
+   */
+  bonus: { wagering: 10, fullWeightEdge: 0.12, firstDepositRate: 0.1, firstDepositMax: 50_00 },
   /**
    * Crédit fictif offert à la création du compte démo, traité comme un bonus.
    * À mettre à 0 en production : un bonus sans dépôt attire surtout les comptes multiples.

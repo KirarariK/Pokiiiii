@@ -14,8 +14,8 @@ const startOfMonth = (d, shift = 0) => new Date(d.getFullYear(), d.getMonth() + 
  * `inVault` ne garde que celles que le site possède encore (giveaway en cours) ;
  * un giveaway passé garde ses lots tels qu'ils ont été attribués.
  */
-function lotsOf(type, count, minValue, inVault) {
-  return CARDS.filter((c) => c.type === type && c.value >= minValue && (!inVault || qtyOf(c.id) > 0))
+function lotsOf(type, count, minValue, inVault, maxValue = Infinity) {
+  return CARDS.filter((c) => c.type === type && c.value >= minValue && c.value <= maxValue && (!inVault || qtyOf(c.id) > 0))
     .sort((a, b) => b.value - a.value)
     .slice(0, count);
 }
@@ -50,12 +50,13 @@ function buildGiveaways(now) {
     withTotal({
       id: 'brasier',
       title: 'Giveaway Brasier',
-      intro: "Jusqu'à douze cartes de type Feu à gagner. Un lot n'est tiré au sort que s'il est débloqué à la clôture. Chaque Pack Brasier ouvert pendant le mois donne un ticket.",
+      intro: "Jusqu'à sept cartes de type Feu à gagner. Un lot n'est tiré au sort que s'il est débloqué à la clôture. Chaque Pack Brasier ouvert pendant le mois donne un ticket.",
       pack: 'brasier',
       start: startOfMonth(d),
       end: endOfMonth,
       drawAt: startOfMonth(d, 1) + 3 * 86400_000 + 18.5 * 3600_000,
-      lots: lotsOf('Fire', 12, 40_00, true),
+      // Lots dimensionnés sur les ventes attendues du pack : la cagnotte d'un mois peut tous les débloquer.
+      lots: lotsOf('Fire', 7, 40_00, true, 220_00),
       /** Part du prix de chaque pack vendu versée à la cagnotte : les lots se débloquent au fil des ventes. */
       fundRate: 0.05,
       hot: true,

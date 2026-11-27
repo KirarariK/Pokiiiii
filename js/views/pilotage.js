@@ -7,7 +7,7 @@ import { packAvailable, packReturn } from '../catalog.js';
 import { BADGES } from '../data/badges.js';
 import { listGiveaways } from '../data/giveaways.js';
 import { PACKS } from '../data/packs.js';
-import { AVERAGE_FIRST_DEPOSIT, DEFAULTS, SALES_MIX, averageBonus, blendedEdge, expectedMonth, levers, packEconomics, simulateMonths } from '../economics.js';
+import { AVERAGE_FIRST_DEPOSIT, averageBonus, blendedEdge, DEFAULTS, expectedMonth, levers, packEconomics, SALES_MIX, simulateMonths, VAT_REGIMES } from '../economics.js';
 import { esc, eur, eurShort, num, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { houseLedger, isLoggedIn } from '../store.js';
@@ -43,8 +43,8 @@ function controls() {
       return `<label class="sim__control"><span>${s.label}<output data-out="${s.key}">${s.show(h[s.key])}</output></span>
         <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${h[s.key] / unit}" data-sim="${s.key}"></label>`;
     }).join('')}
-    <label class="sim__control sim__control--switch"><span>TVA sur la marge<small class="muted">20/120 de la marge de jeu</small></span>
-      <span class="switch"><input type="checkbox" data-sim-vat ${h.vat ? 'checked' : ''}><span class="switch__track"></span></span></label>
+    <label class="sim__control"><span>Régime de TVA<small class="muted">à faire valider : le résultat en dépend</small></span>
+      <select class="input input--sm" data-sim-vat aria-label="Régime de TVA">${VAT_REGIMES.map(([v, label]) => `<option value="${v}" ${Number(h.vat) === v ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
   </div>`;
 }
 
@@ -82,11 +82,19 @@ function statement(m) {
       ${line('Bonus de premier dépôt', m.bonus, `${eurShort(Math.round(averageBonus()))} par nouveau déposant`)}
       ${total('Marge après fidélité', m.afterLoyalty)}
       ${line('Frais de paiement et fraude', m.fees)}
-      ${line('TVA sur la marge', m.vat, h.vat ? '' : 'non appliquée')}
+      ${line('TVA', m.vat, (VAT_REGIMES.find(([v]) => v === Number(h.vat)) || VAT_REGIMES[0])[1].toLowerCase())}
       ${total('Résultat avant frais fixes', m.contribution)}
       ${line('Frais fixes', m.fixed, 'équipe, coffre, assurance, outils, publicité')}
       ${total('Résultat du mois', m.result, "avant impôt sur les sociétés")}
     </tbody>
+  </table></div>
+  <div class="table-wrap"><table class="table table--pl">
+    <caption class="muted small">Le même mois selon le régime de TVA. Le régime applicable n'est pas tranché : seul le premier rend le modèle confortable.</caption>
+    <thead><tr><th>Régime de TVA</th><th class="num">TVA</th><th class="num">Résultat du mois</th></tr></thead>
+    <tbody>${VAT_REGIMES.filter(([v]) => v).map(([v, label]) => {
+      const x = expectedMonth({ ...h, vat: v });
+      return `<tr${v === Number(h.vat) ? ' class="is-total"' : ''}><th scope="row">${label}</th><td class="num">${euros(-x.vat)}</td><td class="num"><strong class="${x.result >= 0 ? 'pos' : 'neg'}">${euros(x.result)}</strong></td></tr>`;
+    }).join('')}</tbody>
   </table></div>`;
 }
 
@@ -237,10 +245,10 @@ export default {
         root.querySelector(`[data-sim="${s.key}"]`).value = h[s.key] / (s.unit || 1);
         root.querySelector(`[data-out="${s.key}"]`).textContent = s.show(h[s.key]);
       });
-      root.querySelector('[data-sim-vat]').checked = Boolean(h.vat);
+      root.querySelector('[data-sim-vat]').value = String(Number(h.vat));
     };
     const onInput = (e) => {
-      if (e.target.closest('[data-sim-vat]')) h.vat = e.target.checked ? 1 : 0;
+      if (e.target.closest('[data-sim-vat]')) h.vat = Number(e.target.value);
       else {
         const input = e.target.closest('[data-sim]');
         if (!input) return;

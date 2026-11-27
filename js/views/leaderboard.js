@@ -75,7 +75,7 @@ function rewards() {
   ];
   return `<section class="panel panel--pad">
     ${sectionHead('Dotation du mois', { iconName: 'gift', note: 'Estimation' })}
-    <p class="muted">Environ <strong>${eurShort(Math.round(pool / 100) * 100)}</strong> à ce jour, versés en crédits. Viser le classement coûte toujours plus que ce qu'il rapporte.</p>
+    <p class="muted">Environ <strong>${eurShort(Math.round(pool / 100) * 100)}</strong> à ce jour, versés en crédits. Viser le classement coûte presque toujours plus que ce qu'il rapporte.</p>
     <div class="grid-4">
       ${tiers
         .map(

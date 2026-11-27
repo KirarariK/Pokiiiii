@@ -82,7 +82,8 @@ export function giveawayParticipants(giveaway, now = Date.now()) {
 /** Tickets vendus (simulés) pour un giveaway : le compteur monte régulièrement pendant sa durée. */
 export function giveawayTickets(giveaway, now = Date.now()) {
   const elapsed = Math.max(0, Math.min(now, giveaway.end) - giveaway.start);
-  return 90 + Math.floor(elapsed / (23 * 60_000));
+  // Rythme cohérent avec le modèle économique : environ 500 packs événement par mois.
+  return 40 + Math.floor(elapsed / (90 * 60_000));
 }
 
 /** Gagnants fictifs d'un giveaway terminé. */

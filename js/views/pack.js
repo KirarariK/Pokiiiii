@@ -1,15 +1,17 @@
 // Page d'un pack : visuel, répartitions, achat, plus grosses cartes, dernières ouvertures.
 
 import { RULES } from '../config.js';
-import { cardRef, dropTable, expectedValue, packAvailable, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
+import { cardRef, dropTable, expectedValue, packAvailable, packEdge, packReturn, profitChance, tableVersion, topHits } from '../catalog.js';
 import { recentOpenings } from '../data/community.js';
 import { giveawayById, isActive } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
 import { esc, eur, num, pctFine, plural } from '../format.js';
 import { icon } from '../icons.js';
-import { buyPacks, getState, giveawayEntry, isLoggedIn, setSetting } from '../store.js';
+import { bonusStatus, buyPacks, getState, giveawayEntry, isLoggedIn, setSetting, wagerWeight } from '../store.js';
 import { emptyState, oddsGrid, openingItem, packRange, sectionHead } from '../ui/blocks.js';
-import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
+import { cardBack, cardImage, cardTile, rarityBadge } from '../ui/card.js';
+import { drawFromPack } from '../draw.js';
+import { openModal } from '../ui/modal.js';
 import { countdownInline } from '../ui/countdown.js';
 import { attachTilt, sfx } from '../ui/effects.js';
 import { confirmDialog, toast } from '../ui/modal.js';
@@ -18,6 +20,8 @@ import { openTopup } from '../ui/topup.js';
 
 /** Nombre de lignes de la table de tirage affichées avant « tout afficher ». */
 const PREVIEW_ROWS = 12;
+/** Packs dont l'essai s'est déjà ouvert tout seul : un nouveau rendu ne le rouvre pas. */
+const tried = new Set();
 
 function dropRow(d) {
   return `<tr data-rarity="${d.rarity}">
@@ -50,6 +54,60 @@ function giveawayBox(pack) {
 
 const QUANTITIES = [1, 2, 3, 5, 10].filter((n) => n <= RULES.maxPacksPerOrder);
 
+/**
+ * Essai gratuit : on tire dans la vraie table du pack, avec les mêmes probabilités,
+ * sans solde ni compte. Rien n'est gagné, rien n'est dépensé, le coffre ne bouge pas.
+ * Le bilan cumulé montre ce que les essais auraient coûté et rendu.
+ */
+function openTrial(pack) {
+  const stats = { n: 0, value: 0, below: 0 };
+  const rate = RULES.buybackRate;
+  const view = (drop) => {
+    const { card } = drop;
+    const diff = card.value - pack.price;
+    return `<div class="trial__card is-in" data-rarity="${drop.rarity}">${cardImage(card, { hi: true, lazy: false })}</div>
+      <div class="trial__info">
+        ${rarityBadge(drop.rarity)}
+        <strong class="trial__name">${esc(card.name)}</strong>
+        <span class="trial__value">${eur(card.value)}</span>
+        <span class="${diff >= 0 ? 'pos' : 'neg'}">${diff >= 0 ? '+' : '−'}${eur(Math.abs(diff))} par rapport au prix du pack</span>
+      </div>`;
+  };
+  const tally = () => {
+    if (!stats.n) return `Chaque essai tire une carte dans la table du moment, comme un vrai achat.`;
+    const paid = stats.n * pack.price;
+    const back = Math.round(stats.value * rate);
+    return `<strong>${plural(stats.n, 'essai', 'essais')}</strong> : ${eur(paid)} de packs, ${eur(stats.value)} de cote, ${eur(back)} en rachat immédiat. Bilan <strong class="${back >= paid ? 'pos' : 'neg'}">${back >= paid ? '+' : '−'}${eur(Math.abs(back - paid))}</strong> · ${stats.below} sur ${stats.n} sous le prix du pack.`;
+  };
+  openModal({
+    title: `Essai gratuit · ${pack.name}`,
+    body: `<p class="note note--demo">${icon('info', { size: 16 })}<span><strong>Mode essai :</strong> rien n'est gagné, rien n'est dépensé. Mêmes probabilités que le tirage réel.</span></p>
+      <div class="trial" data-trial-stage><div class="trial__card">${cardBack()}</div><div class="trial__info"><strong class="trial__name">Prêt ?</strong><span class="muted">Lance un essai pour voir ce que ce pack donne.</span></div></div>
+      <p class="trial__tally small" data-trial-tally aria-live="polite">${tally()}</p>`,
+    footer: `<button class="btn btn--secondary" type="button" data-close>Fermer</button>
+             <button class="btn btn--primary" type="button" data-trial-spin autofocus>${icon('sparkles', { size: 16 })}<span>Lancer un essai</span></button>`,
+    onMount(el) {
+      const spin = el.querySelector('[data-trial-spin]');
+      spin.addEventListener('click', () => {
+        if (!packAvailable(pack)) return;
+        const drop = drawFromPack(pack);
+        stats.n += 1;
+        stats.value += drop.card.value;
+        if (drop.card.value < pack.price) stats.below += 1;
+        el.querySelector('[data-trial-stage]').innerHTML = view(drop);
+        el.querySelector('[data-trial-tally]').innerHTML = tally();
+        spin.querySelector('span').textContent = 'Encore un essai';
+        // Un essai n'est pas une rafale : court délai entre deux tirages.
+        spin.disabled = true;
+        setTimeout(() => {
+          spin.disabled = false;
+          spin.focus({ preventScroll: true });
+        }, 900);
+      });
+    },
+  });
+}
+
 /** Panneau de jeu d'un pack en vente : ce qu'il rend, combien on en ouvre, un bouton. */
 function buyPanel(pack, qty) {
   return `
@@ -65,7 +123,9 @@ function buyPanel(pack, qty) {
         <button class="btn btn--primary btn--lg btn--block buy__cta" type="button" data-buy>
           ${icon('package-open', { size: 20 })}<span data-buy-label></span>
         </button>
+        <button class="btn btn--secondary btn--block" type="button" data-try>${icon('sparkles', { size: 18 })}Essai gratuit · sans solde</button>
         <p class="small center"><strong>${pctFine(1 - profitChance(pack))}</strong> des tirages donnent une carte cotée moins que le prix du pack.</p>
+        ${isLoggedIn() && bonusStatus().active && wagerWeight(packEdge(pack)) < 1 ? `<p class="small muted center">Bonus en cours : ce pack compte pour ${Math.round(wagerWeight(packEdge(pack)) * 100)} % de son prix dans tes mises.</p>` : ''}
         <p class="small muted center">${isLoggedIn() ? `Solde <strong>${eur(getState().balance)}</strong> · ` : ''}Rachat ${Math.round(RULES.buybackRate * 100)} % pendant ${RULES.buybackLockMinutes} min, ${Math.round(RULES.buybackLaterRate * 100)} % ensuite · <a href="#/equite">tirage vérifiable</a></p>`;
 }
 
@@ -155,7 +215,7 @@ export default {
 `;
   },
 
-  mount(root, { params, navigate, rerender }) {
+  mount(root, { params, query, navigate, rerender }) {
     const pack = packBySlug(params.slug);
     if (!pack) return null;
 
@@ -215,6 +275,10 @@ export default {
         paint();
         return;
       }
+      if (e.target.closest('[data-try]')) {
+        openTrial(pack);
+        return;
+      }
       const more = e.target.closest('[data-drops-more]');
       if (more) {
         root.querySelector('[data-drops]').innerHTML = dropTable(pack).map(dropRow).join('');
@@ -234,6 +298,11 @@ export default {
       }
     };
     root.addEventListener('click', onClick);
+    // Arrivée depuis « Essai gratuit » de l'accueil : la fenêtre d'essai s'ouvre d'elle-même.
+    if (query.essai && !tried.has(pack.slug)) {
+      tried.add(pack.slug);
+      openTrial(pack);
+    }
     const untilt = attachTilt(root.querySelector('[data-tilt]'), 16);
     return () => {
       root.removeEventListener('click', onClick);

@@ -58,6 +58,7 @@ function sceneHtml(pack, total) {
   const fast = getState().settings.fast;
   return `
   <section class="opening" data-phase="idle" style="--glow:${themeGlow(pack.theme)}">
+    <h1 class="sr-only">Ouverture : ${esc(pack.name)}</h1>
     <header class="opening__bar">
       <span class="opening__title"><strong>${esc(pack.name)}</strong><span data-progress></span></span>
       <span class="opening__tools">
