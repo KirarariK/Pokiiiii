@@ -1,4 +1,4 @@
-# Pokiiiii
+# Coffreo
 
 Maquette d'un site de **packs mystère de cartes à collectionner** : on achète un
 pack, une roulette tourne, on découvre une carte, puis on la garde au coffre, on
@@ -25,9 +25,9 @@ boutique à prix fixe et des tirages promotionnels) :
 - [`docs/AUDIT_PROJET.md`](docs/AUDIT_PROJET.md) : code, sécurité, accessibilité, économie, originalité ;
 - [`docs/audit/`](docs/audit/) : les treize rapports détaillés.
 
-« Pokiiiii » est un nom de travail repris du dépôt. L'audit recommande de le
-remplacer avant toute communication (nom dérivé de « Poké », difficile à
-dicter) : il se change dans `js/config.js`.
+Le site s'appelle **Coffreo** : le coffre est ce qui le distingue. La disponibilité du nom
+(marque, domaine) reste à vérifier avant tout dépôt ; il se change dans `js/config.js`.
+Le dépôt garde pour l'instant son ancien nom de travail.
 
 ## Lancer le site
 

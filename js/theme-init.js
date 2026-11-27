@@ -6,7 +6,7 @@
   var root = document.documentElement;
   var theme = null;
   try {
-    var saved = JSON.parse(localStorage.getItem('pokiiiii.theme.v1') || 'null');
+    var saved = JSON.parse(localStorage.getItem('coffreo.theme.v1') || 'null');
     if (saved && IDS.indexOf(saved.id) !== -1) theme = saved.id;
   } catch (e) {
     theme = null;

@@ -150,7 +150,7 @@ Jugement des différenciateurs :
 
 ## Ce qui reste, et ne se règle pas dans le code
 
-1. **Le nom.** Cinq « i », impossible à dicter, et dérivé de « Poké » : fragile comme marque et exposé à une opposition. À remplacer avant toute communication.
+1. **Le nom.** L'ancien nom de travail, dérivé de « Poké », a été remplacé par **Coffreo** après l'audit. Reste à vérifier sa disponibilité (marque, domaine) avant tout dépôt.
 2. **Les visuels des cartes.** Images de référence chargées chez un tiers qui annonce sa fermeture en mars 2027, affichées aussi pour des cartes hors stock et en décor. La cible : des photos maison des cartes réellement en stock, avec langue, état et édition.
 3. **Pas de serveur.** Solde, stock, tirages, limites et accès admin vivent dans le navigateur. Rien de tout cela ne peut porter de l'argent ou des données réelles.
 4. **Les illustrations des packs et le logo** sont générés par IA : propres au regard des tiers, mais probablement pas protégeables, et d'un rendu inégal. Un graphiste, sur un gabarit unique.

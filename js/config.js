@@ -3,8 +3,8 @@
 // Le pourquoi de chaque réglage économique est dans docs/GERANT.md.
 
 export const BRAND = {
-  /** Nom de travail (repris du dépôt) : à remplacer par la marque définitive. */
-  name: 'Pokiiiii',
+  /** Nom du site. Disponibilité (marque, domaine) à vérifier avant tout dépôt. */
+  name: 'Coffreo',
   tagline: 'Chaque carte est au coffre. Chaque chance est affichée.',
   baseline: 'Packs mystère à table de tirage publique.',
   /** Coordonnées provisoires : à compléter une fois la société immatriculée. */
@@ -114,10 +114,10 @@ export const RULES = {
   minAge: 18,
 };
 
-export const STORAGE_KEY = 'pokiiiii.demo.v1';
+export const STORAGE_KEY = 'coffreo.demo.v1';
 /** Inventaire du coffre (voir js/stock.js) et accès administrateur (voir js/admin.js). */
-export const STOCK_KEY = 'pokiiiii.stock.v1';
-export const ADMIN_KEY = 'pokiiiii.admin.v1';
+export const STOCK_KEY = 'coffreo.stock.v1';
+export const ADMIN_KEY = 'coffreo.admin.v1';
 
 /** Date de la dernière mise à jour des cotes embarquées (voir scripts/build-cards.mjs). */
 export { PRICES_DATE } from './data/cards.js';

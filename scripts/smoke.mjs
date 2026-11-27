@@ -137,7 +137,7 @@ console.log('\nAccès admin');
   logoutAdmin();
   check(!isAdmin() && !loginAdmin('gerant', 'mauvais').ok && !isAdmin(), 'mauvais mot de passe refusé');
   check(loginAdmin('gerant', 'un-vrai-mot-de-passe').ok && isAdmin(), 'connexion (identifiant insensible à la casse)');
-  check(!localStorage.getItem('pokiiiii.admin.v1').includes('un-vrai-mot-de-passe'), 'le mot de passe n\'est pas conservé en clair');
+  check(!localStorage.getItem('coffreo.admin.v1').includes('un-vrai-mot-de-passe'), 'le mot de passe n\'est pas conservé en clair');
   logoutAdmin();
 }
 
@@ -385,7 +385,7 @@ console.log('\nGarde-fous et robustesse');
 
   // Inventaire importé : rien d'autre que les champs attendus n'entre.
   check(imgUrl('https://images.pokemontcg.io/base1/4.png') !== '' && imgUrl('https://images.pokemontcg.io/base1/4.png\'"><img src=x onerror=alert(1)>').includes('<') === false && imgUrl('https://evil.example/x.png') === '' && imgUrl('javascript:alert(1)') === '', "adresses d'image : hôte attendu seulement, rien d'injectable");
-  const hostile = { format: 'pokiiiii-stock', version: 1, date: '2026-01-01', items: { 'zz-1': { q: 2, c: { id: 'autre', name: 'x'.repeat(500), nameEn: 'Test', set: 'S', value: '12', img: 'https://evil.example/a.png"><script>', imgHi: 'javascript:alert(1)', extra: '<b>' } }, 'zz-2': null, 'zz-3': { q: 5 } } };
+  const hostile = { format: 'coffreo-stock', version: 1, date: '2026-01-01', items: { 'zz-1': { q: 2, c: { id: 'autre', name: 'x'.repeat(500), nameEn: 'Test', set: 'S', value: '12', img: 'https://evil.example/a.png"><script>', imgHi: 'javascript:alert(1)', extra: '<b>' } }, 'zz-2': null, 'zz-3': { q: 5 } } };
   importStock(hostile);
   const kept = exportStock().items['zz-1'];
   check(kept && kept.c.id === 'zz-1' && kept.c.name.length === 80 && kept.c.img === '' && kept.c.imgHi === '' && kept.c.value === 12 && !('extra' in kept.c) && !exportStock().items['zz-2'] && !exportStock().items['zz-3'], 'inventaire importé : fiche réduite aux champs attendus, entrées invalides écartées');
