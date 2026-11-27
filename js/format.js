@@ -18,8 +18,11 @@ export const eurShort = (cents) => ((cents || 0) % 100 === 0 ? EUR0.format(cents
 export const num = (n) => NUM.format(n || 0);
 
 /** Pourcentage -> « 5,5 % ». */
-export const pct = (p) =>
-  `${p.toLocaleString('fr-FR', { minimumFractionDigits: p % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 })} %`;
+export const pct = (p) => {
+  // Arrondi au dixième d'abord : 0,07 × 100 vaut 7,000000000000001 en virgule flottante.
+  const v = Math.round(p * 10) / 10;
+  return `${v.toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(v) ? 0 : 1, maximumFractionDigits: 1 })} %`;
+};
 
 /** Probabilité (0 à 1) -> « 12,5 % », « 0,045 % » ou « 0,0019 % » : assez de décimales pour ne jamais afficher zéro. */
 export function pctFine(p) {
@@ -56,3 +59,19 @@ export const initials = (pseudo) => String(pseudo || '?').replace(/[^\p{L}\p{N}]
 
 /** « 1 carte » / « 3 cartes ». */
 export const plural = (n, one, many) => `${num(n)} ${n > 1 ? many : one}`;
+
+/** Hôte autorisé pour les visuels de cartes (le même que dans la politique CSP). */
+const IMAGE_HOST = 'images.pokemontcg.io';
+
+/**
+ * Adresse d'image sûre : https, hôte attendu, sinon chaîne vide (l'image est alors masquée).
+ * Une fiche de carte peut venir d'un inventaire importé : son adresse n'est jamais injectée telle quelle.
+ */
+export function imgUrl(u) {
+  try {
+    const url = new URL(String(u));
+    return url.protocol === 'https:' && url.hostname === IMAGE_HOST ? url.href : '';
+  } catch {
+    return '';
+  }
+}

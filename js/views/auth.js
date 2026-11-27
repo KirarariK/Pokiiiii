@@ -13,6 +13,13 @@ function safeRedirect(value) {
   return typeof value === 'string' && /^\/[a-z0-9/_?=&%-]*$/i.test(value) && !value.startsWith('//') ? value : '/packs';
 }
 
+/** Dernière date de naissance admise (AAAA-MM-JJ) : il faut avoir l'âge minimal aujourd'hui. */
+function adultBefore() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - RULES.minAge);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export default {
   title: 'Connexion',
   render({ query }) {
@@ -37,8 +44,12 @@ export default {
           </div>
           ${
             signupMode
-              ? `<label class="check"><input type="checkbox" name="age" required><span>Je certifie avoir ${RULES.minAge} ans ou plus.</span></label>
-                 <label class="check"><input type="checkbox" name="terms" required><span>J'accepte les <a href="#/legal/cgu">conditions d'utilisation</a> et la <a href="#/legal/confidentialite">politique de confidentialité</a>.</span></label>`
+              ? `<div class="field">
+                   <label for="auth-birth">Date de naissance</label>
+                   <input class="input" id="auth-birth" name="birth" type="date" autocomplete="bday" required max="${adultBefore()}">
+                   <span class="hint">Réservé aux ${RULES.minAge} ans et plus. La date sert au contrôle et n'est pas enregistrée.</span>
+                 </div>
+                 <label class="check"><input type="checkbox" name="terms" required><span>J'accepte les <a href="#/legal/cgu">conditions d'utilisation</a>. J'ai lu la <a href="#/legal/confidentialite">politique de confidentialité</a>.</span></label>`
               : ''
           }
           <p class="form__error" data-error role="alert" hidden></p>
@@ -61,14 +72,18 @@ export default {
     }
     const form = root.querySelector('[data-auth]');
     const error = root.querySelector('[data-error]');
-    const signupMode = Boolean(form.elements.age);
+    const signupMode = Boolean(form.elements.birth);
     const onSubmit = (e) => {
       e.preventDefault();
       const fail = (message) => {
         error.textContent = message;
         error.hidden = false;
       };
-      if (signupMode && !form.elements.age.checked) return fail(`Le site est réservé aux personnes de ${RULES.minAge} ans ou plus.`);
+      if (signupMode) {
+        const birth = form.elements.birth.value;
+        if (!birth) return fail('Indique ta date de naissance.');
+        if (birth > adultBefore()) return fail(`Le site est réservé aux personnes de ${RULES.minAge} ans ou plus.`);
+      }
       if (signupMode && !form.elements.terms.checked) return fail("Tu dois accepter les conditions d'utilisation.");
       const res = signupMode ? signup(form.elements.pseudo.value) : login(form.elements.pseudo.value);
       if (!res.ok) return fail(res.message);

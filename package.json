@@ -1,15 +1,15 @@
 {
   "name": "pokiiiii",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Maquette de site de packs mystère de cartes à collectionner (démonstration, crédits fictifs)",
   "scripts": {
     "start": "python3 -m http.server 4173 --bind 127.0.0.1",
     "smoke": "node scripts/smoke.mjs",
+    "catalogue": "node scripts/build-catalogue.mjs",
     "cards": "node scripts/build-cards.mjs",
     "themes": "node scripts/build-themes.mjs",
-    "design": "node scripts/design-packs.mjs",
     "icons": "node scripts/build-icons.mjs"
   },
   "engines": {

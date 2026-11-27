@@ -1,20 +1,25 @@
-// Accueil.
+// Accueil : le lobby. Les packs, les jeux, le coffre et les ouvertures en direct.
 
 import { RULES } from '../config.js';
-import { CARDS } from '../catalog.js';
-import { recentOpenings } from '../data/community.js';
-import { isActive, listGiveaways } from '../data/giveaways.js';
+import { CARDS, packAvailable, packReturn, profitChance, stockCards } from '../catalog.js';
+import { giveawayTickets, recentOpenings } from '../data/community.js';
+import { giveawayPool, isActive, listGiveaways } from '../data/giveaways.js';
 import { PACKS, packBySlug } from '../data/packs.js';
-import { esc, eur, eurShort } from '../format.js';
+import { ago, esc, eur, eurShort, initials, num, pct } from '../format.js';
 import { icon } from '../icons.js';
+import { qtyOf } from '../stock.js';
+import { evolutionChance, getState, isLoggedIn } from '../store.js';
 import { currentTheme, signatureCard } from '../theme.js';
 import { packTile, sectionHead } from '../ui/blocks.js';
-import { cardImage, cardTile } from '../ui/card.js';
-import { countdownBlocks } from '../ui/countdown.js';
+import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
+import { countdownInline } from '../ui/countdown.js';
 import { attachTilt } from '../ui/effects.js';
 import { packArt } from '../ui/pack-art.js';
 
 const rate = Math.round(RULES.buybackRate * 100);
+
+/** Onglet du tableau des ouvertures, gardé tant qu'on reste sur le site. */
+const ui = { feed: 'all' };
 
 /**
  * Cartes mises en éventail dans le bandeau : celle qui illustre le thème choisi
@@ -37,85 +42,128 @@ function heroCards() {
   return [center, ...sides];
 }
 
-function ticker() {
-  const pulls = recentOpenings(null, 14);
-  if (!pulls.length) return '';
-  const items = pulls
-    .map(
-      (p) => `<span class="ticker__item" data-rarity="${p.rarity}">
-        <span class="ticker__img">${cardImage(p.card)}</span>
-        <span class="ticker__txt"><b>${esc(p.card.name)}</b><small>${esc(p.pseudo)} · ${eur(p.card.value)}</small></span>
-      </span>`,
-    )
-    .join('');
-  return `<section class="ticker" aria-label="Dernières ouvertures (simulées)">
-    <span class="ticker__label">${icon('radio', { size: 14 })}Ouvertures<small>simulées</small></span>
-    <div class="ticker__viewport"><div class="ticker__track">${items}${items}</div></div>
-  </section>`;
+/** Anneau de jauge : part colorée = chance de réussite. */
+function ring(chance) {
+  const r = 42;
+  const len = 2 * Math.PI * r;
+  return `<span class="gauge-mini">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="${r}" class="gauge-mini__track"></circle>
+      <circle cx="50" cy="50" r="${r}" class="gauge-mini__fill" stroke-dasharray="${(len * chance).toFixed(1)} ${len.toFixed(1)}" transform="rotate(-90 50 50)"></circle>
+    </svg>
+    <strong>${pct(chance * 100)}</strong>
+  </span>`;
 }
 
-const STEPS = [
-  {
-    icon: 'package',
-    title: 'Choisis ton booster',
-    text: `${PACKS.length} packs, de ${eur(Math.min(...PACKS.map((p) => p.price)))} à ${eur(Math.max(...PACKS.map((p) => p.price)))}. La probabilité exacte de chaque carte est publiée avant l'achat.`,
-  },
-  {
-    icon: 'sparkles',
-    title: 'Ouvre-le en ligne',
-    text: 'La roulette tourne, ta carte sort. Elle est rangée à ton nom dans notre coffre sécurisé, et son tirage est vérifiable.',
-  },
-  {
-    icon: 'hand-coins',
-    title: 'Garde, fais livrer ou revends',
-    text: `Conserve-la au coffre, reçois-la chez toi (${RULES.shipping.fr.delay} en France), ou revends-la aussitôt à ${rate} % de sa cote.`,
-  },
-];
+/** Les trois jeux à côté des packs : Évolution, viser une carte, giveaway en cours. */
+function games() {
+  const pool = stockCards().length >= 2 ? stockCards() : CARDS;
+  const stake = [...pool].reverse().find((c) => c.value >= 18_00) || pool[pool.length - 1];
+  const target = [...pool].reverse().find((c) => c.value >= stake.value * 2 && c.nameEn !== stake.nameEn) || pool[0];
+  const wanted = pool.slice(0, 3);
+  const g = listGiveaways().find((x) => isActive(x) && x.lots.length);
+  const gPool = g ? giveawayPool(g, giveawayTickets(g)) : null;
+  return `<div class="games">
+    <a class="game" href="#/evolution">
+      <span class="game__art game__art--evo" aria-hidden="true">
+        <span class="game__card">${cardImage(stake)}</span>
+        ${ring(evolutionChance(stake.value, target.value))}
+        <span class="game__card game__card--big">${cardImage(target)}</span>
+      </span>
+      <span class="game__body"><strong>Évolution</strong><small>Mise une carte, vise plus haut</small></span>
+      ${icon('arrow-right', { size: 18 })}
+    </a>
+    <a class="game" href="#/cartes">
+      <span class="game__art game__art--fan" aria-hidden="true">${wanted.map((c) => cardImage(c)).join('')}</span>
+      <span class="game__body"><strong>Vise une carte</strong><small>Trouve le pack d'où elle sort, et à quelle chance</small></span>
+      ${icon('arrow-right', { size: 18 })}
+    </a>
+    ${
+      g
+        ? `<a class="game" href="#/giveaways/${g.id}">
+            <span class="game__art game__art--fan" aria-hidden="true">${g.lots.slice(0, 3).map((c) => cardImage(c)).join('')}</span>
+            <span class="game__body"><strong>${esc(g.title)}</strong><small>${gPool.funded ? `${eurShort(gPool.pool)} de lots débloqués` : `${eurShort(g.total)} de lots`} · fin dans ${countdownInline(g.end, 'long')}</small></span>
+            ${icon('arrow-right', { size: 18 })}
+          </a>`
+        : `<a class="game" href="#/recompenses">
+            <span class="game__art game__art--fan" aria-hidden="true">${pool.slice(3, 6).map((c) => cardImage(c)).join('')}</span>
+            <span class="game__body"><strong>Cashback</strong><small>Une part de la marge te revient</small></span>
+            ${icon('arrow-right', { size: 18 })}
+          </a>`
+    }
+  </div>`;
+}
 
-function giveawayBanner() {
-  const g = listGiveaways().find((x) => isActive(x));
-  if (!g) return '';
-  const pack = g.pack ? packBySlug(g.pack) : null;
-  return `<section class="gw-banner">
-    <div class="gw-banner__copy">
-      <span class="badge badge--hot">${icon('flame', { size: 13 })}En cours</span>
-      <h2>${esc(g.title)}</h2>
-      <p>${eurShort(g.total)} de lots · ${g.lots.length} gagnants${pack ? ` · 1 ${esc(pack.name)} = 1 ticket` : ''}</p>
-      <div class="gw-banner__row">
-        ${countdownBlocks(g.end, { seconds: false })}
-        <a class="btn btn--primary" href="#/giveaways/${g.id}">Voir le giveaway${icon('arrow-right', { size: 16 })}</a>
-      </div>
+/** Lignes du tableau des ouvertures selon l'onglet. */
+function feedRows() {
+  if (ui.feed === 'mine') {
+    return getState()
+      .cards.filter((c) => packBySlug(c.pack))
+      .sort((a, b) => b.at - a.at)
+      .slice(0, 12)
+      .map((c) => ({ at: c.at, pseudo: getState().user.pseudo, pack: packBySlug(c.pack), card: CARDS.find((x) => x.id === c.cardId) || stockCards().find((x) => x.id === c.cardId), value: c.value, rarity: c.rarity }))
+      .filter((r) => r.card);
+  }
+  const rows = recentOpenings(null, ui.feed === 'big' ? 80 : 12).map((r) => ({ ...r, value: r.card.value }));
+  return ui.feed === 'big' ? rows.filter((r) => r.value >= r.pack.price * 2).slice(0, 12) : rows;
+}
+
+function feed() {
+  const rows = feedRows();
+  const tab = (key, label) => `<button class="tab ${ui.feed === key ? 'is-active' : ''}" type="button" role="tab" aria-selected="${ui.feed === key}" data-feed="${key}">${label}</button>`;
+  return `
+    <div class="section__head">
+      <h2>${icon('radio', { size: 20 })}<span>En direct</span></h2>
+      ${ui.feed === 'mine' ? '' : `<span class="simulated" title="Contenu généré pour la démonstration">${icon('info', { size: 13 })}Simulé</span>`}
+      <div class="tabs" role="tablist" aria-label="Ouvertures">${tab('all', 'Tout')}${tab('big', 'Gros lots')}${isLoggedIn() ? tab('mine', 'Les miennes') : ''}</div>
     </div>
-    <div class="gw-banner__cards" aria-hidden="true">${g.lots.slice(0, 4).map((c) => cardImage(c)).join('')}</div>
-  </section>`;
+    ${
+      rows.length
+        ? `<div class="table-wrap"><table class="table table--feed">
+            <thead><tr><th>Joueur</th><th>Pack</th><th>Carte</th><th class="num">Cote</th><th class="num">Gain</th><th class="num">Quand</th></tr></thead>
+            <tbody>${rows
+              .map(({ at, pseudo, pack, card, value, rarity }) => {
+                const mult = value / pack.price;
+                return `<tr>
+                  <td><span class="feed__who"><span class="avatar avatar--sm" aria-hidden="true">${esc(initials(pseudo))}</span>${esc(pseudo)}</span></td>
+                  <td><a href="#/packs/${pack.slug}">${esc(pack.short)}</a></td>
+                  <td><span class="drop"><span class="drop__img">${cardImage(card)}</span><span><strong>${esc(card.name)}</strong>${rarityBadge(rarity)}</span></span></td>
+                  <td class="num">${eur(value)}</td>
+                  <td class="num"><span class="mult ${mult >= 1 ? 'is-up' : ''}">×${mult.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span></td>
+                  <td class="num muted nowrap">${ago(at)}</td>
+                </tr>`;
+              })
+              .join('')}</tbody>
+          </table></div>`
+        : `<p class="muted">${ui.feed === 'mine' ? "Tu n'as encore rien ouvert." : 'Aucune ouverture pour le moment.'}</p>`
+    }`;
 }
-
-const FEATURES = [
-  { icon: 'shield-check', title: 'Équité prouvable', text: 'Chaque tirage est fixé avant que tu joues et tu peux le recalculer toi-même. La table complète de chaque pack est publique.', href: '#/equite', cta: 'Voir comment' },
-  { icon: 'chevrons-up', title: 'Évolution', text: 'Mise une carte de ton coffre pour tenter de la faire évoluer en une carte plus cotée. La jauge montre exactement ta chance.', href: '#/evolution', cta: 'Tenter une évolution' },
-  { icon: 'calendar-check', title: 'Récompense du jour', text: 'Un tirage gratuit chaque jour, et neuf badges à décrocher qui le font grossir.', href: '#/recompenses', cta: 'Voir les récompenses' },
-];
 
 export default {
   nav: 'home',
   title: '',
   render() {
     const [a, b, c] = heroCards();
-    const hits = CARDS.slice(0, 6);
+    const vault = stockCards();
+    const open = PACKS.filter(packAvailable);
+    const returns = open.map(packReturn);
+    const below = open.map((p) => 1 - profitChance(p));
+    const top = vault.slice(0, 6);
     return `
     <section class="hero">
       <div class="hero__copy">
         <p class="eyebrow">${icon('sparkles', { size: 15 })}Packs mystère · vraies cartes</p>
         <h1>Ouvre en ligne.<br><em>Reçois en vrai.</em></h1>
-        <p class="lead">Chaque pack contient une carte authentique, gardée dans notre coffre. Tu la conserves, tu te la fais livrer ou tu la revends aussitôt à ${rate} % de sa cote.</p>
         <div class="hero__cta">
-          <a class="btn btn--primary btn--lg" href="#/packs">Découvrir les packs${icon('arrow-right', { size: 18 })}</a>
-          <a class="btn btn--secondary btn--lg" href="#/equite">Tirages vérifiables</a>
+          <a class="btn btn--primary btn--lg" href="#/packs">Ouvrir un pack${icon('arrow-right', { size: 18 })}</a>
+          <a class="btn btn--secondary btn--lg" href="#/cartes">Voir le coffre</a>
         </div>
-        <ul class="hero__trust">
-          <li>${icon('shield-check', { size: 17 })}Équité prouvable</li>
-          <li>${icon('percent', { size: 17 })}Retour théorique affiché : ${Math.round(RULES.targetReturn * 100)} %</li>
-          <li>${icon('hand-coins', { size: 17 })}Rachat immédiat à ${rate} %</li>
+        <ul class="hero__chips">
+          ${returns.length ? `<li><strong>${pct(Math.min(...returns) * 100)} – ${pct(Math.max(...returns) * 100)}</strong>retour moyen</li>
+          <li><strong>${pct(Math.min(...below) * 100)} – ${pct(Math.max(...below) * 100)}</strong>des tirages sous le prix</li>` : ''}
+          <li><strong>${num(vault.length)}</strong>cartes au coffre</li>
+          <li><strong>${rate} %</strong>de la cote au rachat</li>
+          <li><a href="#/equite"><strong>${icon('shield-check', { size: 16 })}</strong>tirage vérifiable</a></li>
         </ul>
       </div>
       <div class="hero__art" aria-hidden="true">
@@ -123,58 +171,45 @@ export default {
         <span class="hero__card hero__card--l">${cardImage(b, { lazy: false })}</span>
         <span class="hero__card hero__card--r">${cardImage(c, { lazy: false })}</span>
         <span class="hero__card hero__card--c" data-tilt>${cardImage(a, { hi: true, lazy: false })}</span>
-        <span class="hero__pack">${packArt(packBySlug('legende'))}</span>
+        <span class="hero__pack">${packArt(packBySlug('legende'), { lazy: false })}</span>
       </div>
     </section>
 
-    ${ticker()}
-
     <section class="section">
-      ${sectionHead('Choisis ton booster', { link: `<a class="link-more" href="#/packs">Tous les packs${icon('arrow-right', { size: 15 })}</a>` })}
+      ${sectionHead('Packs', { iconName: 'package' })}
       <div class="pack-grid">${PACKS.map(packTile).join('')}</div>
     </section>
 
-    <section class="section" id="comment">
-      ${sectionHead('Comment ça marche ?')}
-      <ol class="steps">
-        ${STEPS.map(
-          (s, i) => `<li class="step">
-            <span class="step__num">${i + 1}</span>
-            <span class="step__ico">${icon(s.icon, { size: 24 })}</span>
-            <h3>${s.title}</h3>
-            <p>${s.text}</p>
-          </li>`,
-        ).join('')}
-      </ol>
-    </section>
-
     <section class="section">
-      ${sectionHead('Plus que des packs')}
-      <div class="grid-3">
-        ${FEATURES.map(
-          (d) => `<article class="panel panel--pad info-card">
-            <span class="info-card__ico">${icon(d.icon, { size: 22 })}</span>
-            <h3>${d.title}</h3>
-            <p>${d.text}</p>
-            <a class="btn btn--secondary btn--block" href="${d.href}">${d.cta}${icon('arrow-right', { size: 15 })}</a>
-          </article>`,
-        ).join('')}
-      </div>
+      ${sectionHead('Jeux', { iconName: 'gamepad-2' })}
+      ${games()}
     </section>
 
-    <section class="section">
-      ${sectionHead('Les plus grosses cartes du coffre', { iconName: 'star' })}
-      <div class="tile-grid tile-grid--6">
-        ${hits.map((card) => cardTile(card, { rarity: 'mythique' })).join('')}
-      </div>
-      <p class="muted small">Cotes indicatives. Chaque carte ci-dessus peut sortir d'au moins un pack ; sa probabilité exacte est sur la page du pack.</p>
-    </section>
+    ${
+      top.length
+        ? `<section class="section">
+            ${sectionHead('Au coffre', { iconName: 'vault', link: `<a class="link-more" href="#/cartes">Tout le coffre${icon('arrow-right', { size: 15 })}</a>` })}
+            <div class="tile-grid tile-grid--6">
+              ${top.map((card) => cardTile(card, { tag: 'a', attrs: `href="#/cartes?q=${encodeURIComponent(card.name)}"`, extra: `<span class="tile__status">${icon('archive', { size: 13 })}×${qtyOf(card.id)} au coffre</span>` })).join('')}
+            </div>
+          </section>`
+        : ''
+    }
 
-    ${giveawayBanner()}
-
-    <p class="center muted">Une question ? <a href="#/faq">Lis la FAQ</a> ou regarde <a href="#/transparence">ce que vaut un pack en moyenne</a>.</p>`;
+    <section class="section panel panel--pad" data-live>${feed()}</section>`;
   },
   mount(root) {
-    return attachTilt(root.querySelector('[data-tilt]'), 12);
+    const untilt = attachTilt(root.querySelector('[data-tilt]'), 12);
+    const onClick = (e) => {
+      const tab = e.target.closest('[data-feed]');
+      if (!tab) return;
+      ui.feed = tab.dataset.feed;
+      root.querySelector('[data-live]').innerHTML = feed();
+    };
+    root.addEventListener('click', onClick);
+    return () => {
+      untilt();
+      root.removeEventListener('click', onClick);
+    };
   },
 };

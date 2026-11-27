@@ -159,12 +159,14 @@ Repris du site de référence :
 Refait autrement, parce que le site de référence s'arrête là où un opérateur
 de métier commence (détail dans `docs/CONCEPTION.md`) :
 
-- **la gamme** : huit packs conçus pour un même retour théorique de 90 %, au
-  lieu d'une grille dont la marge ne se lit nulle part ;
+- **la gamme** : huit packs dont le retour théorique (86 % à 92 %) est affiché,
+  au lieu d'une grille dont la marge ne se lit nulle part ;
 - **le tirage** : vérifiable par le joueur (graines, tickets), avec la table
   complète de chaque pack publiée carte par carte ;
 - **l'ouverture** : une roulette, dont la bande est tirée honnêtement ;
-- **les jeux** : Évolution, récompense du jour, badges ;
+- **les jeux** : Évolution, cashback, badges ;
+- **l'économie** : chaque récompense indexée sur ce que le joueur rapporte
+  (détail dans `docs/GERANT.md`) ;
 - **l'habillage** : neuf thèmes par type, choisis à la première visite ;
 - **la marque, les visuels et les textes**, propres à la maquette.
 

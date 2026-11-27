@@ -4,6 +4,7 @@
 // En production, ces fonctions sont remplacées par des appels à l'API.
 
 import { PACKS, packBySlug } from './packs.js';
+import { packAvailable } from '../catalog.js';
 import { drawFromPack } from '../draw.js';
 import { intFrom, seeded } from '../rng.js';
 
@@ -47,6 +48,7 @@ export function recentOpenings(slug, count, now = Date.now()) {
     if (at > now) continue;
     const pack = slug ? packBySlug(slug) : PACKS[Math.floor(next() * PACKS.length)];
     const pseudo = PSEUDOS[Math.floor(next() * PSEUDOS.length)];
+    if (!pack || !packAvailable(pack)) continue;
     const { card, rarity } = drawFromPack(pack, intFrom(next));
     out.push({ at, pseudo, pack, card, rarity });
   }
@@ -75,6 +77,12 @@ export function giveawayActivity(giveaway, count, now = Date.now()) {
 export function giveawayParticipants(giveaway, now = Date.now()) {
   const elapsed = Math.max(0, Math.min(now, giveaway.end) - giveaway.start);
   return 64 + Math.floor(elapsed / (52 * 60_000));
+}
+
+/** Tickets vendus (simulés) pour un giveaway : le compteur monte régulièrement pendant sa durée. */
+export function giveawayTickets(giveaway, now = Date.now()) {
+  const elapsed = Math.max(0, Math.min(now, giveaway.end) - giveaway.start);
+  return 90 + Math.floor(elapsed / (23 * 60_000));
 }
 
 /** Gagnants fictifs d'un giveaway terminé. */

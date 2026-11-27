@@ -3,15 +3,15 @@
 import { BRAND, DEMO, RULES } from '../config.js';
 import { esc, eur, initials, num } from '../format.js';
 import { icon } from '../icons.js';
-import { badgeProgress, dailyAvailable, getState, isLoggedIn } from '../store.js';
+import { badgeProgress, cashbackAvailable, getState, isLoggedIn } from '../store.js';
 import { currentTheme } from '../theme.js';
+import { MARK_BOX, MARK_PATH } from './logo-mark.js';
 
-/** Logo : deux cartes inclinées et un éclat, aux couleurs du thème. */
+/** Logo : une carte inclinée avec un éclat découpé, à la couleur du thème. */
 export function logoMark(size = 30) {
-  return `<svg class="logo__mark" viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true">
-    <rect class="logo__back" x="10.5" y="4.5" width="15" height="21" rx="3.2" transform="rotate(12 18 15)"/>
-    <rect class="logo__front" x="6.5" y="6" width="15" height="21" rx="3.2" transform="rotate(-10 14 16.5)"/>
-    <path class="logo__spark" d="M13.2 10.4 14.9 14.9 19.4 16.6 14.9 18.3 13.2 22.8 11.5 18.3 7 16.6 11.5 14.9Z" transform="rotate(-10 14 16.5)"/>
+  const [x, y, w, h] = MARK_BOX;
+  return `<svg class="logo__mark" viewBox="${x} ${y} ${w} ${h}" width="${Math.round((size * w) / h)}" height="${size}" aria-hidden="true">
+    <path class="logo__front" fill-rule="evenodd" d="${MARK_PATH}"/>
   </svg>`;
 }
 
@@ -22,9 +22,10 @@ const NAV_MAIN = [
   { key: 'home', href: '#/', label: 'Accueil', icon: 'house' },
   { key: 'packs', href: '#/packs', label: 'Packs mystère', icon: 'package' },
   { key: 'evolution', href: '#/evolution', label: 'Évolution', icon: 'chevrons-up' },
+  { key: 'cartes', href: '#/cartes', label: 'Cartes', icon: 'library' },
   { key: 'collection', href: '#/collection', label: 'Collection', icon: 'archive' },
   { key: 'giveaways', href: '#/giveaways', label: 'Giveaways', icon: 'gift' },
-  { key: 'recompenses', href: '#/recompenses', label: 'Récompenses', icon: 'calendar-check', dot: true },
+  { key: 'recompenses', href: '#/recompenses', label: 'Récompenses', icon: 'hand-coins', dot: true },
   { key: 'classement', href: '#/classement', label: 'Classement', icon: 'trophy' },
 ];
 
@@ -67,6 +68,10 @@ export function renderShell() {
       <header class="topbar">
         <button class="btn btn--icon btn--ghost topbar__menu" type="button" data-action="nav-open" aria-label="Ouvrir le menu" aria-controls="sidebar">${icon('menu')}</button>
         ${logo('logo--topbar')}
+        <form class="topbar__search" role="search" data-search>
+          ${icon('search', { size: 17 })}
+          <input type="search" name="q" placeholder="Rechercher une carte" aria-label="Rechercher une carte" autocomplete="off">
+        </form>
         <span class="topbar__spacer"></span>
         <div class="topbar__account" id="topbar-account"></div>
       </header>
@@ -93,8 +98,9 @@ function renderFooter() {
         <h3 class="footer__title">Jouer</h3>
         <a href="#/packs">Packs mystère</a>
         <a href="#/evolution">Évolution</a>
+        <a href="#/cartes">Cartes</a>
         <a href="#/giveaways">Giveaways</a>
-        <a href="#/recompenses">Récompenses et badges</a>
+        <a href="#/recompenses">Cashback et badges</a>
         <a href="#/classement">Classement</a>
       </div>
       <div>
@@ -103,6 +109,7 @@ function renderFooter() {
         <a href="#/transparence">Transparence et jeu responsable</a>
         <a href="#/faq">FAQ</a>
         <a href="#/contact">Contact</a>
+        <a href="#/admin">Espace admin</a>
       </div>
       <div>
         <h3 class="footer__title">Légal</h3>
@@ -113,8 +120,8 @@ function renderFooter() {
       </div>
     </div>
     <div class="footer__legal">
-      <p><span class="age-pill">${RULES.minAge}+</span> Réservé aux personnes majeures. Jouer comporte des risques : endettement, isolement, dépendance. Pour être aidé, appelez le 09 74 75 13 13 (Joueurs Info Service, appel non surtaxé).</p>
-      <p>Site de démonstration, non affilié à Nintendo, Creatures Inc., GAME FREAK inc. ni The Pokémon Company. Pokémon et les noms des cartes sont des marques de leurs propriétaires respectifs. Visuels de cartes : pokemontcg.io. Cotes indicatives.</p>
+      <p><span class="age-pill">${RULES.minAge}+</span> Réservé aux personnes majeures. Les jeux d'argent et de hasard peuvent être dangereux : pertes d'argent, conflits familiaux, addiction… Retrouvez nos conseils sur <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener noreferrer">joueurs-info-service.fr</a> (09 74 75 13 13, appel non surtaxé).</p>
+      <p>Site de démonstration : aucun argent réel, rien n'est vendu. Site indépendant : ni édité, ni approuvé, ni parrainé par The Pokémon Company, Nintendo, Creatures Inc. ou GAME FREAK inc. Pokémon et les noms des cartes sont des marques de leurs titulaires, cités pour désigner les cartes. Les packs sont composés par le site : ce ne sont pas des produits officiels. Visuels : pokemontcg.io. Cotes indicatives.</p>
       <p>© ${year} ${esc(BRAND.name)} · ${esc(BRAND.company)} · <a href="mailto:${esc(BRAND.email)}">${esc(BRAND.email)}</a></p>
     </div>
   </footer>`;
@@ -128,7 +135,7 @@ export function renderAccount() {
   }
   const { user, balance, xp } = getState();
   const { current, next, ratio } = badgeProgress();
-  return `<a class="xp" href="#/recompenses" data-theme="${current.theme}" title="${esc(current.name)} · ${num(xp)} XP${next ? ` · prochain badge à ${num(next.xp)} XP` : ''}" aria-label="${esc(current.name)}, ${num(xp)} XP">
+  return `<a class="xp" href="#/recompenses" data-theme="${current.theme}" title="${esc(current.name)} · ${num(Math.floor(xp))} XP${next ? ` · prochain badge à ${num(next.xp)} XP` : ''}" aria-label="${esc(current.name)}, ${num(Math.floor(xp))} XP">
             <span class="xp__ring" style="--p:${Math.round(ratio * 100)}">${icon(current.icon, { size: 16 })}</span>
           </a>
           <a class="balance" href="#/solde" title="Mon solde">${icon('wallet', { size: 18 })}<strong>${eur(balance)}</strong></a>
@@ -136,9 +143,9 @@ export function renderAccount() {
           <a class="avatar" href="#/profil" title="${esc(user.pseudo)}" aria-label="Mon profil">${esc(initials(user.pseudo))}</a>`;
 }
 
-/** Pastille « récompense du jour disponible » dans la navigation. */
+/** Pastille « cashback à encaisser » dans la navigation. */
 export function paintDailyDot() {
-  const show = isLoggedIn() && dailyAvailable();
+  const show = isLoggedIn() && cashbackAvailable();
   document.querySelectorAll('[data-daily-dot]').forEach((el) => {
     el.hidden = !show;
   });

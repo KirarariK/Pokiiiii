@@ -17,7 +17,7 @@ if (!fs.existsSync(dir)) {
   console.error(`Icônes introuvables dans ${dir} : lancer « npm install --no-save lucide-static » d'abord.`);
   process.exit(1);
 }
-const names = `house package package-open gift archive trophy user user-cog moon wallet plus minus chevron-right chevron-down x check truck clock flame sparkles shield-check info menu arrow-right arrow-left star zap lock mail circle-help log-out log-in refresh-cw ticket users eye trash-2 badge-check crown medal award trending-up banknote credit-card landmark map-pin hand-coins history globe search volume-2 volume-x shield scale triangle-alert circle-check skip-forward rotate-ccw send gem percent timer sliders-horizontal arrow-up-right arrow-down-left dices vault receipt circle-alert heart party-popper radio activity list-checks hourglass file-text circle-dollar-sign scan-face calendar user-plus droplet leaf snowflake palette chevrons-up hash key-round rotate-cw target calendar-check list fingerprint circle-x fast-forward`.split(/\s+/);
+const names = `house package package-open gift archive trophy user user-cog moon wallet plus minus chevron-right chevron-down x check truck clock flame sparkles shield-check info menu arrow-right arrow-left star zap lock mail circle-help log-out log-in refresh-cw ticket users eye trash-2 badge-check crown medal award trending-up banknote credit-card landmark map-pin hand-coins history globe search volume-2 volume-x shield scale triangle-alert circle-check skip-forward rotate-ccw send gem percent timer sliders-horizontal arrow-up-right arrow-down-left dices vault receipt circle-alert heart party-popper radio activity list-checks hourglass file-text circle-dollar-sign scan-face calendar user-plus droplet leaf snowflake palette chevrons-up hash key-round rotate-cw target calendar-check list fingerprint circle-x fast-forward download upload layout-dashboard boxes chevron-left gamepad-2 library swords`.split(/\s+/);
 const icons = {}; const missing = [];
 for (const n of names) {
   const f = `${dir}/${n}.svg`;
@@ -27,8 +27,22 @@ for (const n of names) {
   icons[n] = inner;
 }
 const body = Object.entries(icons).map(([k, v]) => `  '${k}': '${v.replace(/'/g, "\\'")}',`).join('\n');
-fs.writeFileSync(out, `// Icônes : tracés issus de Lucide (https://lucide.dev) — licence ISC.
-// Copyright (c) Lucide Icons and Contributors. Fichier généré : ne pas éditer à la main.
+fs.writeFileSync(out, `// Icônes : tracés issus de Lucide (https://lucide.dev). Fichier généré : ne pas éditer à la main.
+//
+// ISC License
+// Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part of Feather (MIT).
+// All other copyright (c) for Lucide are held by Lucide Contributors 2022.
+//
+// Permission to use, copy, modify, and/or distribute this software for any purpose with or without
+// fee is hereby granted, provided that the above copyright notice and this permission notice appear
+// in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+// SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+// AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+// NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+// OF THIS SOFTWARE.
 
 const PATHS = {
 ${body}

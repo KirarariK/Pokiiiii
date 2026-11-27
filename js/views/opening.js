@@ -10,10 +10,10 @@
 // passé près.
 
 import { RULES } from '../config.js';
-import { cardById, cardRef } from '../catalog.js';
+import { cardById, cardRef, packAvailable } from '../catalog.js';
 import { RARITIES, packBySlug } from '../data/packs.js';
 import { drawFromPack } from '../draw.js';
-import { esc, eur, num, plural } from '../format.js';
+import { esc, eur, imgUrl, num, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { intFrom, seeded } from '../rng.js';
 import { buybackOf, getState, markRevealed, ownedByUid, sellCards, setSetting } from '../store.js';
@@ -72,12 +72,14 @@ function sceneHtml(pack, total) {
       <span class="opening__rays" aria-hidden="true"></span>
       <canvas class="opening__fx" aria-hidden="true"></canvas>
       <button class="opening__pack" type="button" data-open aria-label="Ouvrir le pack">
-        <span class="opening__pack-top">${packArt(pack)}</span>
-        <span class="opening__pack-body">${packArt(pack)}</span>
+        <span class="opening__pack-top">${packArt(pack, { lazy: false })}</span>
+        <span class="opening__pack-body">${packArt(pack, { lazy: false })}</span>
       </button>
       <div class="reel" data-reel hidden>
-        <div class="reel__window"><div class="reel__strip" data-strip></div></div>
-        <span class="reel__marker" aria-hidden="true"></span>
+        <div class="reel__band">
+          <div class="reel__window"><div class="reel__strip" data-strip></div></div>
+          <span class="reel__marker" aria-hidden="true"></span>
+        </div>
       </div>
       <div class="opening__card" data-card hidden>
         <div class="flip" data-tilt>
@@ -106,16 +108,18 @@ function summaryHtml(session, pack, order, lockUntil) {
 
   return `
   <section class="summary">
-    <header class="page-head page-head--compact">
-      <span class="page-head__ico">${icon('party-popper', { size: 28 })}</span>
-      <h1>Ton ouverture</h1>
-      <p class="page-head__lead">${plural(order.qty, 'pack', 'packs')} ${esc(pack.name)} · payé ${eur(order.total)}</p>
+    <header class="page-head">
+      <span class="page-head__ico">${icon(diff >= 0 ? 'party-popper' : 'package-open', { size: 24 })}</span>
+      <div class="page-head__text">
+        <h1>Ton ouverture</h1>
+        <p class="page-head__lead">${plural(order.qty, 'pack', 'packs')} ${esc(pack.name)} · payé ${eur(order.total)}</p>
+      </div>
     </header>
 
     <div class="stats">
       <div class="stat"><span class="stat__label">${icon('gem', { size: 16 })}Cote totale</span><strong class="stat__value">${eur(totalValue)}</strong><span class="stat__hint ${diff >= 0 ? 'pos' : 'neg'}">${diff >= 0 ? '+' : '−'}${eur(Math.abs(diff))} par rapport au prix payé</span></div>
       <div class="stat"><span class="stat__label">${icon('star', { size: 16 })}Meilleure carte</span><strong class="stat__value stat__value--text">${esc(best.card.name)}</strong><span class="stat__hint">${eur(best.owned.value)}</span></div>
-      <div class="stat"><span class="stat__label">${icon('hand-coins', { size: 16 })}Rachat des cartes gardées</span><strong class="stat__value">${eur(keptBuyback)}</strong><span class="stat__hint">${Math.round(RULES.buybackRate * 100)} % de la cote</span></div>
+      <div class="stat"><span class="stat__label">${icon('hand-coins', { size: 16 })}Rachat des cartes gardées</span><strong class="stat__value">${eur(keptBuyback)}</strong><span class="stat__hint">${Math.round((locked ? RULES.buybackRate : RULES.buybackLaterRate) * 100)} % de la cote</span></div>
     </div>
 
     <div class="tile-grid tile-grid--5">
@@ -133,12 +137,12 @@ function summaryHtml(session, pack, order, lockUntil) {
         .join('')}
     </div>
 
-    ${locked && kept.length ? `<p class="lock">${icon('timer', { size: 16 })}Prix de rachat garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}</p>` : ''}
+    ${locked && kept.length ? `<p class="lock">${icon('timer', { size: 16 })}Rachat à ${Math.round(RULES.buybackRate * 100)} % garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}, puis ${Math.round(RULES.buybackLaterRate * 100)} %</p>` : ''}
 
     <div class="summary__actions">
       ${kept.length > 1 ? `<button class="btn btn--secondary" type="button" data-sell-all>${icon('hand-coins', { size: 18 })}Tout revendre — ${eur(keptBuyback)}</button>` : ''}
-      <a class="btn btn--secondary" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>
-      <a class="btn btn--primary" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Rouvrir un ${esc(pack.short)}</a>
+      <a class="btn btn--primary" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>
+      <a class="btn btn--secondary" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Retour au ${esc(pack.short)}</a>
     </div>
     <p class="center small muted">${icon('shield-check', { size: 14 })} Chaque tirage est vérifiable : <a href="#/equite">voir mes tickets</a></p>
   </section>`;
@@ -200,7 +204,7 @@ export default {
       const single = queue.length === 1;
       const locked = Date.now() < lockUntil;
       const next = single
-        ? `<a class="btn btn--primary btn--lg" href="#/packs/${pack.slug}">${icon('package', { size: 18 })}Rouvrir un ${esc(pack.short)}</a>`
+        ? `<a class="btn btn--primary btn--lg" href="#/collection">${icon('archive', { size: 18 })}Voir ma collection</a>`
         : `<button class="btn btn--primary btn--lg" type="button" data-next>${last ? 'Voir le récapitulatif' : 'Carte suivante'}${icon('arrow-right', { size: 18 })}</button>`;
       return `
         ${rarityBadge(owned.rarity, 'badge--lg')}
@@ -211,7 +215,7 @@ export default {
           <button class="btn btn--secondary btn--lg" type="button" data-sell-one>${icon('hand-coins', { size: 18 })}Revendre ${eur(buybackOf(owned))}</button>
           ${next}
         </div>
-        ${locked ? `<p class="lock">${icon('timer', { size: 16 })}Prix de rachat garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}</p>` : ''}
+        ${locked ? `<p class="lock">${icon('timer', { size: 16 })}Rachat à ${Math.round(RULES.buybackRate * 100)} % garanti encore ${countdownInline(lockUntil, 'mmss', 'lock__time')}, puis ${Math.round(RULES.buybackLaterRate * 100)} %</p>` : ''}
         <p class="opening__kept">${icon('shield-check', { size: 14 })}Ticket n° ${num(owned.roll?.ticket ?? 0)} · <a href="#/equite">vérifier ce tirage</a>${single ? ` · <a href="#/collection">voir ma collection</a>` : ''}</p>`;
     }
 
@@ -225,7 +229,7 @@ export default {
       $('[data-strip]').innerHTML = tiles
         .map(
           (t, i) => `<span class="reel__tile" data-rarity="${t.rarity}" ${i === REEL_WIN ? 'data-win' : ''}>
-            <img src="${t.card.img}" alt="" width="245" height="342" draggable="false">
+            <img src="${esc(imgUrl(t.card.img))}" alt="" width="245" height="342" draggable="false">
           </span>`,
         )
         .join('');
@@ -282,8 +286,10 @@ export default {
     function reveal(owned, card) {
       scene.dataset.rarity = owned.rarity;
       setPhase('revealed');
-      sfx.reveal(owned.rarity);
-      if (BURST[owned.rarity]) {
+      // On ne fête que ce qui vaut au moins le prix payé : une carte sous le prix n'est pas un gain.
+      const won = owned.value >= pack.price;
+      sfx.reveal(won ? owned.rarity : 'commune');
+      if (won && BURST[owned.rarity]) {
         burst($('.opening__fx'), {
           color: getComputedStyle(scene).getPropertyValue('--rc').trim() || '#ffc83d',
           count: BURST[owned.rarity],
@@ -318,7 +324,7 @@ export default {
       front.innerHTML = '';
       const ready = preload(card.imgHi);
       const showCard = () => {
-        front.innerHTML = `<img src="${card.imgHi}" alt="${esc(card.name)} — ${esc(card.set)}" width="734" height="1024" draggable="false">`;
+        front.innerHTML = `<img src="${esc(imgUrl(card.imgHi))}" alt="${esc(card.name)} — ${esc(card.set)}" width="734" height="1024" draggable="false">`;
         $('[data-card]').hidden = false;
       };
 
@@ -330,7 +336,8 @@ export default {
         return;
       }
 
-      if (fast) {
+      // Pack passé en rupture avec cet achat : plus de table pour garnir la roulette, on révèle directement.
+      if (fast || !packAvailable(pack)) {
         // Ouverture rapide : le pack se déchire, la carte se retourne.
         sfx.tear();
         setPhase('burst');
@@ -477,7 +484,20 @@ export default {
       }
     };
 
+    // Fin de la garantie de prix : les montants de rachat affichés passent au tarif différé.
+    const onLockEnd = () => {
+      if (root.querySelector('.summary')) {
+        root.innerHTML = summaryHtml(session, pack, order, lockUntil);
+        refreshCountdowns(root);
+        return;
+      }
+      root.querySelector('.opening .lock')?.remove();
+      const btn = root.querySelector('[data-sell-one]');
+      if (btn) btn.innerHTML = `${icon('hand-coins', { size: 18 })}Revendre ${eur(buybackOf(queue[index]))}`;
+    };
+
     root.addEventListener('click', onClick);
+    root.addEventListener('countdown:end', onLockEnd);
     paintProgress();
 
     return () => {
@@ -485,6 +505,7 @@ export default {
       cancelAnimationFrame(raf);
       untilt();
       root.removeEventListener('click', onClick);
+      root.removeEventListener('countdown:end', onLockEnd);
     };
   },
 };

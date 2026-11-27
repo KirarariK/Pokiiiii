@@ -1,9 +1,10 @@
 // Liste des giveaways : en cours et terminés.
 
-import { giveawayParticipants } from '../data/community.js';
-import { isActive, listGiveaways } from '../data/giveaways.js';
+import { giveawayParticipants, giveawayTickets } from '../data/community.js';
+import { giveawayPool, isActive, listGiveaways } from '../data/giveaways.js';
 import { dateFr, esc, eurShort, num } from '../format.js';
 import { icon } from '../icons.js';
+import { giveawayEntry } from '../store.js';
 import { emptyState, pageHead } from '../ui/blocks.js';
 import { cardImage } from '../ui/card.js';
 import { countdownBlocks } from '../ui/countdown.js';
@@ -11,11 +12,12 @@ import { countdownBlocks } from '../ui/countdown.js';
 const ui = { tab: 'actifs', sort: 'value' };
 
 function giveawayCard(g, active) {
+  const pool = giveawayPool(g, giveawayTickets(g) + giveawayEntry(g.id).tickets);
   return `<article class="panel gw-card">
     <div class="gw-card__top">
       <div>
         <h2>${esc(g.title)}</h2>
-        <p class="gw-card__value">${eurShort(g.total)} de lots · ${g.lots.length} gagnants</p>
+        <p class="gw-card__value">${active && pool.funded ? `${eurShort(pool.pool)} de lots débloqués sur ${eurShort(g.total)} · ${pool.unlocked} gagnants sur ${g.lots.length}` : `${eurShort(g.total)} de lots · ${g.lots.length} gagnants`}</p>
       </div>
       ${active && g.hot ? `<span class="badge badge--hot">${icon('flame', { size: 13 })}Hot</span>` : ''}
       ${!active ? `<span class="badge badge--info">Terminé</span>` : ''}
@@ -48,7 +50,7 @@ export default {
       .filter((g) => isActive(g, now) === active)
       .sort((a, b) => (ui.sort === 'value' ? b.total - a.total : a.end - b.end));
     return `
-    ${pageHead({ icon: 'gift', title: 'Giveaways', lead: 'Les tirages au sort en cours et passés.' })}
+    ${pageHead({ icon: 'gift', title: 'Giveaways' })}
     <div class="toolbar">
       <div class="tabs" role="tablist" aria-label="Giveaways">
         <button class="tab ${active ? 'is-active' : ''}" type="button" role="tab" aria-selected="${active}" data-tab="actifs">Actifs</button>

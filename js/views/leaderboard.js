@@ -1,23 +1,19 @@
 // Classement des collectionneurs : mensuel, total, récompenses.
+//
+// La dotation n'est pas un montant fixe : c'est une part de la marge du mois
+// (RULES.leaderboardShare). Elle grossit avec l'activité et ne peut pas coûter
+// plus que ce que les joueurs classés ont rapporté.
 
+import { RULES } from '../config.js';
 import { communityRanking } from '../data/community.js';
-import { packBySlug } from '../data/packs.js';
-import { esc, eurShort, initials, num } from '../format.js';
+import { blendedEdge } from '../economics.js';
+import { esc, eur, eurShort, initials, num, pct } from '../format.js';
 import { icon } from '../icons.js';
 import { getState, isLoggedIn, monthlyPoints } from '../store.js';
-import { note, pageHead, sectionHead } from '../ui/blocks.js';
-import { countdownBlocks } from '../ui/countdown.js';
-import { packArt } from '../ui/pack-art.js';
+import { pageHead, sectionHead } from '../ui/blocks.js';
+import { countdownInline } from '../ui/countdown.js';
 
 const ui = { tab: 'monthly' };
-
-/** Récompenses mensuelles (exemple pour la démo : montants à arrêter). */
-const REWARDS = [
-  { rank: '1er', icon: 'trophy', label: "150 € d'avoir", desc: 'Crédités sur le solde du vainqueur du mois.', tone: 'gold' },
-  { rank: '2e', icon: 'medal', label: "75 € d'avoir", desc: 'Pour le dauphin du classement mensuel.', tone: 'silver' },
-  { rank: '3e', icon: 'award', label: "40 € d'avoir", desc: 'La troisième marche du podium.', tone: 'bronze' },
-  { rank: '4e – 10e', pack: 'pro', label: '1 Booster Pro', desc: 'Offert à chaque joueur du top 10.' },
-];
 
 function nextMonthStart(now = new Date()) {
   return new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
@@ -30,6 +26,16 @@ function ranking(period) {
     rows.push({ pseudo: user.pseudo, points: period === 'monthly' ? monthlyPoints() : points.total, me: true });
   }
   return rows.sort((a, b) => b.points - a.points).map((r, i) => ({ ...r, rank: i + 1 }));
+}
+
+/**
+ * Dotation du mois, en centimes. Un point vaut un euro dépensé en packs : la
+ * marge derrière les points se déduit de la marge moyenne des packs.
+ */
+function prizePool() {
+  const points = ranking('monthly').reduce((s, r) => s + r.points, 0);
+  const margin = (points / RULES.pointsPerEuro) * blendedEdge();
+  return Math.round(margin * RULES.leaderboardShare * 100);
 }
 
 const RANK_ICON = { 1: 'trophy', 2: 'medal', 3: 'award' };
@@ -59,20 +65,29 @@ function board(period) {
 }
 
 function rewards() {
+  const pool = prizePool();
+  const [first, second, third, rest] = RULES.leaderboardSplit;
+  const tiers = [
+    { rank: '1er', icon: 'trophy', tone: 'gold', amount: pool * first },
+    { rank: '2e', icon: 'medal', tone: 'silver', amount: pool * second },
+    { rank: '3e', icon: 'award', tone: 'bronze', amount: pool * third },
+    { rank: '4e – 10e', icon: 'star', tone: '', amount: (pool * rest) / 7, each: true },
+  ];
   return `<section class="panel panel--pad">
-    ${sectionHead('Récompenses mensuelles', { iconName: 'gift' })}
+    ${sectionHead('Dotation du mois', { iconName: 'gift', note: 'Estimation' })}
+    <p class="muted">Environ <strong>${eurShort(Math.round(pool / 100) * 100)}</strong> à ce jour, versés en crédits. Viser le classement coûte toujours plus que ce qu'il rapporte.</p>
     <div class="grid-4">
-      ${REWARDS.map((r) => {
-        const pack = r.pack ? packBySlug(r.pack) : null;
-        return `<article class="reward ${r.tone ? `reward--${r.tone}` : ''}">
-          <span class="reward__ico">${pack ? packArt(pack) : icon(r.icon, { size: 30 })}</span>
-          <span class="reward__rank">${r.rank}</span>
-          <h3>${r.label}</h3>
-          <p class="muted small">${r.desc}</p>
-        </article>`;
-      }).join('')}
+      ${tiers
+        .map(
+          (r) => `<article class="reward ${r.tone ? `reward--${r.tone}` : ''}">
+            <span class="reward__ico">${icon(r.icon, { size: 30 })}</span>
+            <span class="reward__rank">${r.rank}</span>
+            <h3>${eur(Math.round(r.amount))}</h3>
+            <p class="muted small">${r.each ? 'chacun, en crédits' : 'en crédits'}</p>
+          </article>`,
+        )
+        .join('')}
     </div>
-    ${note('Exemple de dotation pour la démonstration : montants et modalités à arrêter avant le lancement.', 'demo')}
   </section>`;
 }
 
@@ -83,27 +98,16 @@ export default {
     const tabs = [
       ['monthly', 'Mensuel'],
       ['total', 'Total'],
-      ['rewards', 'Récompenses'],
+      ['rewards', 'Dotation'],
     ];
     return `
-    ${pageHead({ icon: 'trophy', title: 'Classement des collectionneurs', lead: 'Grimpe au classement en ouvrant des packs et remporte les récompenses du mois.' })}
+    ${pageHead({ icon: 'trophy', title: 'Classement des collectionneurs' })}
 
-    <div class="panel panel--pad gw-clock">
-      ${icon('clock', { size: 22 })}
-      <div><span class="muted small">Remise à zéro dans :</span>${countdownBlocks(nextMonthStart())}</div>
-    </div>
-
-    <div class="panel panel--pad rules">
-      <span class="rules__ico">${icon('info', { size: 20 })}</span>
-      <div>
-        <h2>Comment gagner des points ?</h2>
-        <ul>
-          <li><strong>1 € dépensé = 1 point</strong> lors de tes achats de packs</li>
-          <li><strong>1 € reçu = 1 point</strong> lors de tes reventes de cartes</li>
-        </ul>
-        <p class="muted small">Le classement ne donne lieu à aucun gain garanti. ${eurShort(100_00)} dépensés restent ${eurShort(100_00)} dépensés : fixe-toi une <a href="#/parametres">limite</a>.</p>
-      </div>
-    </div>
+    <p class="rule-line">
+      <span>${icon('package', { size: 16 })}<strong>1 € de packs = 1 point</strong></span>
+      <span>${icon('clock', { size: 16 })}Remise à zéro dans ${countdownInline(nextMonthStart(), 'long')}</span>
+      <span>${icon('gift', { size: 16 })}Dotation : ${pct(RULES.leaderboardShare * 100)} de la marge du mois</span>
+    </p>
 
     <div class="tabs tabs--full" role="tablist" aria-label="Classements">
       ${tabs.map(([key, label]) => `<button class="tab ${ui.tab === key ? 'is-active' : ''}" type="button" role="tab" aria-selected="${ui.tab === key}" data-tab="${key}">${label}</button>`).join('')}

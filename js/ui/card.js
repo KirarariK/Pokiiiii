@@ -3,13 +3,13 @@
 import { BRAND } from '../config.js';
 import { RARITIES } from '../data/packs.js';
 import { cardRef } from '../catalog.js';
-import { esc, eur } from '../format.js';
+import { esc, eur, imgUrl } from '../format.js';
 
 /** Étiquette de rareté (« Légendaire », « Rare »…). */
 export function rarityBadge(rarity, cls = '') {
   const r = RARITIES[rarity];
   if (!r) return '';
-  return `<span class="badge badge--rarity ${cls}" data-rarity="${rarity}">${r.label}</span>`;
+  return `<span class="badge badge--rarity ${cls}" data-rarity="${esc(rarity)}">${r.label}</span>`;
 }
 
 /**
@@ -19,7 +19,7 @@ export function rarityBadge(rarity, cls = '') {
  */
 export function cardImage(card, opts = {}) {
   const { hi = false, lazy = true, cls = '' } = opts;
-  return `<span class="tcg ${cls}"><img src="${hi ? card.imgHi : card.img}" alt="${esc(card.name)} — ${esc(card.set)}" width="245" height="342" ${lazy ? 'loading="lazy"' : ''} decoding="async" draggable="false"></span>`;
+  return `<span class="tcg ${cls}"><img src="${esc(imgUrl(hi ? card.imgHi : card.img))}" alt="${esc(card.name)} — ${esc(card.set)}" width="245" height="342" ${lazy ? 'loading="lazy"' : ''} decoding="async" draggable="false"></span>`;
 }
 
 let backSeq = 0;
@@ -59,7 +59,7 @@ export function cardBack(cls = '') {
  */
 export function cardTile(card, opts = {}) {
   const { rarity, value = card.value, showValue = true, attrs = '', tag = 'div', extra = '', cls = '' } = opts;
-  return `<${tag} class="tile ${cls}" ${rarity ? `data-rarity="${rarity}"` : ''} ${attrs}>
+  return `<${tag} class="tile ${cls}" ${rarity ? `data-rarity="${esc(rarity)}"` : ''} ${attrs}>
     <span class="tile__stage">${cardImage(card)}${rarity ? rarityBadge(rarity, 'tile__badge') : ''}</span>
     <span class="tile__body">
       <span class="tile__name" title="${esc(card.name)}">${esc(card.name)}</span>

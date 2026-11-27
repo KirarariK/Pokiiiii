@@ -10,45 +10,69 @@ pas de serveur). Les règles et les calculs, eux, sont ceux d'un vrai produit.
 
 ## 1. Une gamme calibrée
 
-Chaque pack est conçu pour le même **retour théorique de 90 %** : la cote
-moyenne de la carte tirée vaut le prix du pack, et la revente immédiate en
-reprend 90 %. La marge se lit donc directement : 10 % sur ce qui est revendu.
+Chaque pack a son **retour théorique**, affiché sur sa page : ce que le joueur
+récupère en moyenne en revendant la carte aussitôt. Il va de 86 % à 92 % ; le
+reste est la marge du site. Les petits packs margent plus, les gros moins :
+c'est là que le joueur compare.
 
-| Pack | Prix | Cotes | Cartes | Cote moyenne | Retour théorique | Carte ≥ prix |
-| --- | --- | --- | --- | --- | --- | --- |
-| Booster Starter | 9,95 € | 4 à 300 € | 771 | 9,96 € | 90,1 % | 22,4 % |
-| Pack Évoli | 19,90 € | 5 à 650 € | 88 | 19,96 € | 90,3 % | 20,8 % |
-| Booster Pro | 24,95 € | 10 à 500 € | 624 | 25,12 € | 90,6 % | 20,4 % |
-| Pack Rétro | 29,90 € | 10 à 650 € | 203 | 29,84 € | 89,8 % | 20,6 % |
-| Pack Brasier | 39,90 € | 16 à 650 € | 68 | 39,70 € | 89,5 % | 21,9 % |
-| Booster Master | 49,95 € | 20 à 650 € | 512 | 49,98 € | 90,1 % | 23,7 % |
-| Booster Expert | 99,95 € | 40 à 1050 € | 319 | 100,04 € | 90,1 % | 28,6 % |
-| Booster Légende | 249,00 € | 100 à 1600 € | 129 | 249,38 € | 90,1 % | 29,4 % |
+| Pack | Prix | Cotes | Cartes | Cote moyenne | Retour théorique | Marge affichée | Carte ≥ prix |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Booster Starter | 9,95 € | 4 à 293 € | 771 | 9,73 € | 88,0 % | 12,0 % | 22,1 % |
+| Pack Évoli | 19,90 € | 5 à 627 € | 88 | 19,68 € | 89,0 % | 11,0 % | 20,7 % |
+| Booster Pro | 24,95 € | 10 à 453 € | 624 | 24,95 € | 90,0 % | 10,0 % | 20,4 % |
+| Pack Rétro | 29,90 € | 10 à 627 € | 203 | 29,57 € | 89,0 % | 11,0 % | 20,6 % |
+| Pack Brasier | 39,90 € | 18 à 544 € | 68 | 38,13 € | 86,0 % | 14,0 % | 22,1 % |
+| Booster Master | 49,95 € | 20 à 635 € | 512 | 49,95 € | 90,0 % | 10,0 % | 24,0 % |
+| Booster Expert | 99,95 € | 40 à 779 € | 319 | 101,06 € | 91,0 % | 9,0 % | 29,1 % |
+| Booster Légende | 249,00 € | 100 à 1538 € | 129 | 254,53 € | 92,0 % | 8,0 % | 30,5 % |
 
-Comment c'est obtenu :
+Comment c'est obtenu, à chaque mouvement du coffre (`packTable()` dans `js/catalog.js`) :
 
-- six paliers de cote par pack, de « Commune » à « Mythique » ;
-- des probabilités en progression géométrique d'un palier au suivant, réglées
-  par `scripts/design-packs.mjs` pour que la cote moyenne égale le prix ;
-- à l'intérieur d'un palier, une probabilité inversement proportionnelle à la
-  cote (les petites cartes sortent plus souvent, comme dans un stock réel).
+- six paliers de cote par pack, de « Commune » à « Mythique » ; chacun reçoit
+  les cartes au coffre dont la cote tombe dans sa fourchette ;
+- des probabilités en progression géométrique d'un palier au suivant, dont la
+  raison est réglée pour que le retour tombe sur la cible du pack (`target`
+  dans `js/data/packs.js`) ;
+- à l'intérieur d'un palier, un poids proportionnel au nombre d'exemplaires et
+  inversement proportionnel à la cote.
 
-`npm run smoke` échoue si un pack s'écarte de la cible de plus d'un point. Le
-catalogue ou un prix change ? On relance `npm run design` et on recopie.
+Un pack dont le coffre ne garnit pas trois paliers, ou qui ne peut pas
+atteindre sa cible à un point près, passe en rupture. `npm run smoke` vérifie
+qu'avec le stock de départ tous les packs sont en vente et sur leur cible.
 
 Trois packs sont thématiques (Évoli et ses évolutions, séries 1999-2002, type
-Feu) : même mécanique, sélection restreinte.
+Feu) : même mécanique, sélection restreinte. Le Pack Brasier affiche le retour
+le plus bas parce que 5 % de son prix financent les lots de son giveaway.
 
-**À retenir pour un vrai lancement.** Le retour de 90 % est calculé sur des
-cotes de marché. La marge réelle dépend du prix auquel les cartes sont
-achetées et de la part des joueurs qui gardent leurs cartes plutôt que de les
-revendre.
+**Le rachat a deux taux** : 90 % de la cote pendant les 10 minutes qui suivent
+l'ouverture, 85 % ensuite. Le retour théorique est calculé sur le premier.
+
+**À retenir pour un vrai lancement.** Le retour est calculé sur des cotes de
+marché. La marge réelle dépend surtout du prix auquel les cartes sont achetées
+et de la part des joueurs qui gardent leurs cartes plutôt que de les revendre :
+`GERANT.md` et la page Pilotage le chiffrent.
+
+## 1 bis. Un coffre réel
+
+Le site ne vend que ce qu'il possède. Le catalogue complet (toutes les cartes
+de la base, plus de 20 000) est chargé à la demande ; l'espace admin dit pour
+chacune si elle est au coffre, et en combien d'exemplaires (`js/stock.js`).
+
+- Une carte gagnée quitte le coffre, une carte rachetée y revient, et la table
+  du pack est recalculée aussitôt.
+- La page **Cartes** montre le coffre en direct et, pour chaque carte, les packs
+  d'où elle peut sortir avec sa probabilité exacte : on peut viser une carte.
+- Les lots d'un giveaway en cours sont mis de côté.
+
+Limite de la démonstration : l'inventaire vit dans le navigateur. En
+production il est tenu côté serveur et partagé par tous les joueurs.
 
 ## 2. Un tirage que le joueur peut vérifier
 
-Chaque pack publie sa **table de tirage complète** : 1 000 000 de tickets
+Chaque pack publie sa **table de tirage** du moment : 1 000 000 de tickets
 répartis entre ses cartes, avec la probabilité exacte et la plage de tickets de
-chacune. Le tirage ne fait que désigner un ticket.
+chacune. Le tirage ne fait que désigner un ticket. Comme la table change avec
+le coffre, chaque tirage note sa version et la plage de la carte gagnée.
 
 Ce ticket est calculé de façon vérifiable (`js/fair.js`) :
 
@@ -84,20 +108,30 @@ Un clic écourte la roulette ; le mode « Rapide » la passe entièrement.
 
 Le joueur mise une carte de son coffre pour tenter d'en obtenir une plus cotée.
 
-- chance de réussite = cote misée ÷ cote visée × 92 %, plafonnée à 80 % ;
-- réussite : la carte visée remplace la carte misée ; échec : la carte est perdue ;
-- retour théorique : 92 % de la cote misée.
+- chance de réussite = cote misée ÷ cote visée × (1 − marge), plafonnée à 80 % ;
+- la marge va de 6 % pour la plus petite marche à 12 % pour les plus grands
+  écarts : le retour théorique de chaque cible est affiché avant de jouer ;
+- réussite : la carte visée remplace la carte misée ; échec : la carte est perdue.
 
 La jauge montre exactement ce qui se joue : la zone colorée couvre les tickets
 gagnants et l'aiguille s'arrête à la position du ticket tiré.
 
-## 5. Progression
+## 5. Progression et récompenses
 
-- **XP** : 1 € engagé = 1 XP (achat de pack, carte misée en Évolution).
+Tout ce que le site rend au joueur est indexé sur ce que le joueur rapporte,
+jamais sur un montant fixe (le détail est dans `GERANT.md`).
+
+- **XP** : elle suit la marge du site sur les mises. 1 € misé sur un pack à
+  10 % de marge rapporte 1 XP.
 - **Neuf badges**, un par type, de 0 à 40 000 XP.
-- **Récompense du jour** : un tirage gratuit par jour, 0,50 € de crédits en
-  moyenne, multiplié par le badge (de ×1 à ×6). Barème affiché.
-- **Classement mensuel** et **giveaways**, comme sur le site de référence.
+- **Cashback** : de 4 % à 12 % de la marge du site sur les mises, selon le
+  badge. La cagnotte s'encaisse telle quelle, ou se joue à une roue (×0,5 à ×5)
+  dont la moyenne vaut exactement ×1.
+- **Bonus** : 10 % du premier dépôt, à jouer 10 fois avant retrait. L'argent du
+  joueur est joué en premier et reste retirable à tout moment.
+- **Classement mensuel** : les dix premiers se partagent 5 % de la marge du mois.
+- **Giveaways** : 5 % du prix de chaque pack événement alimentent une cagnotte ;
+  les lots se débloquent au fil des ventes.
 
 ## 6. Neuf thèmes, choisis à la première visite
 
@@ -122,6 +156,7 @@ et **refuse d'écrire** si un couple texte/fond tombe sous le seuil de lisibilit
 ## 7. Garde-fous
 
 - retour théorique et probabilités affichés partout, avant l'achat ;
+- conditions de bonus affichées avant le dépôt, argent déposé jamais bloqué ;
 - limite de dépenses quotidienne, pause du compte (non annulable) ;
 - rappel de session : temps passé et bilan, à intervalle réglable ;
 - mention 18+ à l'entrée et numéro d'aide en pied de page ;
@@ -129,6 +164,8 @@ et **refuse d'écrire** si un couple texte/fond tombe sous le seuil de lisibilit
 
 ## 8. Pistes suivantes
 
+- **Vente entre joueurs** : une carte revendue à un autre joueur rapporte une
+  commission au site, au lieu de lui coûter un rachat.
 - **Arène** : duels de packs entre joueurs, le total le plus élevé remporte
   toutes les cartes. C'est le mode le plus populaire du genre ; il demande un
   serveur et change la nature juridique du jeu (les joueurs misent les uns

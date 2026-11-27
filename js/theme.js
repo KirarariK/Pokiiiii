@@ -5,6 +5,7 @@
 // compte démo, et reste modifiable depuis le menu ou les paramètres.
 
 import { CARDS } from './catalog.js';
+import { MARK_PATH } from './ui/logo-mark.js';
 import { DEFAULT_THEME, LIGHT_DEFAULT, THEME_KEY, THEMES, themeById } from './data/themes.js';
 import { RULES } from './config.js';
 import { esc } from './format.js';
@@ -23,9 +24,9 @@ export function savedTheme() {
 
 export const currentTheme = () => themeById(document.documentElement.dataset.theme) || themeById(DEFAULT_THEME);
 
-/** Icône d'onglet aux couleurs du thème. */
+/** Icône d'onglet aux couleurs du thème : la marque sur un carré arrondi. */
 function favicon(v) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${v('--primary')}"/><stop offset="1" stop-color="${v('--primary-2')}"/></linearGradient></defs><rect width="32" height="32" rx="7" fill="${v('--stage-b')}"/><rect x="11.5" y="5.5" width="13" height="18.5" rx="2.8" transform="rotate(12 18 15)" fill="${v('--accent')}"/><rect x="7.5" y="7" width="13" height="18.5" rx="2.8" transform="rotate(-10 14 16.5)" fill="url(#g)"/><path d="M13.4 11.2 14.9 15.1 18.8 16.6 14.9 18.1 13.4 22 11.9 18.1 8 16.6 11.9 15.1Z" fill="${v('--on-primary')}" transform="rotate(-10 14 16.5)"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${v('--primary')}"/><stop offset="1" stop-color="${v('--primary-2')}"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="${v('--stage-b')}"/><path fill="url(#g)" fill-rule="evenodd" d="${MARK_PATH}"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
@@ -174,7 +175,7 @@ export function openThemeChooser({ first = false } = {}) {
         ${THEMES.map((t) => themeCard(t, { selected: t.id === selected, suggested: t.id === suggestion })).join('')}
       </div>
       <footer class="chooser__foot">
-        ${first ? `<p class="small muted"><span class="age-pill">${RULES.minAge}+</span>En entrant, tu confirmes avoir ${RULES.minAge} ans ou plus.</p>` : `<button class="btn btn--secondary btn--lg" type="button" data-chooser-cancel>Annuler</button>`}
+        ${first ? `<p class="small"><span class="age-pill">${RULES.minAge}+</span><strong>Réservé aux majeurs.</strong> En entrant, tu confirmes avoir ${RULES.minAge} ans ou plus.</p>` : `<button class="btn btn--secondary btn--lg" type="button" data-chooser-cancel>Annuler</button>`}
         <button class="btn btn--primary btn--lg" type="button" data-chooser-confirm>${first ? 'Entrer avec le thème' : 'Garder le thème'} <span data-chooser-name></span>${icon('arrow-right', { size: 18 })}</button>
       </footer>
     </div>`;
@@ -200,7 +201,8 @@ export function openThemeChooser({ first = false } = {}) {
     const onKey = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        close(first); // à la première visite, Échap valide la suggestion ; ensuite il annule
+        // À la première visite, entrer vaut déclaration de majorité : il faut le bouton, pas Échap.
+        if (!first) close(false);
         return;
       }
       if (e.key !== 'Tab') return;

@@ -1,24 +1,26 @@
-// Transparence et jeu responsable : fonctionnement du tirage, chiffres par pack,
-// limites de la démonstration et reste à faire avant le lancement.
+// Transparence et jeu responsable : ce que vaut chaque jeu en moyenne, comment
+// une carte est tirée, limites de la démonstration et reste à faire.
 
 import { PRICES_DATE, RULES } from '../config.js';
-import { dropTable, expectedValue, packReturn, profitChance } from '../catalog.js';
+import { dropTable, expectedValue, packAvailable, packReturn, profitChance } from '../catalog.js';
+import { BADGES } from '../data/badges.js';
+import { belowPriceRange } from '../data/faq.js';
+import { listGiveaways } from '../data/giveaways.js';
 import { PACKS } from '../data/packs.js';
-import { dateFr, esc, eur, num, pctFine } from '../format.js';
+import { dateFr, esc, eur, num, pct, pctFine } from '../format.js';
 import { icon } from '../icons.js';
 import { note, pageHead } from '../ui/blocks.js';
 
-const rate = Math.round(RULES.buybackRate * 100);
-const target = Math.round(RULES.targetReturn * 100);
+const percent = (x) => `${Math.round(x * 100)} %`;
 
 function packRows() {
   return PACKS.map((pack) => {
+    if (!packAvailable(pack)) return `<tr><th scope="row"><a href="#/packs/${pack.slug}">${esc(pack.name)}</a></th><td class="num">${eur(pack.price)}</td><td class="muted" colspan="4">En rupture</td></tr>`;
     const ev = expectedValue(pack);
     return `<tr>
       <th scope="row"><a href="#/packs/${pack.slug}">${esc(pack.name)}</a></th>
       <td class="num">${eur(pack.price)}</td>
       <td class="num">${eur(ev)}</td>
-      <td class="num">${eur(Math.round(ev * RULES.buybackRate))}</td>
       <td class="num"><strong>${pctFine(packReturn(pack))}</strong></td>
       <td class="num">${pctFine(profitChance(pack))}</td>
       <td class="num">${num(dropTable(pack).length)}</td>
@@ -28,11 +30,11 @@ function packRows() {
 
 const TODO = [
   ['landmark', 'Société', 'Immatriculation, mentions légales, CGV et CGU rédigées par un juriste.'],
-  ['scale', 'Qualification juridique', "Faire valider le modèle : vente d'un bien à contenu aléatoire, ou jeu d'argent soumis à autorisation. La réponse conditionne tout le reste."],
-  ['dices', 'Tirage certifié', "Graine serveur gardée côté serveur, tables de tirage figées et datées, générateur d'aléa audité par un laboratoire agréé, journal infalsifiable."],
-  ['credit-card', 'Paiement', 'Prestataire de paiement agréé, lutte contre la fraude et les impayés.'],
-  ['scan-face', 'Identité et majorité', "Vérification de l'âge à l'inscription et de l'identité (KYC) avant tout retrait."],
-  ['vault', 'Stock et logistique', 'Une carte physique par ligne de la table de tirage, coffre assuré, expédition suivie, gestion des retours.'],
+  ['scale', 'Modèle à refondre', "En France, payer pour un tirage dont le lot se revend contre de l'argent est un jeu d'argent, interdit hors des opérateurs autorisés, et aucun agrément n'existe pour ce type de jeu. Le modèle montré ici ne peut donc pas ouvrir tel quel : il doit être refondu, puis validé par un avocat."],
+  ['dices', 'Tirage tenu côté serveur', "Graine serveur gardée côté serveur, chaque version de table archivée et datée, journal infalsifiable. Un audit du générateur d'aléa est une garantie technique : il ne vaut pas autorisation."],
+  ['credit-card', 'Paiement', "Aucun solde retirable tenu par le site : cela relève d'un établissement agréé. Prestataire de paiement informé du modèle réel, lutte contre la fraude et les impayés."],
+  ['scan-face', 'Identité et majorité', "Vérification de l'âge et de l'identité avant le premier paiement, pas au moment d'un retrait."],
+  ['vault', 'Stock et logistique', "Inventaire tenu côté serveur et partagé par tous les joueurs, coffre assuré, expédition suivie, gestion des retours."],
   ['shield', 'Protection des joueurs', 'Limites de dépenses, rappels de session, pauses et auto-exclusion appliqués côté serveur.'],
   ['lock', 'Données personnelles', 'Registre des traitements, politique de confidentialité, bandeau cookies conforme.'],
 ];
@@ -40,24 +42,42 @@ const TODO = [
 export default {
   title: 'Transparence et jeu responsable',
   render() {
+    const { edgeMin, edgeMax } = RULES.evolution;
+    const low = Math.min(...PACKS.map((p) => p.target));
+    const high = Math.max(...PACKS.map((p) => p.target));
+    const fund = listGiveaways().find((g) => g.fundRate)?.fundRate ?? 0;
+    const below = belowPriceRange();
     return `
-    ${pageHead({ icon: 'scale', title: 'Transparence et jeu responsable', lead: 'Ce que vaut un pack en moyenne, comment une carte est tirée, et ce que cette démonstration ne fait pas encore.' })}
+    ${pageHead({ icon: 'scale', title: 'Transparence et jeu responsable' })}
 
     <section class="panel panel--pad">
       <div class="section__head"><h2>${icon('percent', { size: 22 })}<span>Ce que vaut un pack en moyenne</span></h2></div>
-      <p class="muted">Tous les packs sont conçus pour le même retour théorique : <strong>${target} %</strong>. La cote moyenne de la carte tirée vaut le prix du pack, et la revente immédiate en reprend ${rate} %. Autrement dit, sur un grand nombre de packs ouverts puis revendus, tu récupères environ ${target} € pour 100 € dépensés.</p>
+      <p class="muted">Le retour théorique est ce que tu récupères en moyenne en revendant la carte dans les ${RULES.buybackLockMinutes} minutes, à ${percent(RULES.buybackRate)} de sa cote. Il va de <strong>${percent(low)}</strong> à <strong>${percent(high)}</strong> selon le pack : le reste est la marge du site.</p>
       <div class="table-wrap"><table class="table">
-        <thead><tr><th>Pack</th><th class="num">Prix</th><th class="num">Cote moyenne</th><th class="num">Rachat moyen</th><th class="num">Retour théorique</th><th class="num">Carte ≥ prix</th><th class="num">Cartes</th></tr></thead>
+        <thead><tr><th>Pack</th><th class="num">Prix</th><th class="num">Cote moyenne</th><th class="num">Retour théorique</th><th class="num">Carte ≥ prix</th><th class="num">Cartes</th></tr></thead>
         <tbody>${packRows()}</tbody>
       </table></div>
-      <p class="small muted">« Carte ≥ prix » : part des tirages où la carte vaut au moins le prix du pack. Cotes indicatives relevées le ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())} (Cardmarket, moyenne 30 jours, via pokemontcg.io).</p>
+      ${below ? `<p><strong>La moyenne cache l'essentiel :</strong> dans ${pct(below.low * 100)} à ${pct(below.high * 100)} des tirages selon le pack, la carte vaut moins que le prix payé.</p>` : ''}
+      <p class="small muted">« Carte ≥ prix » : part des tirages où la carte vaut au moins le prix du pack. Revendue après la garantie, une carte est reprise à ${percent(RULES.buybackLaterRate)} : le retour baisse d'autant. Cotes indicatives relevées le ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())} (Cardmarket, moyenne 30 jours, via pokemontcg.io) : un prix observé entre vendeurs tiers, qui ne distingue ni l'état ni la langue de l'exemplaire.</p>
       ${note("Une moyenne ne dit rien d'un tirage isolé : la plupart des cartes sortent dans les premiers paliers, et les gros lots sont rares. Ne compte jamais sur un pack pour te refaire.", 'warn')}
+    </section>
+
+    <section class="panel panel--pad prose">
+      <h2>${icon('chevrons-up', { size: 22 })}Les autres jeux et avantages</h2>
+      <ul>
+        <li><strong>Évolution</strong> : chance de réussite = cote misée ÷ cote visée × (1 − marge). La marge va de ${percent(edgeMin)} à ${percent(edgeMax)} selon l'écart visé ; le retour théorique de chaque cible est affiché avant de jouer.</li>
+        <li><strong>Cashback</strong> : de ${pct(BADGES[0].cashback * 100)} à ${pct(BADGES[BADGES.length - 1].cashback * 100)} de la marge du site sur tes mises, selon ton badge. La roue qui permet de le multiplier a une moyenne de ×1 : elle ne te fait ni gagner ni perdre sur la durée.</li>
+        <li><strong>Bonus</strong> : crédités tout de suite, tenus à part tant que tu n'as pas misé ${RULES.bonus.wagering} fois leur montant en packs. Un bonus ne bloque jamais le reste de ton solde.</li>
+        <li><strong>Giveaways</strong> : financés par ${pct(fund * 100)} du prix de chaque pack événement vendu ; les lots se débloquent au fil des ventes et seuls les lots débloqués sont tirés au sort.</li>
+        <li><strong>Classement</strong> : les dix premiers se partagent ${pct(RULES.leaderboardShare * 100)} de la marge du mois. Seuls les achats de packs donnent des points.</li>
+        <li><strong>Livraison</strong> : forfait par envoi, plus ${pct(RULES.shippingInsurance.rate * 100)} d'envoi en valeur déclarée sur la cote expédiée au-delà de ${eur(RULES.shippingInsurance.from)}. La perte et la casse restent à la charge du vendeur jusqu'à la remise.</li>
+      </ul>
     </section>
 
     <section class="panel panel--pad prose">
       <h2>${icon('dices', { size: 22 })}Comment une carte est tirée</h2>
       <ol>
-        <li><strong>Chaque pack a une table de tirage publiée</strong> : ${num(1_000_000)} tickets répartis entre ses cartes. La probabilité d'une carte, c'est la taille de sa plage de tickets. La table complète est sur la page du pack.</li>
+        <li><strong>Seules les cartes au coffre peuvent sortir.</strong> La table d'un pack répartit ${num(1_000_000)} tickets entre les cartes que le site possède à cet instant : la probabilité d'une carte, c'est la taille de sa plage. Une carte gagnée quitte le coffre, une carte rachetée y revient, et la table est recalculée pour que le retour reste celui affiché.</li>
         <li><strong>Les paliers fixent les grandes masses</strong> (les « répartitions »). À l'intérieur d'un palier, ${RULES.tierSkew ? 'la probabilité d’une carte est inversement proportionnelle à sa cote : les moins chères sortent plus souvent, comme dans un stock réel.' : 'toutes les cartes ont la même probabilité.'}</li>
         <li><strong>Un ticket est tiré de façon vérifiable</strong> à partir de ta graine, de la nôtre et d'un compteur. Tu peux le recalculer après coup : voir <a href="#/equite">Équité prouvable</a>.</li>
       </ol>
@@ -66,21 +86,13 @@ export default {
     </section>
 
     <section class="panel panel--pad prose">
-      <h2>${icon('chevrons-up', { size: 22 })}Les autres jeux</h2>
-      <ul>
-        <li><strong>Évolution</strong> : chance de réussite = cote misée ÷ cote visée × ${Math.round((1 - RULES.evolution.edge) * 100)} %. Retour théorique : ${Math.round((1 - RULES.evolution.edge) * 100)} % de la cote misée.</li>
-        <li><strong>Récompense du jour</strong> : gratuite, une fois par jour, barème affiché sur la page <a href="#/recompenses">Récompenses</a>.</li>
-        <li><strong>Giveaways</strong> : gratuits pour les participants ; un ticket par pack éligible ouvert.</li>
-      </ul>
-    </section>
-
-    <section class="panel panel--pad prose">
       <h2>${icon('info', { size: 22 })}Ce que la démonstration ne fait pas</h2>
+      <p><strong>Ce site est une maquette sans argent.</strong> Aucune autorité ne l'a autorisé, agréé ni certifié, et il ne sera pas ouvert en argent réel sous cette forme.</p>
       <ul>
         <li><strong>Aucun paiement</strong> : le solde est fait de crédits fictifs, et aucun retrait n'est possible.</li>
-        <li><strong>Aucun stock</strong> : les cartes tirées ne sont pas adossées à des cartes physiques, une même carte peut sortir sans limite.</li>
+        <li><strong>Un coffre d'exemple</strong> : l'inventaire est un stock de démonstration, tenu dans ton navigateur. Il n'est pas partagé entre appareils.</li>
         <li><strong>Aucune expédition</strong> : les demandes de livraison restent locales.</li>
-        <li><strong>Aucune communauté réelle</strong> : classement, dernières ouvertures et participants aux giveaways sont générés.</li>
+        <li><strong>Aucune communauté réelle</strong> : classement, dernières ouvertures, ventes et participants aux giveaways sont générés.</li>
         <li><strong>Aucun serveur</strong> : compte, tirages et graines vivent dans ton navigateur. La graine « serveur » y est donc lisible.</li>
       </ul>
     </section>
