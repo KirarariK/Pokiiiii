@@ -54,8 +54,17 @@ const SPIN_MS = 5200;
 
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
+/** Bord déchiré : une ligne en dents de scie à la hauteur de la coupe, la même sur les deux morceaux. */
+function tearEdges() {
+  const y = 10.6;
+  const pts = [];
+  for (let i = 0; i <= 24; i++) pts.push(`${((i / 24) * 100).toFixed(2)}% ${(y + (i % 2 ? 1.3 : -1.3) + Math.sin(i * 2.7) * 0.5).toFixed(2)}%`);
+  return { top: `polygon(0% 0%, 100% 0%, ${[...pts].reverse().join(', ')})`, body: `polygon(${pts.join(', ')}, 100% 100%, 0% 100%)` };
+}
+
 function sceneHtml(pack, total) {
   const fast = getState().settings.fast;
+  const edge = tearEdges();
   return `
   <section class="opening" data-phase="idle" style="--glow:${themeGlow(pack.theme)}">
     <h1 class="sr-only">Ouverture : ${esc(pack.name)}</h1>
@@ -72,9 +81,11 @@ function sceneHtml(pack, total) {
       <span class="opening__aura" aria-hidden="true"></span>
       <span class="opening__rays" aria-hidden="true"></span>
       <canvas class="opening__fx" aria-hidden="true"></canvas>
-      <button class="opening__pack" type="button" data-open aria-label="Ouvrir le pack">
-        <span class="opening__pack-top">${packArt(pack, { lazy: false })}</span>
+      <button class="opening__pack" type="button" data-open aria-label="Déchirer le pack pour l'ouvrir" style="--clip-top:${edge.top};--clip-body:${edge.body}">
         <span class="opening__pack-body">${packArt(pack, { lazy: false })}</span>
+        <span class="opening__slit" aria-hidden="true"></span>
+        <span class="opening__pack-top">${packArt(pack, { lazy: false })}</span>
+        <span class="opening__tip" aria-hidden="true"></span>
       </button>
       <div class="reel" data-reel hidden>
         <div class="reel__band">
@@ -93,7 +104,7 @@ function sceneHtml(pack, total) {
       <span class="opening__flash" aria-hidden="true"></span>
     </div>
 
-    <p class="opening__hint" data-hint>${icon('sparkles', { size: 16 })}Touche le pack pour l'ouvrir</p>
+    <p class="opening__hint" data-hint>${icon('sparkles', { size: 16 })}Glisse sur le haut du pack pour le déchirer, ou touche-le</p>
     <div class="opening__result" data-result hidden aria-live="polite"></div>
   </section>`;
 }
@@ -187,7 +198,27 @@ export default {
     let alive = true;
     let skipSpin = null;
     let raf = 0;
+    let ripRaf = 0;
     let untilt = () => {};
+    const packEl = scene.querySelector('[data-open]');
+
+    /** Avancement de la déchirure (0 à 1) : tout le visuel en découle par une variable CSS. */
+    const setRip = (p) => {
+      packEl.style.setProperty('--p', p.toFixed(3));
+      packEl.classList.toggle('is-ripping', p > 0.01);
+    };
+    const animateRip = (from, to, ms) =>
+      new Promise((resolve) => {
+        cancelAnimationFrame(ripRaf);
+        const t0 = performance.now();
+        const step = (t) => {
+          const k = Math.min(1, (t - t0) / ms);
+          setRip(from + (to - from) * (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2));
+          if (k < 1 && alive) ripRaf = requestAnimationFrame(step);
+          else resolve();
+        };
+        ripRaf = requestAnimationFrame(step);
+      });
 
     queue.forEach((o) => preload(cardById(o.cardId).imgHi));
 
@@ -310,7 +341,7 @@ export default {
       busy = false;
     }
 
-    async function open() {
+    async function open({ ripped = false } = {}) {
       if (busy || scene.dataset.phase !== 'idle') return;
       busy = true;
       const owned = queue[index];
@@ -348,6 +379,7 @@ export default {
         showCard();
         scene.dataset.rarity = owned.rarity;
         setPhase('tease');
+        if (RARITIES[owned.rarity].rank >= 3) sfx.suspense(RARITIES[owned.rarity].rank);
         await wait(RARITIES[owned.rarity].rank >= 3 ? 700 : 320);
         if (!alive) return;
         sfx.flip();
@@ -361,11 +393,15 @@ export default {
       // Ouverture complète : le pack se charge, se déchire, puis la roulette tourne.
       const { tiles, jitter } = buildReel(owned, card);
       const thumbs = Promise.all(tiles.map((t) => preload(t.card.img, 1500)));
-      sfx.charge();
-      setPhase('charging');
-      await Promise.all([wait(900), thumbs]);
+      // Le sachet se déchire (à la main, ou tout seul après un toucher), puis la lumière jaillit.
+      setPhase('ripping');
+      if (!ripped) {
+        sfx.rip(0.6);
+        await animateRip(0, 1, 600);
+      }
+      await thumbs;
       if (!alive) return;
-      sfx.tear();
+      sfx.burst();
       setPhase('burst');
       await wait(380);
       if (!alive) return;
@@ -375,7 +411,9 @@ export default {
       if (!alive) return;
       scene.dataset.rarity = owned.rarity;
       setPhase('landed');
-      await Promise.all([ready, wait(750)]);
+      const rank = RARITIES[owned.rarity].rank;
+      if (rank >= 3) sfx.suspense(rank);
+      await Promise.all([ready, wait(rank >= 4 ? 1150 : rank >= 3 ? 850 : 750)]);
       if (!alive) return;
       $('[data-reel]').hidden = true;
       showCard();
@@ -383,6 +421,8 @@ export default {
     }
 
     function resetScene() {
+      cancelAnimationFrame(ripRaf);
+      setRip(0);
       untilt();
       untilt = () => {};
       $('[data-result]').hidden = true;
@@ -447,7 +487,7 @@ export default {
         return;
       }
       if (e.target.closest('[data-open]')) {
-        open();
+        if (!suppressClick) open();
         return;
       }
       if (e.target.closest('[data-skip]')) {
@@ -497,6 +537,49 @@ export default {
       if (btn) btn.innerHTML = `${icon('hand-coins', { size: 18 })}Revendre ${eur(buybackOf(queue[index]))}`;
     };
 
+    // Geste de déchirure : on glisse de gauche à droite le long du haut du pack.
+    let drag = null;
+    let suppressClick = false;
+    const finishDrag = async (force) => {
+      const d = drag;
+      if (!d) return;
+      drag = null;
+      d.live?.stop();
+      if (!d.moved) return; // simple toucher : le clic fera le reste
+      suppressClick = true;
+      setTimeout(() => (suppressClick = false), 80);
+      if (d.p >= 0.6 || force) {
+        await animateRip(d.p, 1, 140);
+        open({ ripped: true });
+      } else await animateRip(d.p, 0, 260);
+    };
+    const onDown = (e) => {
+      if (busy || scene.dataset.phase !== 'idle' || !motionOk() || getState().settings.fast) return;
+      drag = { x: e.clientX, w: packEl.getBoundingClientRect().width, p: 0, last: e.clientX, t: performance.now(), moved: false, live: null };
+      packEl.setPointerCapture?.(e.pointerId);
+    };
+    const onMove = (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && dx < 10) return;
+      if (!drag.moved) {
+        drag.moved = true;
+        drag.live = sfx.ripLive();
+      }
+      drag.p = Math.max(0, Math.min(1, dx / (drag.w * 0.6)));
+      const now = performance.now();
+      drag.live.set((Math.abs(e.clientX - drag.last) / Math.max(1, now - drag.t)) / 1.6);
+      drag.last = e.clientX;
+      drag.t = now;
+      setRip(drag.p);
+      if (drag.p >= 1) finishDrag(true);
+    };
+    const onUp = () => finishDrag(false);
+    packEl.addEventListener('pointerdown', onDown);
+    packEl.addEventListener('pointermove', onMove);
+    packEl.addEventListener('pointerup', onUp);
+    packEl.addEventListener('pointercancel', onUp);
+
     root.addEventListener('click', onClick);
     root.addEventListener('countdown:end', onLockEnd);
     paintProgress();
@@ -504,6 +587,8 @@ export default {
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(ripRaf);
+      drag?.live?.stop();
       untilt();
       root.removeEventListener('click', onClick);
       root.removeEventListener('countdown:end', onLockEnd);
