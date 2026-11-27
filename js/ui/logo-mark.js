@@ -1,9 +1,9 @@
-// Marque du site : un C en forme de porte de coffre, une carte glissée dans son ouverture,
-// un éclat découpé au centre de la carte. Tracé unique (remplissage pair-impair) :
+// Marque du site : un C en porte de coffre (charnières à gauche, boulons en haut et en bas),
+// une carte glissée dans son ouverture, un éclat découpé au centre de la carte. Tracé unique (remplissage pair-impair) :
 // il sert au logo et à l'icône d'onglet.
 
 /** Cadre du tracé (x, y, largeur, hauteur). */
-export const MARK_BOX = [40, 64, 340, 384];
+export const MARK_BOX = [30, 76, 386, 360];
 
 export const MARK_PATH =
-  'M353.4 125.8A178 178 0 1 0 353.4 386.2A33 33 0 0 0 308.4 337.9A112 112 0 1 1 308.4 174.1A33 33 0 0 0 353.4 125.8ZM298.8 187.1L361.6 199.3A14 14 0 0 1 372.7 215.7L353.6 313.9A14 14 0 0 1 337.2 324.9L274.4 312.7A14 14 0 0 1 263.3 296.3L282.4 198.1A14 14 0 0 1 298.8 187.1ZM323.7 226.6L325.5 251L347.4 261.7L323 263.5L312.3 285.4L310.5 261L288.6 250.3L313 248.5Z';
+  'M367.1 128.2A172 172 0 1 0 367.1 383.8A32 32 0 0 0 324.3 336.3A108 108 0 1 1 324.3 175.7A32 32 0 0 0 367.1 128.2ZM42 128H54A12 12 0 0 1 66 140V208A12 12 0 0 1 54 220H42A12 12 0 0 1 30 208V140A12 12 0 0 1 42 128ZM42 292H54A12 12 0 0 1 66 304V372A12 12 0 0 1 54 384H42A12 12 0 0 1 30 372V304A12 12 0 0 1 42 292ZM252 102H252A6 6 0 0 1 258 108V130A6 6 0 0 1 252 136H252A6 6 0 0 1 246 130V108A6 6 0 0 1 252 102ZM252 376H252A6 6 0 0 1 258 382V404A6 6 0 0 1 252 410H252A6 6 0 0 1 246 404V382A6 6 0 0 1 252 376ZM331.5 185.9L391.6 207.7A13 13 0 0 1 399.4 224.4L365.2 318.4A13 13 0 0 1 348.5 326.1L288.4 304.3A13 13 0 0 1 280.6 287.6L314.8 193.6A13 13 0 0 1 331.5 185.9ZM349.9 228.7L348.2 252.2L367.3 265.9L343.8 264.2L330.1 283.3L331.8 259.8L312.7 246.1L336.2 247.8Z';

@@ -26,7 +26,7 @@ export const currentTheme = () => themeById(document.documentElement.dataset.the
 
 /** Icône d'onglet aux couleurs du thème : la marque sur un carré arrondi. */
 function favicon(v) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${v('--primary')}"/><stop offset="1" stop-color="${v('--primary-2')}"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="${v('--stage-b')}"/><path fill="url(#g)" fill-rule="evenodd" transform="translate(46 0)" d="${MARK_PATH}"/></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${v('--primary')}"/><stop offset="1" stop-color="${v('--primary-2')}"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="${v('--stage-b')}"/><path fill="url(#g)" fill-rule="evenodd" transform="translate(33 0)" d="${MARK_PATH}"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
