@@ -1,8 +1,9 @@
-// Marque du site : une carte inclinée, un éclat découpé en son centre.
-// Tracé généré puis repris tel quel ; il sert au logo et à l'icône d'onglet.
+// Marque du site : un C en forme de porte de coffre, une carte glissée dans son ouverture,
+// un éclat découpé au centre de la carte. Tracé unique (remplissage pair-impair) :
+// il sert au logo et à l'icône d'onglet.
 
 /** Cadre du tracé (x, y, largeur, hauteur). */
-export const MARK_BOX = [112, 78, 288, 356];
+export const MARK_BOX = [40, 64, 340, 384];
 
 export const MARK_PATH =
-  'M199.206 88.5947L366.624 118.115C385.007 121.356 392.578 132.169 389.336 150.552L345.23 400.693C341.988 419.076 331.176 426.647 312.793 423.405L145.376 393.885C126.992 390.644 119.422 379.831 122.663 361.448L166.77 111.307C170.011 92.9241 180.823 85.3533 199.206 88.5947ZM270.412 174.261L280.327 238.966L320.997 267.461L273.034 280.328L241.587 337.739L231.672 273.034L191.002 244.539L238.965 231.672L270.412 174.261Z';
+  'M353.4 125.8A178 178 0 1 0 353.4 386.2A33 33 0 0 0 308.4 337.9A112 112 0 1 1 308.4 174.1A33 33 0 0 0 353.4 125.8ZM298.8 187.1L361.6 199.3A14 14 0 0 1 372.7 215.7L353.6 313.9A14 14 0 0 1 337.2 324.9L274.4 312.7A14 14 0 0 1 263.3 296.3L282.4 198.1A14 14 0 0 1 298.8 187.1ZM323.7 226.6L325.5 251L347.4 261.7L323 263.5L312.3 285.4L310.5 261L288.6 250.3L313 248.5Z';
