@@ -1458,3 +1458,70 @@ button.tile, a.tile { text-align: left; font: inherit; color: var(--text) !impor
 p a:not(.btn):not(.link-more), .prose a:not(.btn), .acc__body a:not(.btn), .footer__legal a, .hint a, .note a, .check a { text-decoration: underline; text-underline-offset: 2px; }
 .table-wrap:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .setting__pending { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
+
+
+/* ---------------------------------------------------------------------------
+   18. Habillage « carte à jouer »
+   Contours épais, ombres franches, trames et reflets holographiques : l'allure
+   d'un jeu de cartes, sans reprendre aucun élément d'une marque.
+   --------------------------------------------------------------------------- */
+:root { --ink: color-mix(in srgb, var(--bg) 55%, #000); --edge: color-mix(in srgb, var(--border-strong) 80%, var(--text) 8%); }
+
+/* Fond : rayons d'énergie et trame de points, à la place des halos doux. */
+body::before {
+  background:
+    repeating-conic-gradient(from 0deg at 85% -10%, color-mix(in srgb, var(--primary) 9%, transparent) 0 7deg, transparent 7deg 14deg),
+    radial-gradient(760px 560px at -6% 108%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%);
+  -webkit-mask-image: radial-gradient(1200px 900px at 85% -10%, #000 20%, transparent 75%), linear-gradient(#000, #000);
+  -webkit-mask-composite: source-over; mask-image: radial-gradient(1200px 900px at 85% -10%, #000 15%, transparent 70%), radial-gradient(760px 560px at -6% 108%, #000, transparent 70%);
+}
+body::after { background-image: var(--motif), radial-gradient(color-mix(in srgb, var(--text) 7%, transparent) 1.2px, transparent 1.4px); background-size: 150px 150px, 14px 14px; }
+
+/* Boutons : une touche qu'on enfonce. */
+.btn { border-width: 2px; border-color: var(--edge); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); }
+.btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+.btn--primary { border-color: color-mix(in srgb, var(--primary-2) 55%, #000); box-shadow: 0 4px 0 color-mix(in srgb, var(--primary-2) 45%, #000); }
+.btn--primary:active { box-shadow: 0 0 0 transparent; }
+.btn--ghost, .btn--icon.btn--ghost { box-shadow: none; border-color: transparent; }
+.btn:disabled, .btn[aria-disabled='true'] { box-shadow: none; }
+
+/* Panneaux et vignettes : des cartes posées sur la table. */
+.panel, .tile, .pack-tile, .game, .stat, .acc, .table-wrap { border-width: 2px; border-color: var(--edge); box-shadow: 0 5px 0 var(--ink); }
+.panel { border-radius: 22px; }
+.tile { border-radius: 18px; }
+button.tile:hover, a.tile:hover { box-shadow: 0 9px 0 var(--ink), 0 14px 30px color-mix(in srgb, var(--rc) 22%, transparent); }
+.pack-tile:hover { box-shadow: 0 10px 0 var(--ink), 0 18px 40px color-mix(in srgb, var(--glow) 24%, transparent); }
+
+/* Reflet holographique au survol d'une carte. */
+.tile__stage { position: relative; overflow: hidden; border-radius: 12px; }
+.tile__stage::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 90, 160, 0.28) 40%, rgba(255, 220, 90, 0.3) 47%, rgba(90, 230, 190, 0.3) 54%, rgba(110, 160, 255, 0.28) 61%, transparent 71%);
+  background-size: 260% 100%; background-position: 100% 0; mix-blend-mode: screen;
+}
+button.tile:hover .tile__stage::after, a.tile:hover .tile__stage::after { opacity: 1; animation: holo 1.1s var(--ease) forwards; }
+@keyframes holo { to { background-position: 0 0; } }
+
+/* Titres : une étiquette inclinée, un trait d'énergie. */
+.hero h1 { text-shadow: 0 4px 0 var(--ink); letter-spacing: -0.02em; }
+.hero h1 em { -webkit-text-stroke: 0; text-shadow: 0 4px 0 color-mix(in srgb, var(--primary-2) 40%, #000); }
+.section__head h2 { padding: 6px 14px 6px 10px; border: 2px solid var(--edge); border-radius: 12px; background: var(--surface-2); box-shadow: 0 3px 0 var(--ink); transform: rotate(-1.2deg); }
+.eyebrow { display: inline-flex; padding: 5px 11px; border-radius: 999px; border: 2px solid color-mix(in srgb, var(--primary) 55%, transparent); background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.hero__chips li { border-width: 2px; border-color: var(--edge); box-shadow: 0 3px 0 var(--ink); }
+.badge { border: 2px solid color-mix(in srgb, currentColor 35%, transparent); text-transform: uppercase; letter-spacing: 0.05em; }
+.tab.is-active { background: var(--primary); color: var(--on-primary) !important; box-shadow: 0 3px 0 color-mix(in srgb, var(--primary-2) 45%, #000); }
+.tab.is-active .tab__count { background: var(--on-primary); color: var(--primary); }
+.bet__chip.is-active { box-shadow: 0 3px 0 color-mix(in srgb, var(--primary-2) 45%, #000); }
+.hero { border: 2px solid var(--edge); box-shadow: 0 6px 0 var(--ink); }
+
+/* Essai gratuit. */
+.trial { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); align-items: center; gap: 18px; margin: 14px 0; }
+.trial__card { perspective: 800px; }
+.trial__card.is-in { animation: trial-in 0.5s var(--ease); filter: drop-shadow(0 10px 22px color-mix(in srgb, var(--rc, var(--primary)) 40%, transparent)); }
+.trial__info { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
+.trial__name { font-family: var(--font-display); font-size: 1.1rem; }
+.trial__value { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--primary-text); }
+.trial__tally { padding: 10px 13px; border-radius: 12px; background: var(--surface-2); border: 2px solid var(--edge); }
+@keyframes trial-in { from { transform: rotateY(90deg) scale(0.9); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .trial__card.is-in, button.tile:hover .tile__stage::after, a.tile:hover .tile__stage::after { animation: none; } }
+html[data-motion='off'] .trial__card.is-in { animation: none; }

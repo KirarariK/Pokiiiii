@@ -149,6 +149,7 @@ export default {
     const returns = open.map(packReturn);
     const below = open.map((p) => 1 - profitChance(p));
     const top = vault.slice(0, 6);
+    const open0 = PACKS.find(packAvailable);
     return `
     <section class="hero">
       <div class="hero__copy">
@@ -156,7 +157,7 @@ export default {
         <h1>Chaque carte est au coffre.<br><em>Chaque chance est affichée.</em></h1>
         <div class="hero__cta">
           <a class="btn btn--primary btn--lg" href="#/packs">Ouvrir un pack${icon('arrow-right', { size: 18 })}</a>
-          <a class="btn btn--secondary btn--lg" href="#/cartes">Voir le coffre</a>
+          <a class="btn btn--secondary btn--lg" href="#/packs/${(open0 || PACKS[0]).slug}?essai=1">${icon('sparkles', { size: 18 })}Essai gratuit</a>
         </div>
         <ul class="hero__chips">
           ${returns.length ? `<li><strong>${pct(Math.min(...returns) * 100)} – ${pct(Math.max(...returns) * 100)}</strong>retour moyen</li>
