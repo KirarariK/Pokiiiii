@@ -75,16 +75,20 @@ export default {
     const signupMode = Boolean(form.elements.birth);
     const onSubmit = (e) => {
       e.preventDefault();
-      const fail = (message) => {
+      form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
+      const fail = (message, field = form.elements.pseudo) => {
         error.textContent = message;
         error.hidden = false;
+        field.setAttribute('aria-invalid', 'true');
+        field.focus();
       };
+      if (form.elements.pseudo.value.trim().length < 3) return fail('Choisis un pseudo de 3 à 16 caractères.');
       if (signupMode) {
         const birth = form.elements.birth.value;
-        if (!birth) return fail('Indique ta date de naissance.');
-        if (birth > adultBefore()) return fail(`Le site est réservé aux personnes de ${RULES.minAge} ans ou plus.`);
+        if (!birth) return fail('Indique ta date de naissance.', form.elements.birth);
+        if (birth > adultBefore()) return fail(`Le site est réservé aux personnes de ${RULES.minAge} ans ou plus.`, form.elements.birth);
       }
-      if (signupMode && !form.elements.terms.checked) return fail("Tu dois accepter les conditions d'utilisation.");
+      if (signupMode && !form.elements.terms.checked) return fail("Tu dois accepter les conditions d'utilisation.", form.elements.terms);
       const res = signupMode ? signup(form.elements.pseudo.value) : login(form.elements.pseudo.value);
       if (!res.ok) return fail(res.message);
       toast(signupMode ? `Bienvenue ! ${eur(RULES.welcomeCredit)} de crédits fictifs t'attendent.` : 'Content de te revoir.', 'success');

@@ -95,7 +95,7 @@ function renderFooter() {
         <p>${esc(BRAND.baseline)}<br>Une vraie carte dans chaque pack : à garder au coffre, à recevoir chez toi ou à revendre.</p>
       </div>
       <div>
-        <h3 class="footer__title">Jouer</h3>
+        <h2 class="footer__title">Jouer</h2>
         <a href="#/packs">Packs mystère</a>
         <a href="#/evolution">Évolution</a>
         <a href="#/cartes">Cartes</a>
@@ -104,7 +104,7 @@ function renderFooter() {
         <a href="#/classement">Classement</a>
       </div>
       <div>
-        <h3 class="footer__title">Confiance</h3>
+        <h2 class="footer__title">Confiance</h2>
         <a href="#/equite">Équité prouvable</a>
         <a href="#/transparence">Transparence et jeu responsable</a>
         <a href="#/faq">FAQ</a>
@@ -112,7 +112,7 @@ function renderFooter() {
         <a href="#/admin">Espace admin</a>
       </div>
       <div>
-        <h3 class="footer__title">Légal</h3>
+        <h2 class="footer__title">Légal</h2>
         <a href="#/legal/cgv">Conditions générales de vente</a>
         <a href="#/legal/cgu">Conditions d'utilisation</a>
         <a href="#/legal/confidentialite">Politique de confidentialité</a>
@@ -139,7 +139,7 @@ export function renderAccount() {
             <span class="xp__ring" style="--p:${Math.round(ratio * 100)}">${icon(current.icon, { size: 16 })}</span>
           </a>
           <a class="balance" href="#/solde" title="Mon solde">${icon('wallet', { size: 18 })}<strong>${eur(balance)}</strong></a>
-          <button class="btn btn--primary btn--sm topbar__topup" type="button" data-action="topup">${icon('plus', { size: 16 })}<span>Recharger</span></button>
+          <button class="btn btn--primary btn--sm topbar__topup" type="button" data-action="topup" aria-label="Recharger">${icon('plus', { size: 16 })}<span>Recharger</span></button>
           <a class="avatar" href="#/profil" title="${esc(user.pseudo)}" aria-label="Mon profil">${esc(initials(user.pseudo))}</a>`;
 }
 

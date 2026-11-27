@@ -205,6 +205,7 @@ export default {
       if (!tab) return;
       ui.feed = tab.dataset.feed;
       root.querySelector('[data-live]').innerHTML = feed();
+      root.querySelector('[data-feed].is-active')?.focus({ preventScroll: true });
     };
     root.addEventListener('click', onClick);
     return () => {

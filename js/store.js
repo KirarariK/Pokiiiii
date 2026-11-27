@@ -485,8 +485,14 @@ export function buyPacks(slug, qty) {
   const bought = pulls.length;
   const paid = pack.price * bought;
 
-  const fromBonus = debit(paid);
-  if (fromBonus > 0) pulls.forEach((p) => (p.bonusShare = fromBonus / paid));
+  // La part payée en bonus est portée par le moins de cartes possible (les dernières tirées) :
+  // un petit reste de bonus ne retient pas toute une commande au coffre.
+  let fromBonus = debit(paid);
+  for (let i = pulls.length - 1; i >= 0 && fromBonus > 0; i--) {
+    const part = Math.min(pack.price, fromBonus);
+    pulls[i].bonusShare = part / pack.price;
+    fromBonus -= part;
+  }
   state.cards.push(...pulls);
   state.pending = pulls.map((p) => p.uid);
   state.lastOrder = { pack: pack.slug, qty: bought, total: paid, at: now, uids: pulls.map((p) => p.uid) };

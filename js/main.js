@@ -107,6 +107,40 @@ export function navigate(to, { replace = false } = {}) {
 let cleanup = null;
 let currentPath = null;
 
+/** Sélecteur qui retrouve un élément après un nouveau rendu : son identifiant, ou son premier attribut data-. */
+function focusKey(el) {
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  const attr = [...el.attributes].find((a) => a.name.startsWith('data-') && a.value !== '');
+  return attr ? `${el.tagName.toLowerCase()}[${attr.name}="${CSS.escape(attr.value)}"]` : null;
+}
+
+/** Onglets et groupes de choix : les flèches passent d'un élément au suivant et l'activent. */
+function onArrowKeys(e) {
+  if (e.defaultPrevented || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+  const item = e.target.closest?.('button[role="tab"], button[role="radio"]');
+  const group = item?.closest('[role="tablist"], [role="radiogroup"]');
+  if (!group) return;
+  const items = [...group.querySelectorAll('button[role="tab"], button[role="radio"]')].filter((el) => !el.disabled);
+  const index = items.indexOf(item);
+  const step = e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1;
+  const next = e.key === 'Home' ? items[0] : e.key === 'End' ? items[items.length - 1] : items[(index + step + items.length) % items.length];
+  if (!next || next === item) return;
+  e.preventDefault();
+  const key = focusKey(next);
+  next.click();
+  // Le clic peut redessiner le groupe : on focalise l'élément tel qu'il existe après.
+  (key && document.querySelector(key) ? document.querySelector(key) : next).focus({ preventScroll: true });
+}
+
+/** Tableaux défilants : atteignables au clavier, avec un nom pour les lecteurs d'écran. */
+function labelTables() {
+  document.querySelectorAll('.table-wrap:not([tabindex])').forEach((el) => {
+    el.tabIndex = 0;
+    el.setAttribute('role', 'region');
+    el.setAttribute('aria-label', el.closest('section')?.querySelector('h1, h2')?.textContent.trim() || 'Tableau');
+  });
+}
+
 function render({ keepScroll = false } = {}) {
   const { path, query } = parseHash();
   if (MOVED[path]) {
@@ -123,6 +157,8 @@ function render({ keepScroll = false } = {}) {
   const main = document.getElementById('main');
   const shell = document.getElementById('shell');
   const scrollY = window.scrollY;
+  // Page redessinée sur place : on retrouvera l'élément qui avait le focus (onglet, filtre…).
+  const focused = path === currentPath && main.contains(document.activeElement) ? focusKey(document.activeElement) : null;
 
   try {
     cleanup?.();
@@ -154,6 +190,7 @@ function render({ keepScroll = false } = {}) {
     console.error(err);
   }
 
+  if (focused) main.querySelector(focused)?.focus({ preventScroll: true });
   if (keepScroll && path === currentPath) window.scrollTo(0, scrollY);
   else {
     window.scrollTo(0, 0);
@@ -190,6 +227,13 @@ const ACTIONS = {
 
 function boot() {
   document.getElementById('app').innerHTML = renderShell();
+  // Le lien d'évitement mène au contenu : son ancre ne doit pas être lue comme une route.
+  document.querySelector('.skip-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('main')?.focus();
+  });
+  document.addEventListener('keydown', onArrowKeys);
+  new MutationObserver(labelTables).observe(document.body, { childList: true, subtree: true });
   const account = document.getElementById('topbar-account');
   const paintAccount = () => {
     account.innerHTML = renderAccount();

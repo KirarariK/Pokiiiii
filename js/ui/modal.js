@@ -5,6 +5,12 @@ import { esc } from '../format.js';
 
 const host = () => document.getElementById('overlays');
 
+/** Rend la page derrière une fenêtre inerte : ni clic ni tabulation ne l'atteignent. */
+function backdrop(on) {
+  const app = document.getElementById('app');
+  if (app) app.inert = on;
+}
+
 let current = null;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -22,12 +28,12 @@ export function openModal({ title, body, footer = '', size = 'md', onMount, onCl
   wrap.innerHTML = `
     <div class="modal__backdrop" data-close></div>
     <div class="modal__dialog modal__dialog--${size}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <header class="modal__head">
+      <div class="modal__head">
         <h2 id="modal-title" class="modal__title">${esc(title)}</h2>
         <button class="btn btn--icon btn--ghost" type="button" data-close aria-label="Fermer">${icon('x')}</button>
-      </header>
+      </div>
       <div class="modal__body">${body}</div>
-      ${footer ? `<footer class="modal__foot">${footer}</footer>` : ''}
+      ${footer ? `<div class="modal__foot">${footer}</div>` : ''}
     </div>`;
 
   const close = () => {
@@ -37,6 +43,7 @@ export function openModal({ title, body, footer = '', size = 'md', onMount, onCl
     wrap.classList.add('is-leaving');
     // Pendant le fondu de sortie, la fenêtre ne reçoit plus de clic (pas de double validation).
     wrap.inert = true;
+    backdrop(false);
     document.documentElement.classList.remove('has-modal');
     setTimeout(() => wrap.remove(), 180);
     onClose?.();
@@ -69,6 +76,7 @@ export function openModal({ title, body, footer = '', size = 'md', onMount, onCl
   });
   document.addEventListener('keydown', onKey);
   host().appendChild(wrap);
+  backdrop(true);
   document.documentElement.classList.add('has-modal');
   current = handle;
   onMount?.(wrap.querySelector('.modal__dialog'), close);
@@ -92,8 +100,9 @@ export function confirmDialog({ title, body, confirm = 'Confirmer', cancel = 'An
       title,
       size: 'sm',
       body,
-      footer: `<button class="btn btn--secondary" type="button" data-close>${esc(cancel)}</button>
-               <button class="btn ${danger ? 'btn--danger' : 'btn--primary'}" type="button" data-confirm autofocus>${esc(confirm)}</button>`,
+      // Une action destructive ne reçoit pas le focus d'office : Entrée ne doit pas la valider par mégarde.
+      footer: `<button class="btn btn--secondary" type="button" data-close ${danger ? 'autofocus' : ''}>${esc(cancel)}</button>
+               <button class="btn ${danger ? 'btn--danger' : 'btn--primary'}" type="button" data-confirm ${danger ? '' : 'autofocus'}>${esc(confirm)}</button>`,
       onMount(el, close) {
         el.querySelector('[data-confirm]').addEventListener('click', () => {
           answered = true;
