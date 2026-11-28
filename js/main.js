@@ -225,6 +225,14 @@ const ACTIONS = {
   },
 };
 
+// Le navigateur refuse d'enregistrer (stockage plein, navigation privée) : on le dit une fois.
+let storageWarned = false;
+window.addEventListener('coffreo:storage-failed', () => {
+  if (storageWarned) return;
+  storageWarned = true;
+  toast("Impossible d'enregistrer : tes dernières actions seront perdues au rechargement. Libère de la place dans le navigateur.", 'error');
+});
+
 function boot() {
   document.getElementById('app').innerHTML = renderShell();
   // Le lien d'évitement mène au contenu : son ancre ne doit pas être lue comme une route.

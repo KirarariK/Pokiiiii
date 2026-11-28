@@ -90,13 +90,30 @@ function fresh() {
   };
 }
 
-function load() {
+/** Garde-fous (limite, pause) d'un état illisible ou d'un ancien schéma : ils ne se perdent pas avec le reste. */
+function salvageLimits(raw) {
+  const out = fresh();
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const l = JSON.parse(raw)?.limits;
+    if (l && typeof l === 'object') {
+      if (l.daily === null || (Number.isFinite(l.daily) && l.daily >= 0)) out.limits.daily = l.daily;
+      if (Number.isFinite(l.pauseUntil) && l.pauseUntil > 0) out.limits.pauseUntil = l.pauseUntil;
+      if (l.pending && Number.isFinite(l.pending.from) && (l.pending.daily === null || Number.isFinite(l.pending.daily))) out.limits.pending = { daily: l.pending.daily, from: l.pending.from };
+    }
+  } catch {
+    // Rien de récupérable.
+  }
+  return out;
+}
+
+function load() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fresh();
     const data = JSON.parse(raw);
     const lists = ['cards', 'tx', 'shipments', 'rolls', 'pending'];
-    if (!data || data.v !== VERSION || !data.fair?.serverSeed || !Number.isFinite(data.balance) || lists.some((k) => !Array.isArray(data[k]))) return fresh();
+    if (!data || data.v !== VERSION || !data.fair?.serverSeed || !Number.isFinite(data.balance) || lists.some((k) => !Array.isArray(data[k]))) return salvageLimits(raw);
     const base = fresh();
     const merged = {
       ...base,
@@ -110,6 +127,11 @@ function load() {
       settings: { ...base.settings, ...data.settings },
     };
     merged.cards = cleanOwnedCards(merged.cards);
+    const objects = (list) => list.filter((x) => x && typeof x === 'object');
+    merged.tx = objects(merged.tx);
+    merged.rolls = objects(merged.rolls);
+    merged.shipments = objects(merged.shipments).filter((s) => s.address && typeof s.address === 'object');
+    if (merged.user != null && (typeof merged.user !== 'object' || typeof merged.user.pseudo !== 'string')) merged.user = null;
     merged.pending = merged.pending.filter((u) => typeof u === 'string' && UID_RE.test(u));
     if (!merged.fair.next?.serverSeed) merged.fair = { ...merged.fair, next: seedPair() };
     if (data.totals?.bought == null) {
@@ -126,7 +148,7 @@ function load() {
     }
     return merged;
   } catch {
-    return fresh();
+    return salvageLimits(raw);
   }
 }
 
@@ -139,7 +161,9 @@ function commit() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    // Stockage indisponible (navigation privée, quota) : la session reste en mémoire.
+    // Stockage indisponible (navigation privée, quota) : la session reste en mémoire,
+    // mais le joueur doit le savoir, sinon un rechargement annulerait ses achats sans prévenir.
+    globalThis.dispatchEvent?.(new Event('coffreo:storage-failed'));
   }
   // Copie : un abonné peut se désabonner ou en ajouter un autre pendant la notification.
   [...listeners].forEach((fn) => fn(state));
@@ -445,8 +469,8 @@ export function resetDemo() {
   // Les cartes encore au coffre au nom du joueur redeviennent disponibles.
   state.cards.filter((c) => c.status === 'coffre').forEach((c) => adjustStock(c.cardId, 1));
   // Les garde-fous survivent : une pause ou une limite ne se lève pas en effaçant le compte.
-  const { limits } = state;
-  state = { ...fresh(), limits };
+  const { limits, day } = state;
+  state = { ...fresh(), limits, day };
   commit();
 }
 
@@ -784,6 +808,7 @@ export function dailyLimit(now = Date.now()) {
  * @returns {{ ok: true, from: number|null }} `from` : échéance du changement s'il est différé
  */
 export function setDailyLimit(cents) {
+  if (cents != null && !Number.isFinite(cents)) return fail('amount', 'Montant de limite invalide.');
   const now = Date.now();
   settleLimits(now);
   const next = cents == null ? null : Math.max(0, Math.round(cents));
@@ -803,7 +828,7 @@ export function setDailyLimit(cents) {
  * participations sont suspendus. Une pause se prolonge mais ne se lève pas avant son terme.
  */
 export function setPause(hours) {
-  if (!(hours > 0)) return fail('pause', "Une pause ne se lève pas avant son terme.");
+  if (!(hours > 0) || !Number.isFinite(hours)) return fail('pause', "Une pause ne se lève pas avant son terme.");
   state.limits.pauseUntil = Math.max(state.limits.pauseUntil, Date.now() + hours * 3600_000);
   commit();
   return { ok: true };
