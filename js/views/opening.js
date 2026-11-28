@@ -97,6 +97,7 @@ function sceneHtml(pack, total) {
     <div class="opening__stage">
       <span class="opening__aura" aria-hidden="true"></span>
       <span class="opening__rays" aria-hidden="true"></span>
+      <span class="opening__ring" aria-hidden="true"></span>
       <canvas class="opening__fx" aria-hidden="true"></canvas>
       <canvas class="opening__sparks" aria-hidden="true"></canvas>
       <button class="opening__pack" type="button" data-open aria-label="Déchirer le pack pour l'ouvrir" style="--clip-body:${bodyClip()}">
@@ -122,7 +123,7 @@ function sceneHtml(pack, total) {
         <div class="flip" data-tilt>
           <div class="flip__inner">
             <div class="flip__face flip__face--back">${cardBack()}</div>
-            <div class="flip__face flip__face--front"><span class="tcg" data-front></span><span class="holo" aria-hidden="true"></span></div>
+            <div class="flip__face flip__face--front"><span class="tcg" data-front></span><span class="holo" aria-hidden="true"></span><span class="flip__glare" aria-hidden="true"></span></div>
           </div>
         </div>
       </div>
@@ -471,12 +472,34 @@ export default {
         let lastIndex = -1;
         let lastTick = 0;
         let done = false;
+        const marker = windowEl.parentElement.querySelector('.reel__marker');
+        const tilesEl = strip.children;
+        /** Cartes grossies en ce moment : celle sous le repère enfle en passant, comme sous une loupe. */
+        const lit = new Set();
+        const focus = (x) => {
+          const pos = (center - x - tileW / 2) / pitch;
+          const lo = Math.max(0, Math.floor(pos) - 1);
+          const hi = Math.min(tilesEl.length - 1, Math.ceil(pos) + 1);
+          for (const i of lit) {
+            if (i < lo || i > hi) {
+              tilesEl[i].style.transform = '';
+              lit.delete(i);
+            }
+          }
+          for (let i = lo; i <= hi; i++) {
+            const d = Math.abs(i - pos);
+            tilesEl[i].style.transform = d < 1 ? `scale(${(1 + 0.1 * (1 - d)).toFixed(3)})` : '';
+            lit.add(i);
+          }
+        };
 
         const finish = () => {
           if (done) return;
           done = true;
           cancelAnimationFrame(raf);
           skipSpin = null;
+          for (const i of lit) tilesEl[i].style.transform = '';
+          lit.clear();
           strip.style.transform = `translate3d(${to}px, 0, 0)`;
           resolve();
         };
@@ -487,11 +510,14 @@ export default {
           const k = Math.min(1, (now - t0) / SPIN_MS);
           const x = from + (to - from) * easeOutQuart(k);
           strip.style.transform = `translate3d(${x}px, 0, 0)`;
+          focus(x);
           const under = Math.round((center - x - tileW / 2) / pitch);
           if (under !== lastIndex && now - lastTick > 40) {
             lastIndex = under;
             lastTick = now;
             sfx.tick(k);
+            // Le repère tressaille à chaque carte qui passe.
+            marker?.animate?.([{ transform: 'scaleY(1.1)' }, { transform: 'scaleY(1)' }], { duration: 120, easing: 'ease-out' });
           }
           if (k < 1) raf = requestAnimationFrame(frame);
           else finish();
@@ -506,6 +532,7 @@ export default {
       setPhase('revealed');
       // On ne fête que ce qui vaut au moins le prix payé : une carte sous le prix n'est pas un gain.
       const won = owned.value >= pack.price;
+      scene.dataset.won = won ? '1' : '';
       sfx.reveal(won ? owned.rarity : 'commune');
       if (won && BURST[owned.rarity]) {
         burst($('.opening__fx'), {
@@ -604,9 +631,31 @@ export default {
       if (rank >= 3) sfx.suspense(rank);
       await Promise.all([ready, wait(rank >= 4 ? 1150 : rank >= 3 ? 850 : 750)]);
       if (!alive) return;
+      // La carte gagnée quitte la roulette et vient se poser au centre, au lieu d'apparaître d'un coup.
+      const winRect = $('[data-strip] [data-win]')?.getBoundingClientRect();
       $('[data-reel]').hidden = true;
       showCard();
       reveal(owned, card);
+      flyFrom(winRect);
+    }
+
+    /** Fait partir la carte de l'endroit et de la taille qu'elle avait dans la roulette. */
+    function flyFrom(rect) {
+      const el = $('[data-card]');
+      if (!rect || !rect.width || !el.animate || !motionOk()) return;
+      el.style.animation = 'none';
+      const r = el.getBoundingClientRect();
+      if (!r.width) return;
+      const dx = rect.left + rect.width / 2 - (r.left + r.width / 2);
+      const dy = rect.top + rect.height / 2 - (r.top + r.height / 2);
+      el.animate(
+        [
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${(rect.width / r.width).toFixed(3)})` },
+          { transform: 'translate(0, -3%) scale(1.07)', offset: 0.72 },
+          { transform: 'none' },
+        ],
+        { duration: 640, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+      );
     }
 
     function resetScene() {
@@ -617,8 +666,10 @@ export default {
       $('[data-result]').hidden = true;
       $('[data-result]').innerHTML = '';
       $('[data-card]').hidden = true;
+      $('[data-card]').style.animation = '';
       $('[data-reel]').hidden = true;
       scene.dataset.rarity = '';
+      scene.dataset.won = '';
       setPhase('idle');
       paintProgress();
     }

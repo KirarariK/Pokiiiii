@@ -95,6 +95,9 @@ export const RULES = {
   welcomeCredit: 100_00,
   /** Montants de recharge proposés en démo (en centimes). */
   topups: [20_00, 50_00, 100_00, 250_00],
+  /** Bornes d'une recharge au montant libre, en centimes. */
+  topupMin: 5_00,
+  topupMax: 1000_00,
 
   /* ---- Logistique ----------------------------------------------------- */
   /** Barème de livraison indicatif (démo) : forfait + supplément par carte. */

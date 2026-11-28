@@ -445,7 +445,7 @@ export const isFirstDeposit = () => state.totals.deposits === 0;
 /** Recharge fictive du solde. Le tout premier dépôt ouvre droit à un bonus à jouer. */
 export function deposit(cents) {
   if (!isLoggedIn()) return fail('auth', 'Connecte-toi pour recharger ton solde.');
-  if (!Number.isInteger(cents) || cents <= 0 || cents > 1000_00) return fail('amount', 'Montant de recharge invalide.');
+  if (!Number.isInteger(cents) || cents < RULES.topupMin || cents > RULES.topupMax) return fail('amount', `Une recharge va de ${RULES.topupMin / 100} € à ${RULES.topupMax / 100} €.`);
   if (paused()) return fail('pause', 'Ton compte est en pause : les recharges sont suspendues.');
   const first = isFirstDeposit();
   state.totals.deposits += 1;

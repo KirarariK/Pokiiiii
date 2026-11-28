@@ -33,13 +33,58 @@ export function openTopup(opts = {}) {
           )
           .join('')}
       </div>
-      ${first ? `<p class="small">${icon('gift', { size: 15 })} Premier dépôt : <strong>+${Math.round(RULES.bonus.firstDepositRate * 100)} % de bonus</strong> (jusqu'à ${eurShort(RULES.bonus.firstDepositMax)}), à jouer ${RULES.bonus.wagering} fois. Une carte payée avec le bonus ne s'expédie pas avant ; le bonus restant est repris s'il n'y a plus rien à jouer.</p>` : ''}
+      <label class="amount-free">
+        <span class="amount-free__label">Ou choisis ton montant</span>
+        <span class="amount-free__box"><input type="text" inputmode="decimal" name="custom" autocomplete="off" maxlength="7" placeholder="Ex. 35" aria-describedby="topup-info"><b aria-hidden="true">€</b></span>
+      </label>
+      <p class="small" id="topup-info" data-topup-info aria-live="polite"></p>
+      ${first ? `<p class="small muted">${icon('gift', { size: 15 })} Premier dépôt : +${Math.round(RULES.bonus.firstDepositRate * 100)} % de bonus (jusqu'à ${eurShort(RULES.bonus.firstDepositMax)}), à jouer ${RULES.bonus.wagering} fois. Une carte payée avec le bonus ne s'expédie pas avant ; le bonus restant est repris s'il n'y a plus rien à jouer.</p>` : ''}
       <p class="muted small">Solde actuel : <strong>${eur(getState().balance)}</strong></p>`,
     footer: `<button class="btn btn--secondary" type="button" data-close>Annuler</button>
              <button class="btn btn--primary" type="button" data-topup-confirm>${icon('plus', { size: 16 })}<span>Créditer</span></button>`,
     onMount(el, close) {
-      el.querySelector('[data-topup-confirm]').addEventListener('click', () => {
-        const amount = Number(el.querySelector('input[name="topup"]:checked')?.value);
+      const custom = el.querySelector('input[name="custom"]');
+      const info = el.querySelector('[data-topup-info]');
+      const confirm = el.querySelector('[data-topup-confirm]');
+      const range = `de ${eurShort(RULES.topupMin)} à ${eurShort(RULES.topupMax)}`;
+      /** Montant choisi en centimes, ou null s'il n'est pas valable. */
+      const chosen = () => {
+        const text = custom.value.trim().replace(/\s/g, '');
+        if (!text) return Number(el.querySelector('input[name="topup"]:checked')?.value) || null;
+        if (!/^\d{1,4}([.,]\d{1,2})?$/.test(text)) return null;
+        const cents = Math.round(Number(text.replace(',', '.')) * 100);
+        return cents >= RULES.topupMin && cents <= RULES.topupMax ? cents : null;
+      };
+      const paint = () => {
+        const amount = chosen();
+        confirm.disabled = !amount;
+        confirm.querySelector('span').textContent = amount ? `Créditer ${eur(amount)}` : 'Créditer';
+        custom.setAttribute('aria-invalid', String(!amount && !!custom.value.trim()));
+        if (!amount) {
+          info.innerHTML = `<span class="neg">Entre un montant ${range}.</span>`;
+          return;
+        }
+        const bonus = first ? Math.min(RULES.bonus.firstDepositMax, Math.round(amount * RULES.bonus.firstDepositRate)) : 0;
+        const short = need > 0 && amount < need ? ` Il manquera encore ${eur(need - amount)} pour cet achat.` : '';
+        info.textContent = `${bonus ? `Avec le bonus : +${eur(bonus)} à jouer. ` : ''}Nouveau solde : ${eur(getState().balance + amount + bonus)}.${short}`;
+      };
+      custom.addEventListener('input', () => {
+        if (custom.value.trim()) el.querySelectorAll('input[name="topup"]').forEach((r) => (r.checked = false));
+        paint();
+      });
+      el.querySelectorAll('input[name="topup"]').forEach((r) =>
+        r.addEventListener('change', () => {
+          custom.value = '';
+          paint();
+        }),
+      );
+      custom.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') confirm.click();
+      });
+      paint();
+      confirm.addEventListener('click', () => {
+        const amount = chosen();
+        if (!amount) return;
         const res = deposit(amount);
         if (!res.ok) {
           toast(res.message, 'error');
