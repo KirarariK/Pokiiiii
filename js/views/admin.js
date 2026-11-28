@@ -13,7 +13,7 @@ import { KINDS, cardRecord, fold, loadCatalogue } from '../catalogue.js';
 import { RULES } from '../config.js';
 import { isActive, listGiveaways } from '../data/giveaways.js';
 import { PACKS, RARITIES } from '../data/packs.js';
-import { dateTimeFr, esc, eur, eurShort, num, pct, plural } from '../format.js';
+import { dateTimeFr, esc, eur, eurShort, imgUrl, num, pct, plural } from '../format.js';
 import { icon } from '../icons.js';
 import { clearStock, exportStock, importStock, priceOverride, qtyOf, resetStock, setPrice, setStock, setStockMany, usingDemoStock } from '../stock.js';
 import { getState, holdBackOwnedCards, houseLedger, ownedByUid, updateShipment } from '../store.js';
@@ -127,7 +127,7 @@ function stockRow(card) {
   const value = priceOf(card);
   const packs = value ? PACKS.filter((p) => fitsPack({ ...card, value }, p)).map((p) => p.short) : [];
   return `<tr data-id="${esc(card.id)}" class="${qty ? 'is-in' : ''}">
-    <td><span class="drop"><span class="drop__img"><span class="tcg"><img src="${esc(card.img)}" alt="" width="245" height="342" loading="lazy" decoding="async"></span></span><span><strong>${esc(card.name)}</strong><small>${card.name !== card.nameEn ? `${esc(card.nameEn)} · ` : ''}${esc(card.set)} · ${esc(cardRef(card))}</small></span></span></td>
+    <td><span class="drop"><span class="drop__img"><span class="tcg"><img src="${esc(imgUrl(card.img))}" alt="" width="245" height="342" loading="lazy" decoding="async"></span></span><span><strong>${esc(card.name)}</strong><small>${card.name !== card.nameEn ? `${esc(card.nameEn)} · ` : ''}${esc(card.set)} · ${esc(cardRef(card))}</small></span></span></td>
     <td class="small">${esc(KINDS[card.kind] || '')}${card.tcgRarity ? `<br><span class="muted">${esc(card.tcgRarity)}</span>` : ''}</td>
     <td class="num">${
       qty
@@ -138,7 +138,7 @@ function stockRow(card) {
     }</td>
     <td class="small">${packs.length ? packs.map((p) => `<span class="tag">${esc(p)}</span>`).join('') : `<span class="muted">${value ? 'aucun pack' : '—'}</span>`}</td>
     <td class="num"><label class="switch" title="Au coffre"><input type="checkbox" data-toggle ${qty ? 'checked' : ''} aria-label="${esc(card.name)} au coffre"><span class="switch__track"></span></label></td>
-    <td class="num"><span class="qty"><button class="btn btn--icon btn--secondary btn--sm" type="button" data-dec aria-label="Un exemplaire de moins" ${qty ? '' : 'disabled'}>${icon('minus', { size: 14 })}</button><output>${qty}</output><button class="btn btn--icon btn--secondary btn--sm" type="button" data-inc aria-label="Un exemplaire de plus">${icon('plus', { size: 14 })}</button></span></td>
+    <td class="num"><span class="qty"><button class="btn btn--icon btn--secondary btn--sm" type="button" data-dec aria-label="Un exemplaire de moins" ${qty ? '' : 'disabled'}>${icon('minus', { size: 14 })}</button><output>${num(qty)}</output><button class="btn btn--icon btn--secondary btn--sm" type="button" data-inc aria-label="Un exemplaire de plus">${icon('plus', { size: 14 })}</button></span></td>
   </tr>`;
 }
 

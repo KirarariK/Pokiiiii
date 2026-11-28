@@ -168,7 +168,7 @@ function summaryHtml(session, pack, order, lockUntil) {
             value: owned.value,
             extra:
               owned.status === 'coffre'
-                ? `<button class="btn btn--secondary btn--sm btn--block" type="button" data-sell="${owned.uid}">Revendre ${eur(buybackOf(owned))}</button>`
+                ? `<button class="btn btn--secondary btn--sm btn--block" type="button" data-sell="${esc(owned.uid)}">Revendre ${eur(buybackOf(owned))}</button>`
                 : `<span class="tile__status">${icon('check', { size: 14 })}Revendue ${eur(owned.soldFor)}</span>`,
           }),
         )
@@ -434,7 +434,7 @@ export default {
       );
       $('[data-strip]').innerHTML = tiles
         .map(
-          (t, i) => `<span class="reel__tile" data-rarity="${t.rarity}" ${i === REEL_WIN ? 'data-win' : ''}>
+          (t, i) => `<span class="reel__tile" data-rarity="${esc(t.rarity)}" ${i === REEL_WIN ? 'data-win' : ''}>
             <img src="${esc(imgUrl(t.card.img))}" alt="" width="245" height="342" draggable="false">
           </span>`,
         )

@@ -38,7 +38,7 @@ function tile(card) {
     attrs: `type="button" data-card="${esc(card.id)}"`,
     cls: qty ? '' : 'is-out',
     showValue: shown.value > 0,
-    extra: qty ? `<span class="tile__status">${icon('archive', { size: 13 })}×${qty} au coffre</span>` : `<span class="tile__status tile__status--off">Pas au coffre</span>`,
+    extra: qty ? `<span class="tile__status">${icon('archive', { size: 13 })}×${num(qty)} au coffre</span>` : `<span class="tile__status tile__status--off">Pas au coffre</span>`,
   });
 }
 
@@ -66,7 +66,7 @@ function openCard(card) {
       <div class="detail__info">
         <p class="muted">${shown.name !== shown.nameEn ? `${esc(shown.nameEn)} · ` : ''}${esc(shown.set)} · ${esc(cardRef(shown))}</p>
         <p class="detail__value">${shown.value ? eur(shown.value) : 'Cote inconnue'}</p>
-        <p>${qty ? `<span class="badge badge--stock">${icon('archive', { size: 13 })}×${qty} au coffre</span>` : `<span class="badge badge--out">Pas au coffre</span>`}</p>
+        <p>${qty ? `<span class="badge badge--stock">${icon('archive', { size: 13 })}×${num(qty)} au coffre</span>` : `<span class="badge badge--out">Pas au coffre</span>`}</p>
         <h3>Où elle sort</h3>
         ${
           drops.length

@@ -200,7 +200,7 @@ export default {
         ? `<section class="section">
             ${sectionHead('Au coffre', { iconName: 'vault', link: `<a class="link-more" href="#/cartes">Tout le coffre${icon('arrow-right', { size: 15 })}</a>` })}
             <div class="tile-grid tile-grid--6">
-              ${top.map((card) => cardTile(card, { tag: 'a', attrs: `href="#/cartes?q=${encodeURIComponent(card.name)}"`, extra: `<span class="tile__status">${icon('archive', { size: 13 })}×${qtyOf(card.id)} au coffre</span>` })).join('')}
+              ${top.map((card) => cardTile(card, { tag: 'a', attrs: `href="#/cartes?q=${encodeURIComponent(card.name)}"`, extra: `<span class="tile__status">${icon('archive', { size: 13 })}×${num(qtyOf(card.id))} au coffre</span>` })).join('')}
             </div>
           </section>`
         : ''

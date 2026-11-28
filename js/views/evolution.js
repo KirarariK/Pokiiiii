@@ -63,7 +63,7 @@ function openPicker(rerender) {
     size: 'lg',
     body: `<p class="muted small">La carte misée quitte ton coffre : elle évolue en cas de réussite, elle est perdue en cas d'échec.</p>
       <div class="tile-grid">${cards
-        .map((o) => cardTile(cardById(o.cardId), { rarity: o.rarity, value: o.value, tag: 'button', attrs: `type="button" data-pick="${o.uid}"` }))
+        .map((o) => cardTile(cardById(o.cardId), { rarity: o.rarity, value: o.value, tag: 'button', attrs: `type="button" data-pick="${esc(o.uid)}"` }))
         .join('')}</div>`,
     onMount(el, close) {
       el.addEventListener('click', (e) => {
@@ -153,7 +153,7 @@ export default {
             <div class="evo__targets" role="radiogroup" aria-label="Carte visée">
               ${targets
                 .map(
-                  (t) => `<button class="evo__target" type="button" role="radio" aria-checked="${t.card.id === ui.targetId}" data-target="${t.card.id}">
+                  (t) => `<button class="evo__target" type="button" role="radio" aria-checked="${t.card.id === ui.targetId}" data-target="${esc(t.card.id)}">
                     <span class="evo__target-img">${cardImage(t.card)}</span>
                     <span class="evo__target-name">${esc(t.card.name)}</span>
                     <span class="evo__target-meta"><strong>${eur(t.card.value)}</strong><span>×${t.multiplier.toLocaleString('fr-FR', { maximumFractionDigits: 1 })}</span></span>

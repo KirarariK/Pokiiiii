@@ -98,7 +98,7 @@ function openDetail(uid, rerender) {
       </div>
     </div>`,
     footer: inVault
-      ? `<a class="btn btn--ghost" href="#/evolution?carte=${owned.uid}" data-close>${icon('chevrons-up', { size: 16 })}Faire évoluer</a>
+      ? `<a class="btn btn--ghost" href="#/evolution?carte=${encodeURIComponent(owned.uid)}" data-close>${icon('chevrons-up', { size: 16 })}Faire évoluer</a>
          ${canShip(owned) ? `<button class="btn btn--secondary" type="button" data-detail-ship>${icon('truck', { size: 16 })}Faire livrer</button>` : `<span class="muted small">${icon('truck', { size: 14 })} Livraison possible une fois le bonus joué : encore ${eur(bonusStatus().wagerLeft)} de mises</span>`}
          <button class="btn btn--primary" type="button" data-detail-sell>${icon('hand-coins', { size: 16 })}Revendre ${eur(buybackOf(owned))}</button>`
       : '',

@@ -9,7 +9,7 @@ import { RULES, STORAGE_KEY } from './config.js';
 import { cardById, packEdge, packTable, resolveTicket, stockCard } from './catalog.js';
 import { progress } from './data/badges.js';
 import { listGiveaways } from './data/giveaways.js';
-import { PACKS, packBySlug, rarityByValue } from './data/packs.js';
+import { PACKS, RARITIES, packBySlug, rarityByValue } from './data/packs.js';
 import { TICKETS, isValidClientSeed, newClientSeed, newServerSeed, sha256Hex, ticketFor } from './fair.js';
 import { uid } from './rng.js';
 import { adjustStock, drawableQty, priceOverride } from './stock.js';
@@ -43,6 +43,17 @@ function seedPair() {
  */
 function freshSeeds(clientSeed = newClientSeed(), pair = seedPair()) {
   return { ...pair, clientSeed, nonce: 0, since: Date.now(), next: seedPair() };
+}
+
+/** Identifiants admis dans un attribut HTML : rien qui puisse en sortir, même si l'état enregistré a été modifié. */
+const UID_RE = /^[A-Za-z0-9_-]{1,32}$/;
+const CARD_ID_RE = /^[A-Za-z0-9._-]{1,40}$/;
+
+/** Cartes d'un état relu : celles dont la forme est impossible sont écartées plutôt que d'atteindre l'affichage. */
+function cleanOwnedCards(list) {
+  return list.filter(
+    (c) => c && typeof c === 'object' && UID_RE.test(c.uid) && CARD_ID_RE.test(String(c.cardId)) && Object.hasOwn(RARITIES, c.rarity) && Number.isFinite(c.value) && Number.isFinite(c.at),
+  );
 }
 
 function fresh() {
@@ -98,6 +109,8 @@ function load() {
       limits: { ...base.limits, ...data.limits },
       settings: { ...base.settings, ...data.settings },
     };
+    merged.cards = cleanOwnedCards(merged.cards);
+    merged.pending = merged.pending.filter((u) => typeof u === 'string' && UID_RE.test(u));
     if (!merged.fair.next?.serverSeed) merged.fair = { ...merged.fair, next: seedPair() };
     if (data.totals?.bought == null) {
       // État enregistré avant les compteurs durables : on les reconstruit une fois depuis le journal.
