@@ -10,11 +10,11 @@ import { icon } from '../icons.js';
 import { qtyOf } from '../stock.js';
 import { evolutionChance, getState, isLoggedIn } from '../store.js';
 import { currentTheme, signatureCard } from '../theme.js';
-import { packTile, sectionHead } from '../ui/blocks.js';
+import { sectionHead } from '../ui/blocks.js';
 import { cardImage, cardTile, rarityBadge } from '../ui/card.js';
 import { countdownInline } from '../ui/countdown.js';
 import { attachTilt } from '../ui/effects.js';
-import { packArt } from '../ui/pack-art.js';
+import { packArt, themeGlow } from '../ui/pack-art.js';
 
 const rate = Math.round(RULES.buybackRate * 100);
 
@@ -40,6 +40,20 @@ function heroCards() {
     if (c.id !== center.id && !sides.includes(c)) sides.push(c);
   }
   return [center, ...sides];
+}
+
+/** Vitrine : les huit sachets debout côte à côte, chacun sur son halo, du moins cher au plus cher. */
+function showcase() {
+  return `<div class="vitrine"><div class="vitrine__row">${PACKS.map((p, i) => {
+    const open = packAvailable(p);
+    return `<a class="vpack ${open ? '' : 'is-out'}" href="#/packs/${p.slug}" style="--glow:${themeGlow(p.theme)};--i:${i}">
+      ${!open ? `<span class="badge badge--out">Rupture</span>` : p.event ? `<span class="badge badge--event">${icon('flame', { size: 12 })}Événement</span>` : ''}
+      <span class="vpack__stage">${packArt(p, { lazy: i > 3 })}</span>
+      <span class="vpack__name">${esc(p.short || p.name)}</span>
+      <strong class="vpack__price">${eurShort(p.price)}</strong>
+      <span class="vpack__tag">${open ? `retour moyen ${pct(packReturn(p) * 100)}` : 'bientôt de retour'}</span>
+    </a>`;
+  }).join('')}</div></div>`;
 }
 
 /** Anneau de jauge : part colorée = chance de réussite. */
@@ -177,8 +191,8 @@ export default {
     </section>
 
     <section class="section">
-      ${sectionHead('Packs', { iconName: 'package' })}
-      <div class="pack-grid">${PACKS.map(packTile).join('')}</div>
+      ${sectionHead('Les huit packs', { iconName: 'package', link: `<a class="link-more" href="#/packs">Comparer les packs${icon('arrow-right', { size: 15 })}</a>` })}
+      ${showcase()}
     </section>
 
     <section class="section">
