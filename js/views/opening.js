@@ -491,7 +491,7 @@ export default {
           if (under !== lastIndex && now - lastTick > 40) {
             lastIndex = under;
             lastTick = now;
-            sfx.tick();
+            sfx.tick(k);
           }
           if (k < 1) raf = requestAnimationFrame(frame);
           else finish();
@@ -599,6 +599,7 @@ export default {
       if (!alive) return;
       scene.dataset.rarity = owned.rarity;
       setPhase('landed');
+      sfx.land();
       const rank = RARITIES[owned.rarity].rank;
       if (rank >= 3) sfx.suspense(rank);
       await Promise.all([ready, wait(rank >= 4 ? 1150 : rank >= 3 ? 850 : 750)]);
@@ -756,6 +757,7 @@ export default {
       layout();
       drag = { x: e.clientX, w: geo.w || packEl.offsetWidth, p: 0, step: 0, last: e.clientX, t: performance.now(), moved: false, live: null };
       packEl.setPointerCapture?.(e.pointerId);
+      sfx.grab();
     };
     const onMove = (e) => {
       if (!drag) return;
@@ -768,13 +770,14 @@ export default {
       }
       drag.p = Math.max(0, Math.min(1, dx / (drag.w * 0.92)));
       const now = performance.now();
-      drag.live.set((Math.abs(e.clientX - drag.last) / Math.max(1, now - drag.t)) / 1.6);
+      drag.live.set((Math.abs(e.clientX - drag.last) / Math.max(1, now - drag.t)) / 1.6, drag.p);
       drag.last = e.clientX;
       drag.t = now;
       // Un petit cran sous le doigt tous les huitièmes de la déchirure.
       if (Math.floor(drag.p * 8) > drag.step) {
         drag.step = Math.floor(drag.p * 8);
         buzz(5);
+        drag.live.notch();
       }
       if (drag.p >= 1) finishDrag(true);
     };
