@@ -26,11 +26,11 @@ const tried = new Set();
 function dropRow(d) {
   return `<tr data-rarity="${d.rarity}">
     <td><span class="drop"><span class="drop__img">${cardImage(d.card)}</span><span><strong>${esc(d.card.name)}</strong><small>${esc(cardRef(d.card))} · ${esc(d.card.set)}</small></span></span></td>
-    <td>${rarityBadge(d.rarity)}</td>
-    <td class="num">${eur(d.card.value)}</td>
-    <td class="num">${d.copies === 1 ? '<span class="tag tag--last">dernier</span>' : `×${d.copies}`}</td>
-    <td class="num"><strong>${pctFine(d.p)}</strong></td>
-    <td class="num muted">${num(d.from)} – ${num(d.to - 1)}</td>
+    <td data-label="Rareté">${rarityBadge(d.rarity)}</td>
+    <td class="num" data-label="Cote">${eur(d.card.value)}</td>
+    <td class="num" data-label="Au coffre">${d.copies === 1 ? '<span class="tag tag--last">dernier</span>' : `×${d.copies}`}</td>
+    <td class="num" data-label="Probabilité"><strong>${pctFine(d.p)}</strong></td>
+    <td class="num muted" data-label="Tickets">${num(d.from)} – ${num(d.to - 1)}</td>
   </tr>`;
 }
 
@@ -199,7 +199,7 @@ export default {
     <section class="section panel panel--pad">
       ${sectionHead(`Contenu du pack · ${num(drops.length)} cartes`, { iconName: 'list' })}
       <p class="muted small">Table du coffre en direct : elle change à chaque carte qui entre ou sort. Version <code>${tableVersion(pack)}</code></p>
-      <div class="table-wrap"><table class="table table--drops">
+      <div class="table-wrap"><table class="table table--drops table--stack">
         <thead><tr><th>Carte</th><th>Rareté</th><th class="num">Cote</th><th class="num">Au coffre</th><th class="num">Probabilité</th><th class="num">Tickets</th></tr></thead>
         <tbody data-drops>${drops.slice(0, PREVIEW_ROWS).map(dropRow).join('')}</tbody>
       </table></div>

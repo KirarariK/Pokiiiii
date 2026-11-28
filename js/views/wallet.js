@@ -66,7 +66,7 @@ export default {
       <div class="section__head"><h2>${icon('receipt', { size: 22 })}<span>Mouvements</span></h2></div>
       ${
         tx.length
-          ? `<div class="table-wrap"><table class="table">
+          ? `<div class="table-wrap"><table class="table table--stack table--tx">
               <thead><tr><th>Date</th><th>Opération</th><th>Détail</th><th class="num">Montant</th></tr></thead>
               <tbody>
                 ${tx
@@ -74,10 +74,10 @@ export default {
                   .map((t) => {
                     const type = TYPES[t.type] || { label: t.type, icon: 'receipt' };
                     return `<tr>
-                      <td class="nowrap muted">${dateTimeFr(t.at)}</td>
-                      <td><span class="tx-type">${icon(type.icon, { size: 16 })}${esc(type.label)}</span></td>
-                      <td>${esc(t.label)}</td>
-                      <td class="num ${t.amount >= 0 ? 'pos' : 'neg'}">${t.amount >= 0 ? '+' : '−'}${eur(Math.abs(t.amount))}</td>
+                      <td class="nowrap muted" data-label="Date">${dateTimeFr(t.at)}</td>
+                      <td data-label="Opération"><span class="tx-type">${icon(type.icon, { size: 16 })}${esc(type.label)}</span></td>
+                      <td data-label="Détail">${esc(t.label)}</td>
+                      <td data-label="Montant" class="num ${t.amount >= 0 ? 'pos' : 'neg'}">${t.amount >= 0 ? '+' : '−'}${eur(Math.abs(t.amount))}</td>
                     </tr>`;
                   })
                   .join('')}
