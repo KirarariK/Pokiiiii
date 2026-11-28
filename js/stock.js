@@ -45,6 +45,9 @@ function fresh() {
   return { v: VERSION, demo: true, items: {} };
 }
 
+/** Identifiant de carte admis : lettres, chiffres, point, tiret et souligné, rien qui puisse sortir d'un attribut HTML. */
+const ID_RE = /^[A-Za-z0-9._-]{1,40}$/;
+
 const text = (v, max = 80) => String(v ?? '').slice(0, max);
 
 /** Fiche d'une carte hors fonds, réduite aux champs attendus : rien d'autre n'entre dans l'inventaire. */
@@ -71,7 +74,7 @@ function cleanItems(raw) {
   const items = {};
   if (!raw || typeof raw !== 'object') return items;
   for (const [id, item] of Object.entries(raw)) {
-    if (!item || typeof item !== 'object') continue;
+    if (!ID_RE.test(id) || !item || typeof item !== 'object') continue;
     const c = cleanCard(id, item.c);
     if (!BASE_VALUE.has(id) && !c) continue;
     const q = Math.max(0, Math.min(999, Math.round(item.q) || 0));
@@ -83,7 +86,7 @@ function cleanItems(raw) {
 function load() {
   try {
     const data = JSON.parse(localStorage.getItem(STOCK_KEY));
-    if (data && data.v === VERSION && data.items && typeof data.items === 'object') return { v: VERSION, demo: Boolean(data.demo), items: data.items };
+    if (data && data.v === VERSION && data.items && typeof data.items === 'object') return { v: VERSION, demo: Boolean(data.demo), items: cleanItems(data.items) };
   } catch {
     // Pas de stockage (navigation privée, exécution hors navigateur) : état par défaut.
   }

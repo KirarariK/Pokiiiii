@@ -21,7 +21,22 @@ function read() {
   }
 }
 
-const digest = (salt, user, password) => sha256Hex(`${salt}:${user.trim().toLowerCase()}:${password}`);
+/** Tours de hachage : ralentissent d'autant une attaque par essais répétés sur l'empreinte. */
+const ROUNDS = 6000;
+
+/** Empreinte salée et étirée ; `rounds` vaut 1 pour les accès créés avant l'étirement. */
+function digest(salt, user, password, rounds = ROUNDS) {
+  let h = sha256Hex(`${salt}:${user.trim().toLowerCase()}:${password}`);
+  for (let i = 1; i < rounds; i++) h = sha256Hex(`${h}:${salt}`);
+  return h;
+}
+
+/** Sel aléatoire de 24 caractères hexadécimaux, tiré du générateur cryptographique. */
+function newSalt() {
+  const buf = new Uint8Array(12);
+  crypto.getRandomValues(buf);
+  return Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 function openSession() {
   try {
@@ -53,9 +68,9 @@ export function setupAdmin(user, password) {
   const name = String(user || '').trim();
   if (name.length < 3) return { ok: false, message: 'Identifiant : 3 caractères au moins.' };
   if (String(password || '').length < MIN_PASSWORD) return { ok: false, message: `Mot de passe : ${MIN_PASSWORD} caractères au moins.` };
-  const salt = sha256Hex(`${Date.now()}:${Math.random()}:${name}`).slice(0, 24);
+  const salt = newSalt();
   try {
-    localStorage.setItem(ADMIN_KEY, JSON.stringify({ user: name, salt, hash: digest(salt, name, password) }));
+    localStorage.setItem(ADMIN_KEY, JSON.stringify({ user: name, salt, rounds: ROUNDS, hash: digest(salt, name, password) }));
   } catch {
     return { ok: false, message: "Le navigateur refuse d'enregistrer l'accès (navigation privée ?)." };
   }
@@ -66,7 +81,16 @@ export function setupAdmin(user, password) {
 export function loginAdmin(user, password) {
   const data = read();
   if (!data) return { ok: false, message: "Aucun accès n'a été créé sur cet appareil." };
-  if (digest(data.salt, String(user || ''), String(password || '')) !== data.hash) return { ok: false, message: 'Identifiant ou mot de passe incorrect.' };
+  const rounds = Number.isInteger(data.rounds) && data.rounds > 0 ? Math.min(data.rounds, 100_000) : 1;
+  if (digest(data.salt, String(user || ''), String(password || ''), rounds) !== data.hash) return { ok: false, message: 'Identifiant ou mot de passe incorrect.' };
+  if (rounds < ROUNDS) {
+    // Accès créé avant l'étirement : on le renforce maintenant que le mot de passe est connu.
+    try {
+      localStorage.setItem(ADMIN_KEY, JSON.stringify({ user: data.user, salt: data.salt, rounds: ROUNDS, hash: digest(data.salt, String(user || ''), String(password || '')) }));
+    } catch {
+      // Le stockage refuse l'écriture : l'ancienne empreinte reste valable.
+    }
+  }
   openSession();
   return { ok: true };
 }

@@ -1,0 +1,5 @@
+# Documents et outils de travail : ils ne font pas partie du site publié.
+docs/
+scripts/
+README.md
+.cache/

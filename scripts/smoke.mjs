@@ -324,9 +324,19 @@ console.log('\nGarde-fous et robustesse');
   const d2 = store.deposit(100_00);
   check(d1.bonus > 0 && d2.bonus === 0, 'bonus de premier dépôt versé une seule fois, même journal vidé');
   const cheap = PACKS.filter(packAvailable).sort((a, b) => a.price - b.price)[0];
+  // La dépense du jour survit à la réinitialisation (sinon elle servirait à contourner la limite).
+  const spentBefore = store.spentToday();
   store.buyPacks(cheap.slug, 2);
   st().tx.length = 0;
-  check(store.spentToday() === cheap.price * 2 && store.stats().spent === cheap.price * 2, 'dépense du jour et cumul des achats tenus hors du journal');
+  check(store.spentToday() === spentBefore + cheap.price * 2 && store.stats().spent === cheap.price * 2, 'dépense du jour et cumul des achats tenus hors du journal');
+  {
+    // Contournement de la limite : réinitialiser la démo ne remet pas le compteur du jour à zéro.
+    const before = store.spentToday();
+    store.resetDemo();
+    store.signup('Gardien');
+    check(store.spentToday() === before, 'la dépense du jour survit à la réinitialisation');
+    check(!store.setDailyLimit(Number.NaN).ok && !store.setPause(Number.POSITIVE_INFINITY).ok, 'limite ou pause non finies refusées');
+  }
 
   // Limite : une baisse est immédiate, un relèvement ou un retrait est différé.
   store.setDailyLimit(50_00);
