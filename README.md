@@ -24,6 +24,7 @@ boutique à prix fixe et des tirages promotionnels) :
 - [`docs/AUDIT_JURIDIQUE.md`](docs/AUDIT_JURIDIQUE.md) : jeux d'argent, consommation, paiements, fiscalité, données, propriété intellectuelle, autres pays ;
 - [`docs/AUDIT_PROJET.md`](docs/AUDIT_PROJET.md) : code, sécurité, accessibilité, économie, originalité ;
 - [`docs/audit/`](docs/audit/) : les treize rapports détaillés.
+- [`docs/AUDIT_SECURITE.md`](docs/AUDIT_SECURITE.md) : audit de sécurité du 28 novembre (failles corrigées, points laissés ouverts).
 - [`docs/VERIFICATION_COTES.md`](docs/VERIFICATION_COTES.md) : relecture des cotes carte par carte, cote prudente, ancienneté des prix.
 
 Le site s'appelle **Coffreo** : le coffre est ce qui le distingue. La disponibilité du nom
