@@ -22,7 +22,7 @@ import { cardBack, cardTile, rarityBadge } from '../ui/card.js';
 import { countdownInline, refreshCountdowns } from '../ui/countdown.js';
 import { attachTilt, burst, countUp, motionOk, sfx } from '../ui/effects.js';
 import { toast } from '../ui/modal.js';
-import { packArt, themeGlow } from '../ui/pack-art.js';
+import { packArt, packArtInfo, themeGlow } from '../ui/pack-art.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -54,17 +54,34 @@ const SPIN_MS = 5200;
 
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
-/** Bord déchiré : une ligne en dents de scie à la hauteur de la coupe, la même sur les deux morceaux. */
-function tearEdges() {
-  const y = 10.6;
+/** Nombre de lamelles du haut du sachet : chacune suit la déchirure et se recourbe. */
+const SLICES = 24;
+/** Part de la hauteur du sachet que couvre la bande du haut (un peu plus bas que la ligne de coupe). */
+const STRIP = 13;
+/** Hauteur de la ligne de coupe au point i (en % de la hauteur du sachet) : des dents de scie irrégulières. */
+const jag = (i) => 10.6 + (i % 2 ? 1.3 : -1.3) + Math.sin(i * 2.7) * 0.5;
+
+/** Découpe du corps du sachet, sous la ligne de coupe. */
+function bodyClip() {
   const pts = [];
-  for (let i = 0; i <= 24; i++) pts.push(`${((i / 24) * 100).toFixed(2)}% ${(y + (i % 2 ? 1.3 : -1.3) + Math.sin(i * 2.7) * 0.5).toFixed(2)}%`);
-  return { top: `polygon(0% 0%, 100% 0%, ${[...pts].reverse().join(', ')})`, body: `polygon(${pts.join(', ')}, 100% 100%, 0% 100%)` };
+  for (let i = 0; i <= SLICES; i++) pts.push(`${((i / SLICES) * 100).toFixed(2)}% ${jag(i).toFixed(2)}%`);
+  return `polygon(${pts.join(', ')}, 100% 100%, 0% 100%)`;
+}
+
+/** Haut du sachet en lamelles : chacune porte sa part de l'illustration et son bout de bord déchiré. */
+function stripHtml(info) {
+  let out = '';
+  for (let i = 0; i < SLICES; i++) {
+    const yl = ((jag(i) / STRIP) * 100).toFixed(1);
+    const yr = ((jag(i + 1) / STRIP) * 100).toFixed(1);
+    out += `<span class="opening__slice" style="clip-path:polygon(0 0, 100% 0, 100% ${yr}%, 0 ${yl}%)"><img src="${info.src}" alt="" draggable="false"><i class="opening__sheen"></i></span>`;
+  }
+  return out;
 }
 
 function sceneHtml(pack, total) {
   const fast = getState().settings.fast;
-  const edge = tearEdges();
+  const info = packArtInfo(pack);
   return `
   <section class="opening" data-phase="idle" style="--glow:${themeGlow(pack.theme)}">
     <h1 class="sr-only">Ouverture : ${esc(pack.name)}</h1>
@@ -81,11 +98,19 @@ function sceneHtml(pack, total) {
       <span class="opening__aura" aria-hidden="true"></span>
       <span class="opening__rays" aria-hidden="true"></span>
       <canvas class="opening__fx" aria-hidden="true"></canvas>
-      <button class="opening__pack" type="button" data-open aria-label="Déchirer le pack pour l'ouvrir" style="--clip-top:${edge.top};--clip-body:${edge.body}">
+      <canvas class="opening__sparks" aria-hidden="true"></canvas>
+      <button class="opening__pack" type="button" data-open aria-label="Déchirer le pack pour l'ouvrir" style="--clip-body:${bodyClip()}">
         <span class="opening__pack-body">${packArt(pack, { lazy: false })}</span>
-        <span class="opening__slit" aria-hidden="true"><span class="opening__slit-in"></span></span>
-        <span class="opening__pack-top">${packArt(pack, { lazy: false })}</span>
-        <span class="opening__tip" aria-hidden="true"></span>
+        ${
+          info
+            ? `<span class="opening__rig" aria-hidden="true" style="width:${info.width}%;aspect-ratio:${info.w}/${info.h}">
+                <span class="opening__leak"></span>
+                <span class="opening__slit"><span class="opening__slit-in"></span></span>
+                <span class="opening__strip">${stripHtml(info)}</span>
+                <span class="opening__tip"></span>
+              </span>`
+            : ''
+        }
       </button>
       <div class="reel" data-reel hidden>
         <div class="reel__band">
@@ -202,35 +227,158 @@ export default {
     let untilt = () => {};
     const packEl = scene.querySelector('[data-open]');
 
-    const topEl = packEl.querySelector('.opening__pack-top');
-    const slitEl = packEl.querySelector('.opening__slit');
-    const slitIn = packEl.querySelector('.opening__slit-in');
-    const tipEl = packEl.querySelector('.opening__tip');
-    let frameW = packEl.offsetWidth;
+    const stage = scene.querySelector('.opening__stage');
+    const rig = packEl.querySelector('.opening__rig');
+    const slices = rig ? [...rig.querySelectorAll('.opening__slice')] : [];
+    const sheens = slices.map((el) => el.lastElementChild);
+    const slitEl = rig?.querySelector('.opening__slit');
+    const slitIn = rig?.querySelector('.opening__slit-in');
+    const leakEl = rig?.querySelector('.opening__leak');
+    const tipEl = rig?.querySelector('.opening__tip');
+    const sparkCanvas = scene.querySelector('.opening__sparks');
+    /** Mesures en pixels de la bande : refaites quand la taille change. */
+    const geo = { w: 0, h: 0, sh: 0, left: [], sw: [], ox: 0, oy: 0 };
     let ripping = false;
     let shown = 0;
 
+    /** Place chaque lamelle au pixel près (pas de joint visible) et cale l'illustration dedans. */
+    function layout() {
+      if (!rig) return;
+      const r = rig.getBoundingClientRect();
+      const st = stage.getBoundingClientRect();
+      geo.w = r.width;
+      geo.h = r.height;
+      geo.sh = Math.ceil((r.height * STRIP) / 100);
+      geo.ox = r.left - st.left;
+      geo.oy = r.top - st.top;
+      slices.forEach((el, i) => {
+        const left = Math.round((i * r.width) / SLICES);
+        const right = Math.round(((i + 1) * r.width) / SLICES);
+        geo.left[i] = left;
+        geo.sw[i] = right - left;
+        el.style.left = `${left}px`;
+        el.style.width = `${right - left}px`;
+        el.style.height = `${geo.sh}px`;
+        const img = el.firstElementChild;
+        img.style.width = `${r.width}px`;
+        img.style.height = `${r.height}px`;
+        img.style.left = `${-left}px`;
+      });
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      sparkCanvas.width = Math.round(st.width * dpr);
+      sparkCanvas.height = Math.round(st.height * dpr);
+      sparkCanvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    /* Étincelles de feuille d'aluminium qui s'échappent du point de déchirure. */
+    const sparks = [];
+    let sparkRaf = 0;
+    let sparkLast = 0;
+    function emitSparks(x, y, count) {
+      for (let i = 0; i < count && sparks.length < 140; i++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
+        const v = 60 + Math.random() * 220;
+        sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, ttl: 0.35 + Math.random() * 0.45, size: 1 + Math.random() * 2.2, gold: Math.random() < 0.6 });
+      }
+      if (!sparkRaf) {
+        sparkLast = performance.now();
+        sparkRaf = requestAnimationFrame(drawSparks);
+      }
+    }
+    function drawSparks(now) {
+      const g = sparkCanvas.getContext('2d');
+      g.lineCap = 'round';
+      const dt = Math.min(0.05, (now - sparkLast) / 1000);
+      sparkLast = now;
+      g.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height);
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.life += dt;
+        if (s.life >= s.ttl) {
+          sparks.splice(i, 1);
+          continue;
+        }
+        s.vy += 620 * dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        g.globalAlpha = 1 - s.life / s.ttl;
+        g.strokeStyle = s.gold ? '#ffd166' : '#ffffff';
+        g.lineWidth = s.size;
+        g.beginPath();
+        g.moveTo(s.x, s.y);
+        g.lineTo(s.x - s.vx * 0.028, s.y - s.vy * 0.028);
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+      sparkRaf = sparks.length && alive ? requestAnimationFrame(drawSparks) : 0;
+    }
+
+    const ease = (t) => t * t * (3 - 2 * t);
+
     /**
-     * Avancement de la déchirure (0 à 1). Seules des transformations et des opacités changent :
-     * pas de recalcul de mise en page ni de repeinte, l'animation reste fluide même sur mobile.
+     * Avancement de la déchirure (0 à 1). Le haut du sachet est une chaîne de lamelles : celles que
+     * la déchirure a dépassées se soulèvent et se recourbent, chacune accrochée à la suivante, comme
+     * une bande de feuille qu'on pèle. Seules des transformations et des opacités changent : rien
+     * n'est repeint, l'animation reste fluide même sur mobile.
      */
     const setRip = (p) => {
+      const grew = p > shown;
       shown = p;
-      topEl.style.transform = p ? `rotate(${(p * 24).toFixed(2)}deg) translate(${(-1.5 * p).toFixed(2)}%, ${(-4 * p).toFixed(2)}%)` : '';
-      slitIn.style.transform = `translateX(${((p - 1) * 100).toFixed(2)}%)`;
-      slitEl.style.opacity = Math.min(0.95, p * 3).toFixed(3);
-      tipEl.style.transform = `translate3d(${(frameW * (0.15 + 0.7 * p)).toFixed(1)}px, 0, 0)`;
-      tipEl.style.opacity = Math.max(0, Math.min(1, p * 30, (1 - p) * 10)).toFixed(3);
+      if (!rig) return;
+      if (!geo.w) layout();
+      const front = p * geo.w * 1.06;
+      const reach = geo.w * 0.5;
+      // On remonte la chaîne de droite à gauche : chaque lamelle part du bord gauche de la précédente.
+      let ax = geo.w;
+      let ay = geo.sh;
+      for (let i = SLICES - 1; i >= 0; i--) {
+        const w = geo.sw[i];
+        const center = geo.left[i] + w / 2;
+        const t = Math.max(0, Math.min(1, (front - center) / reach));
+        if (t <= 0) {
+          slices[i].style.transform = '';
+          sheens[i].style.opacity = '';
+          ax = geo.left[i];
+          ay = geo.sh;
+          continue;
+        }
+        const angle = 1.35 * ease(t);
+        const dx = ax - (geo.left[i] + w);
+        const dy = ay - geo.sh;
+        slices[i].style.transform = `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) rotate(${angle.toFixed(4)}rad)`;
+        // Le reflet de la feuille grandit avec la courbure : la bande prend du volume.
+        sheens[i].style.opacity = (0.7 * Math.sin(Math.PI * Math.min(1, t * 1.15)) + 0.25 * t).toFixed(3);
+        ax -= w * Math.cos(angle);
+        ay -= w * Math.sin(angle);
+      }
+      const tipX = Math.min(geo.w, front);
+      const tipY = (geo.h * jag(Math.round((tipX / geo.w) * SLICES))) / 100;
+      slitIn.style.transform = `translateX(${((Math.min(1, p * 1.06) - 1) * 100).toFixed(2)}%)`;
+      slitEl.style.opacity = Math.min(1, p * 4).toFixed(3);
+      leakEl.style.transform = `scale(${Math.min(1, p * 1.06).toFixed(3)}, ${(0.35 + 0.65 * p).toFixed(3)})`;
+      leakEl.style.opacity = Math.min(0.9, p * 2.2).toFixed(3);
+      tipEl.style.transform = `translate3d(${tipX.toFixed(1)}px, ${tipY.toFixed(1)}px, 0)`;
+      tipEl.style.opacity = Math.max(0, Math.min(1, p * 30, (1 - p) * 12)).toFixed(3);
+      if (grew && p > 0.02 && p < 1) emitSparks(geo.ox + tipX, geo.oy + tipY, 2);
       if (p > 0.01 !== ripping) {
         ripping = !ripping;
         packEl.classList.toggle('is-ripping', ripping);
       }
     };
-    /** Après la déchirure : les feuilles de style reprennent la main (envol du morceau, fondu de la fente). */
+    /** Après la déchirure : les feuilles de style reprennent la main (envol de la bande, fondu de la lumière). */
     const releaseRip = () => {
-      topEl.style.transform = '';
+      if (!rig) return;
       slitEl.style.opacity = '';
+      leakEl.style.opacity = '';
       tipEl.style.opacity = '';
+      emitSparks(geo.ox + geo.w / 2, geo.oy + (geo.h * 10.6) / 100, 46);
+    };
+    const buzz = (pattern) => {
+      try {
+        navigator.vibrate?.(pattern);
+      } catch {
+        // Pas de vibreur : rien à faire.
+      }
     };
     const animateRip = (from, to, ms) =>
       new Promise((resolve) => {
@@ -238,7 +386,7 @@ export default {
         const t0 = performance.now();
         const step = (t) => {
           const k = Math.min(1, (t - t0) / ms);
-          setRip(from + (to - from) * (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2));
+          setRip(from + (to - from) * (1 - (1 - k) ** 3));
           if (k < 1 && alive) ripRaf = requestAnimationFrame(step);
           else resolve();
         };
@@ -433,15 +581,16 @@ export default {
       // Le sachet se déchire (à la main, ou tout seul après un toucher), puis la lumière jaillit.
       setPhase('ripping');
       if (!ripped) {
-        frameW = packEl.offsetWidth;
-        sfx.rip(0.6);
-        await animateRip(0, 1, 600);
+        layout();
+        sfx.rip(0.7);
+        await animateRip(0, 1, 700);
       }
       await Promise.race([thumbs, wait(200)]);
       if (!alive) return;
       sfx.burst();
       setPhase('burst');
       releaseRip();
+      buzz([14, 30, 38]);
       await wait(380);
       if (!alive) return;
       $('[data-reel]').hidden = false;
@@ -604,8 +753,8 @@ export default {
     };
     const onDown = (e) => {
       if (busy || scene.dataset.phase !== 'idle' || !motionOk() || getState().settings.fast) return;
-      frameW = packEl.offsetWidth;
-      drag = { x: e.clientX, w: frameW, p: 0, last: e.clientX, t: performance.now(), moved: false, live: null };
+      layout();
+      drag = { x: e.clientX, w: geo.w || packEl.offsetWidth, p: 0, step: 0, last: e.clientX, t: performance.now(), moved: false, live: null };
       packEl.setPointerCapture?.(e.pointerId);
     };
     const onMove = (e) => {
@@ -617,14 +766,27 @@ export default {
         drag.live = sfx.ripLive();
         followRaf = requestAnimationFrame(follow);
       }
-      drag.p = Math.max(0, Math.min(1, dx / (drag.w * 0.7)));
+      drag.p = Math.max(0, Math.min(1, dx / (drag.w * 0.92)));
       const now = performance.now();
       drag.live.set((Math.abs(e.clientX - drag.last) / Math.max(1, now - drag.t)) / 1.6);
       drag.last = e.clientX;
       drag.t = now;
+      // Un petit cran sous le doigt tous les huitièmes de la déchirure.
+      if (Math.floor(drag.p * 8) > drag.step) {
+        drag.step = Math.floor(drag.p * 8);
+        buzz(5);
+      }
       if (drag.p >= 1) finishDrag(true);
     };
     const onUp = () => finishDrag(false);
+    const onResize = () => {
+      geo.w = 0;
+      if (scene.dataset.phase === 'idle') {
+        layout();
+        setRip(0);
+      }
+    };
+    window.addEventListener('resize', onResize);
     packEl.addEventListener('pointerdown', onDown);
     packEl.addEventListener('pointermove', onMove);
     packEl.addEventListener('pointerup', onUp);
@@ -640,6 +802,8 @@ export default {
       cancelAnimationFrame(raf);
       cancelAnimationFrame(ripRaf);
       cancelAnimationFrame(followRaf);
+      cancelAnimationFrame(sparkRaf);
+      window.removeEventListener('resize', onResize);
       drag?.live?.stop();
       untilt();
       root.removeEventListener('click', onClick);

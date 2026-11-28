@@ -845,8 +845,7 @@ button.tile:hover, a.tile:hover { transform: translateY(-4px); border-color: col
   position: relative; z-index: 2; width: min(46vw, 232px, 24dvh); aspect-ratio: 240 / 340; padding: 0; border: 0; background: none;
   transform-origin: 50% 70%;
 }
-.opening__pack-top, .opening__pack-body { position: absolute; inset: 0; transition: transform 0.6s var(--ease), opacity 0.45s; }
-.opening__pack-top { clip-path: var(--clip-top, inset(0 0 89.4% 0)); }
+.opening__pack-body { position: absolute; inset: 0; transition: transform 0.6s var(--ease), opacity 0.45s; }
 .opening__pack-body { clip-path: var(--clip-body, inset(10.6% 0 0 0)); }
 .opening__pack .pack-art { filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.6)); }
 
@@ -871,7 +870,6 @@ button.tile:hover, a.tile:hover { transform: translateY(-4px); border-color: col
 }
 
 .opening:not([data-phase='idle']):not([data-phase='charging']):not([data-phase='ripping']) .opening__pack { pointer-events: none; }
-.opening:not([data-phase='idle']):not([data-phase='charging']):not([data-phase='ripping']) .opening__pack-top { transform: translate(-30%, -210%) rotate(-28deg); opacity: 0; }
 .opening:not([data-phase='idle']):not([data-phase='charging']):not([data-phase='ripping']) .opening__pack-body { transform: translateY(70%) scale(0.86); opacity: 0; }
 .opening[data-phase='burst'] .opening__flash { animation: flash 0.6s ease-out; }
 @keyframes flash { 0% { opacity: 0; scale: 0.3; } 25% { opacity: 0.9; } 100% { opacity: 0; scale: 1.2; } }
@@ -1538,27 +1536,37 @@ html[data-motion='off'] .trial__card.is-in { animation: none; }
 .pack-art__label i { font-size: calc(2.9cqw * var(--s, 1)); }
 
 
-/* Déchirure du sachet. Le script ne touche qu'aux transformations et à l'opacité de trois éléments,
-   chacun sur son propre calque : la carte graphique déplace des images déjà peintes, sans repeinte. */
+/* Déchirure du sachet. Le haut est une chaîne de lamelles que le script soulève et recourbe ;
+   il ne touche qu'aux transformations et aux opacités : rien n'est repeint pendant le geste. */
 .opening__pack { touch-action: none; cursor: grab; }
 .opening__pack:active { cursor: grabbing; }
-.opening[data-phase='idle'] .opening__pack-top, .opening[data-phase='ripping'] .opening__pack-top { transform-origin: 100% 10.6%; transition: none; will-change: transform; }
 .opening[data-phase] .opening__pack.is-ripping { animation: none; scale: 1; }
 .opening__pack.is-ripping .pack-art__shine::before, .opening__pack.is-ripping .pack-art__foil { animation: none !important; }
-.opening__slit, .opening__tip { position: absolute; pointer-events: none; opacity: 0; will-change: opacity; }
-.opening__slit { z-index: 2; left: 15%; right: 15%; top: 8.4%; height: 4.4%; overflow: hidden; }
+.opening__rig { position: absolute; left: 50%; top: 50%; translate: -50% -50%; pointer-events: none; z-index: 2; }
+.opening__strip { position: absolute; inset: 0; transition: transform 0.75s cubic-bezier(0.3, 0.7, 0.2, 1), opacity 0.5s 0.15s; }
+.opening[data-phase='idle'] .opening__strip { transition: none; }
+.opening__slice { position: absolute; top: 0; overflow: hidden; transform-origin: 100% 100%; will-change: transform; backface-visibility: hidden; }
+.opening__slice img { position: absolute; top: 0; max-width: none; display: block; }
+.opening__sheen { position: absolute; inset: 0; opacity: 0; will-change: opacity; background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(214, 222, 236, 0.75) 45%, rgba(40, 44, 60, 0.55)); }
+.opening__slit, .opening__leak, .opening__tip { position: absolute; opacity: 0; will-change: transform, opacity; }
+.opening__slit { left: 0; right: 0; top: 8.2%; height: 5%; overflow: hidden; }
 .opening__slit-in {
   position: absolute; inset: 0; transform: translateX(-100%); will-change: transform;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--glow, #ffd166) 45%, transparent) 22%, #ffe9a6 42%, #fff 50%, #ffe9a6 58%, color-mix(in srgb, var(--glow, #ffd166) 45%, transparent) 78%, transparent);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--glow, #ffd166) 55%, transparent) 20%, #ffe9a6 40%, #fff 50%, #ffe9a6 60%, color-mix(in srgb, var(--glow, #ffd166) 55%, transparent) 80%, transparent);
+}
+.opening__leak {
+  left: -30%; right: -30%; bottom: 89.4%; height: 60%; transform-origin: 18.75% 100%; transform: scale(0, 0.35);
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(255, 246, 210, 0.9), color-mix(in srgb, var(--glow, #ffd166) 50%, transparent) 30%, transparent 70%);
 }
 .opening__tip {
-  z-index: 3; left: 0; top: 10.6%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff;
-  box-shadow: 0 0 14px 7px #ffd166, 0 0 36px 14px color-mix(in srgb, var(--glow, #ffd166) 60%, transparent);
-  will-change: transform, opacity;
+  left: 0; top: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 14px 7px #ffd166, 0 0 38px 16px color-mix(in srgb, var(--glow, #ffd166) 60%, transparent);
 }
-.opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__slit, .opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__tip { opacity: 0 !important; transition: opacity 0.3s; }
+.opening__sparks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+.opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__strip { transform: translate(-38%, -340%) rotate(-48deg) scale(0.9); opacity: 0; }
+.opening:not([data-phase='idle']):not([data-phase='ripping']) :is(.opening__slit, .opening__leak, .opening__tip) { opacity: 0 !important; transition: opacity 0.35s; }
 .opening[data-phase='ripping'] .opening__aura { opacity: 0.9; scale: 1.25; }
-@media (prefers-reduced-motion: reduce) { .opening__pack-top { transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { .opening__slice { transform: none !important; } }
 
 /* Écrans tactiles : toute commande offre une cible d'au moins 44 × 44 px (recommandation WCAG 2.5.5). */
 @media (pointer: coarse) {

@@ -134,6 +134,14 @@ const FRAME = 240 / 340;
  * @param {{ title?: string, lazy?: boolean }} [opts]
  * @returns {string} balisage HTML
  */
+/** Géométrie de l'illustration d'un pack dans son cadre, pour les effets qui la découpent. */
+export function packArtInfo(pack) {
+  const art = ART[pack.slug];
+  if (!art) return null;
+  const [w, h] = art;
+  return { src: `assets/packs/${pack.slug}.webp`, w, h, width: ((w / h / FRAME) * 100).toFixed(2) };
+}
+
 export function packArt(pack, opts = {}) {
   const art = ART[pack.slug];
   if (!art) return drawnPack(pack, opts);
