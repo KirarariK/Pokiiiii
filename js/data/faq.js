@@ -1,11 +1,12 @@
 // Foire aux questions. Les réponses décrivent ce que fait la démonstration ;
 // rien n'y est promis pour une version en argent réel (voir docs/AUDIT_JURIDIQUE.md).
 
-import { BRAND, PRICES_DATE, RULES } from '../config.js';
+import { BRAND, PRICES_DATE, PRICES_OLDEST, RULES } from '../config.js';
 import { packAvailable, profitChance } from '../catalog.js';
 import { dateFr, pct } from '../format.js';
 import { PACKS } from './packs.js';
 
+const monthFr = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 const rate = Math.round(RULES.buybackRate * 100);
 const later = Math.round(RULES.buybackLaterRate * 100);
 const lowReturn = Math.round(Math.min(...PACKS.map((p) => p.target)) * 100);
@@ -47,7 +48,7 @@ export function faq() {
     },
     {
       q: "D'où viennent les cotes ?",
-      a: `<p>La cote est le prix de vente moyen sur 30 jours relevé sur Cardmarket, fourni par pokemontcg.io. Relevé du ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())}.</p>
+      a: `<p>La cote est le prix de vente moyen sur 30 jours relevé sur Cardmarket, fourni par pokemontcg.io. Les relevés vont de ${monthFr(PRICES_OLDEST)} à ${monthFr(PRICES_DATE)} : l'API ne rafraîchit pas toutes les cartes en même temps. Un prix de plus de six mois est abaissé de 10 %, et la cote retenue est le deuxième plus bas de plusieurs indicateurs (moyenne 30 jours, tendance, moyenne 7 jours, prix de vente moyen), jamais au-dessus de la moyenne 30 jours.</p>
           <p>C'est un prix observé entre vendeurs tiers, qui ne distingue ni l'état ni la langue de l'exemplaire. Ce n'est pas un prix garanti : un exemplaire réel peut valoir plus ou moins.</p>`,
     },
     {

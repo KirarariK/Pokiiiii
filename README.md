@@ -24,6 +24,7 @@ boutique à prix fixe et des tirages promotionnels) :
 - [`docs/AUDIT_JURIDIQUE.md`](docs/AUDIT_JURIDIQUE.md) : jeux d'argent, consommation, paiements, fiscalité, données, propriété intellectuelle, autres pays ;
 - [`docs/AUDIT_PROJET.md`](docs/AUDIT_PROJET.md) : code, sécurité, accessibilité, économie, originalité ;
 - [`docs/audit/`](docs/audit/) : les treize rapports détaillés.
+- [`docs/VERIFICATION_COTES.md`](docs/VERIFICATION_COTES.md) : relecture des cotes carte par carte, cote prudente, ancienneté des prix.
 
 Le site s'appelle **Coffreo** : le coffre est ce qui le distingue. La disponibilité du nom
 (marque, domaine) reste à vérifier avant tout dépôt ; il se change dans `js/config.js`.
@@ -135,7 +136,7 @@ docs/                 analyse du site de référence, choix de conception, vue d
 
 ## Les règles du jeu, en bref
 
-- **Packs** : huit packs, chacun avec son retour théorique, de 86 % à 92 %,
+- **Packs** : huit packs, chacun avec son retour théorique, de 86 % à 90 %,
   affiché sur sa page avec sa table de tirage. La table ne contient que des
   cartes au coffre et se recalcule à chaque mouvement du stock.
 - **Rachat** : 90 % de la cote pendant 10 minutes après l'ouverture, 85 % ensuite.

@@ -58,7 +58,7 @@ function valueOf(card) {
   if (!(avg > 0) || !(trend > 0)) return null;
   const ratio = trend / avg;
   if (ratio < 0.6 || ratio > 1.7) return null; // cote instable ou variantes mélangées
-  return Math.round(prudentPrice(p) * 100);
+  return Math.round(prudentPrice(p, { updatedAt: card.cardmarket.updatedAt }) * 100);
 }
 
 function hash(s) {
@@ -74,6 +74,7 @@ const isStar = (name) => STARS.some((s) => new RegExp(`(^|[ '’-])${s}($|[ '’
 
 const candidates = [];
 let pricesDate = '';
+let oldestDate = '9999';
 for (const id of Object.keys(SETS)) {
   let cards = [];
   try {
@@ -92,6 +93,7 @@ for (const id of Object.keys(SETS)) {
     if (c.images?.small !== expected) continue;
     const updated = (c.cardmarket.updatedAt || '').replace(/\//g, '-');
     if (updated > pricesDate) pricesDate = updated;
+    if (updated < oldestDate) oldestDate = updated;
     candidates.push({ id: c.id, name: c.name, value, rarity: c.rarity, type: c.types?.[0] || 'Colorless' });
     kept++;
   }
@@ -126,6 +128,8 @@ fs.writeFileSync(
 // Cotes indicatives pour la démonstration, relevées le ${pricesDate}.
 
 export const PRICES_DATE = '${pricesDate}';
+/** Relevé le plus ancien : les prix de plus de six mois sont abaissés de 10 % (voir scripts/prudent-price.mjs). */
+export const PRICES_OLDEST = '${oldestDate}';
 
 /** Extensions : identifiant API -> nom français et code affiché. */
 export const SETS = ${JSON.stringify(setsOut, null, 2).replace(/"([a-zA-Z0-9]+)":/g, '$1:').replace(/"/g, "'")};

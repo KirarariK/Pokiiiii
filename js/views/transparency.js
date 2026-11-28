@@ -1,7 +1,7 @@
 // Transparence et jeu responsable : ce que vaut chaque jeu en moyenne, comment
 // une carte est tirée, limites de la démonstration et reste à faire.
 
-import { PRICES_DATE, RULES } from '../config.js';
+import { PRICES_DATE, PRICES_OLDEST, RULES } from '../config.js';
 import { dropTable, expectedValue, packAvailable, packReturn, profitChance } from '../catalog.js';
 import { BADGES } from '../data/badges.js';
 import { belowPriceRange } from '../data/faq.js';
@@ -58,7 +58,7 @@ export default {
         <tbody>${packRows()}</tbody>
       </table></div>
       ${below ? `<p><strong>La moyenne cache l'essentiel :</strong> dans ${pct(below.low * 100)} à ${pct(below.high * 100)} des tirages selon le pack, la carte vaut moins que le prix payé.</p>` : ''}
-      <p class="small muted">« Carte ≥ prix » : part des tirages où la carte vaut au moins le prix du pack. Revendue après la garantie, une carte est reprise à ${percent(RULES.buybackLaterRate)} : le retour baisse d'autant. Cotes indicatives relevées le ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())} (Cardmarket, moyenne 30 jours, via pokemontcg.io) : un prix observé entre vendeurs tiers, qui ne distingue ni l'état ni la langue de l'exemplaire.</p>
+      <p class="small muted">« Carte ≥ prix » : part des tirages où la carte vaut au moins le prix du pack. Revendue après la garantie, une carte est reprise à ${percent(RULES.buybackLaterRate)} : le retour baisse d'autant. Cotes indicatives relevées entre le ${dateFr(new Date(`${PRICES_OLDEST}T12:00:00`).getTime())} et le ${dateFr(new Date(`${PRICES_DATE}T12:00:00`).getTime())} (Cardmarket, via pokemontcg.io) et abaissées par prudence (voir la FAQ) : un prix observé entre vendeurs tiers, qui ne distingue ni l'état ni la langue de l'exemplaire.</p>
       ${note("Une moyenne ne dit rien d'un tirage isolé : la plupart des cartes sortent dans les premiers paliers, et les gros lots sont rares. Ne compte jamais sur un pack pour te refaire.", 'warn')}
     </section>
 

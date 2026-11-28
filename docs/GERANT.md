@@ -43,21 +43,21 @@ leur cote, 3 % de frais sur les dépôts, 4 nouveaux déposants pour 100 packs,
 | Poste | Montant | Part des ventes |
 | --- | ---: | ---: |
 | Ventes de packs | 168 400 € | 100 % |
-| Coût des cartes (rachats versés, cartes sorties du stock) | −143 732 € | 85,4 % |
-| **Marge de jeu** | **24 668 €** | **14,6 %** |
-| Cashback | −1 052 € | 0,6 % |
-| Dotation du classement | −877 € | 0,5 % |
+| Coût des cartes (rachats versés, cartes sorties du stock) | −141 869 € | 84,2 % |
+| **Marge de jeu** | **26 531 €** | **15,8 %** |
+| Cashback | −1 170 € | 0,7 % |
+| Dotation du classement | −975 € | 0,6 % |
 | Cagnotte des giveaways | −965 € | 0,6 % |
 | Bonus de premier dépôt | −1 200 € | 0,7 % |
-| **Marge après fidélité** | **20 574 €** | **12,2 %** |
-| Frais de paiement et fraude | −2 672 € | 1,6 % |
-| TVA sur la marge | −4 111 € | 2,4 % |
-| **Résultat avant frais fixes** | **13 791 €** | **8,2 %** |
+| **Marge après fidélité** | **22 222 €** | **13,2 %** |
+| Frais de paiement et fraude | −2 683 € | 1,6 % |
+| TVA sur la marge | −4 422 € | 2,6 % |
+| **Résultat avant frais fixes** | **15 117 €** | **9,0 %** |
 | Frais fixes (équipe, coffre, assurance, outils, publicité) | −6 000 € | 3,6 % |
-| **Résultat du mois** (avant impôt sur les sociétés) | **7 791 €** | **4,6 %** |
+| **Résultat du mois** (avant impôt sur les sociétés) | **9 117 €** | **5,4 %** |
 
-Seuil de rentabilité : **2 176 packs par mois**. Chaque pack vendu laisse
-2,76 € en moyenne avant frais fixes.
+Seuil de rentabilité : **1 985 packs par mois**. Chaque pack vendu laisse
+3,02 € en moyenne avant frais fixes.
 
 Ce que ce compte ne dit pas : les frais fixes sont une hypothèse à remplacer
 par les tiens, et **la TVA est comptée dans sa lecture la plus favorable**.
@@ -70,9 +70,9 @@ compensent les autres. Ce n'est pas la méthode par défaut.
 
 | Régime de TVA | TVA du mois | Résultat du mois |
 | --- | ---: | ---: |
-| Marge, calcul global du mois (hypothèse du modèle) | 4 111 € | 7 791 € |
-| Marge, vente par vente (méthode par défaut) | 10 952 € | 950 € |
-| TVA sur tout le prix | 28 067 € | −16 165 € |
+| Marge, calcul global du mois (hypothèse du modèle) | 4 422 € | 9 117 € |
+| Marge, vente par vente (méthode par défaut) | 11 029 € | 2 510 € |
+| TVA sur tout le prix | 28 067 € | −14 527 € |
 
 Sous la méthode par défaut, le modèle est à peine à l'équilibre ; sur le prix
 entier, il perd de l'argent à chaque vente. Le régime applicable dépend de la
@@ -84,24 +84,24 @@ Le pilotage affiche les trois lectures côte à côte.
 
 | Scénario | Résultat avant frais fixes | Résultat du mois | Seuil |
 | --- | ---: | ---: | ---: |
-| Hypothèses par défaut | 13 791 € (8,2 %) | 7 791 € | 2 176 packs |
-| Cartes achetées à 60 % de la cote | 19 071 € (11,3 %) | 13 071 € | 1 574 packs |
-| Cartes achetées à 90 % de la cote | 8 510 € (5,1 %) | 2 510 € | 3 526 packs |
-| Cartes achetées à la cote | 4 990 € (3,0 %) | −1 010 € | 6 012 packs |
-| Toutes les cartes revendues aussitôt | 8 616 € (5,1 %) | 2 616 € | 3 482 packs |
-| Toutes les cartes gardées | 26 547 € (15,8 %) | 20 547 € | 1 131 packs |
-| Sans TVA sur la marge | 17 902 € (10,6 %) | 11 902 € | 1 676 packs |
+| Hypothèses par défaut | 15 117 € (9,0 %) | 9 117 € | 1 985 packs |
+| Cartes achetées à 60 % de la cote | 20 330 € (12,1 %) | 14 330 € | 1 476 packs |
+| Cartes achetées à 90 % de la cote | 9 905 € (5,9 %) | 3 905 € | 3 029 packs |
+| Cartes achetées à la cote | 6 430 € (3,8 %) | 430 € | 4 666 packs |
+| Toutes les cartes revendues aussitôt | 10 016 € (5,9 %) | 4 016 € | 2 996 packs |
+| Toutes les cartes gardées | 27 690 € (16,4 %) | 21 690 € | 1 084 packs |
+| Sans TVA sur la marge | 19 539 € (11,6 %) | 13 539 € | 1 536 packs |
 
 ### Les leviers, du plus rentable au moins rentable
 
 | Mouvement | Effet sur le résultat du mois |
 | --- | ---: |
-| Acheter les cartes 5 points moins cher | +1 760 € |
-| Vendre 10 % de packs en plus | +1 379 € |
+| Acheter les cartes 5 points moins cher | +1 737 € |
+| Vendre 10 % de packs en plus | +1 512 € |
 | Baisser d'un point le retour de tous les packs | +1 133 € |
-| 5 points de cartes gardées en plus, plutôt que revendues aussitôt | +897 € |
-| Un point de frais de paiement en moins | +891 € |
-| Un point de cashback moyen en moins | +175 € |
+| 5 points de cartes gardées en plus, plutôt que revendues aussitôt | +884 € |
+| Un point de frais de paiement en moins | +894 € |
+| Un point de cashback moyen en moins | +195 € |
 
 À lire ainsi : le retour et le cashback sont les leviers les plus faciles à
 actionner et les moins intéressants. Baisser le retour d'un point rapporte
@@ -115,11 +115,11 @@ le rouge même si le modèle est sain.
 
 | Packs par mois | Résultat moyen | Mauvais mois (1 sur 20) | Mois déficitaires |
 | ---: | ---: | ---: | ---: |
-| 1 000 | −3 188 € | −5 355 € | presque tous |
-| 2 000 | −463 € | −3 456 € | plus de 1 sur 2 |
-| 3 000 | 2 253 € | −1 474 € | 1 sur 5 |
-| 5 000 | 7 660 € | 2 783 € | moins de 1 sur 100 |
-| 10 000 | 21 349 € | 14 812 € | aucun |
+| 1 000 | −2 960 € | −5 086 € | 98,7 % |
+| 2 000 | 47 € | −2 672 € | 45,3 % |
+| 3 000 | 3 028 € | −628 € | 9,7 % |
+| 5 000 | 8 922 € | 4 182 € | 0,0 % |
+| 10 000 | 23 979 € | 17 573 € | 0,0 % |
 
 Conséquence pratique : prévoir une réserve qui couvre plusieurs mauvais mois,
 et ne pas lancer le Pack Joyau (lot de 1 500 €) avant d'avoir le volume
@@ -154,14 +154,14 @@ c'est là que le joueur regarde le retour.
 
 | Pack | Prix | Retour affiché | Marge de jeu | Résultat par pack | Si tout est revendu aussitôt |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Pack Rosée | 8,00 € | 88,0 % | 16,2 % | 0,86 € (10,7 %) | 0,62 € (7,8 %) |
-| Pack Prisme | 18,00 € | 89,0 % | 15,2 % | 1,75 € (9,7 %) | 1,19 € (6,6 %) |
-| Pack Orage | 28,00 € | 90,0 % | 14,2 % | 2,57 € (9,2 %) | 1,71 € (6,1 %) |
-| Pack Millésime | 35,00 € | 89,0 % | 15,2 % | 3,42 € (9,8 %) | 2,35 € (6,7 %) |
-| Pack Brasier | 45,00 € | 86,0 % | 18,1 % | 3,41 € (7,6 %) | 2,00 € (4,5 %) |
-| Pack Canopée | 60,00 € | 90,0 % | 14,2 % | 5,51 € (9,2 %) | 3,68 € (6,1 %) |
-| Pack Zénith | 120,00 € | 91,0 % | 13,3 % | 10,25 € (8,5 %) | 6,55 € (5,5 %) |
-| Pack Joyau | 300,00 € | 92,0 % | 12,3 % | 23,72 € (7,9 %) | 14,40 € (4,8 %) |
+| Pack Rosée | 8,00 € | 87,0 % | 17,1 % | 0,91 € (11,4 %) | 0,68 € (8,5 %) |
+| Pack Prisme | 18,00 € | 88,0 % | 16,2 % | 1,87 € (10,4 %) | 1,32 € (7,3 %) |
+| Pack Orage | 28,00 € | 89,0 % | 15,2 % | 2,76 € (9,8 %) | 1,91 € (6,8 %) |
+| Pack Millésime | 35,00 € | 88,0 % | 16,2 % | 3,66 € (10,5 %) | 2,61 € (7,4 %) |
+| Pack Brasier | 45,00 € | 86,0 % | 18,1 % | 3,40 € (7,6 %) | 1,99 € (4,4 %) |
+| Pack Canopée | 60,00 € | 89,0 % | 15,2 % | 5,92 € (9,9 %) | 4,10 € (6,8 %) |
+| Pack Zénith | 120,00 € | 89,0 % | 15,2 % | 11,87 € (9,9 %) | 8,26 € (6,9 %) |
+| Pack Joyau | 300,00 € | 90,0 % | 14,2 % | 27,94 € (9,3 %) | 18,89 € (6,3 %) |
 
 Le Pack Brasier affiche le retour le plus bas parce que 5 % de son prix
 financent son giveaway : lots compris, il rend autant que les autres.
