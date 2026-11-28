@@ -7,14 +7,15 @@
 //          scripts/build-catalogue.mjs, ce qui évite de retélécharger.
 // --names  affiche les noms de cartes qui n'ont pas de traduction française.
 //
-// Les cotes sont celles de Cardmarket telles que relayées par l'API (moyenne
-// 30 jours, en euros). Ce sont des cotes INDICATIVES pour la démonstration :
+// Les cotes sont celles de Cardmarket telles que relayées par l'API, en euros ; la cote retenue
+// est la cote prudente de scripts/prudent-price.mjs (jamais au-dessus de la moyenne 30 jours). Ce sont des cotes INDICATIVES pour la démonstration :
 // en production, la valeur de référence vient de l'inventaire réel.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SETS } from './sets-fr.mjs';
+import { prudentPrice } from './prudent-price.mjs';
 import { fetchSetCards } from './tcg-api.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -57,7 +58,7 @@ function valueOf(card) {
   if (!(avg > 0) || !(trend > 0)) return null;
   const ratio = trend / avg;
   if (ratio < 0.6 || ratio > 1.7) return null; // cote instable ou variantes mélangées
-  return Math.round(avg * 100);
+  return Math.round(prudentPrice(p, { updatedAt: card.cardmarket.updatedAt }) * 100);
 }
 
 function hash(s) {
@@ -73,6 +74,7 @@ const isStar = (name) => STARS.some((s) => new RegExp(`(^|[ '’-])${s}($|[ '’
 
 const candidates = [];
 let pricesDate = '';
+let oldestDate = '9999';
 for (const id of Object.keys(SETS)) {
   let cards = [];
   try {
@@ -91,6 +93,7 @@ for (const id of Object.keys(SETS)) {
     if (c.images?.small !== expected) continue;
     const updated = (c.cardmarket.updatedAt || '').replace(/\//g, '-');
     if (updated > pricesDate) pricesDate = updated;
+    if (updated < oldestDate) oldestDate = updated;
     candidates.push({ id: c.id, name: c.name, value, rarity: c.rarity, type: c.types?.[0] || 'Colorless' });
     kept++;
   }
@@ -125,6 +128,8 @@ fs.writeFileSync(
 // Cotes indicatives pour la démonstration, relevées le ${pricesDate}.
 
 export const PRICES_DATE = '${pricesDate}';
+/** Relevé le plus ancien : les prix de plus de six mois sont abaissés de 10 % (voir scripts/prudent-price.mjs). */
+export const PRICES_OLDEST = '${oldestDate}';
 
 /** Extensions : identifiant API -> nom français et code affiché. */
 export const SETS = ${JSON.stringify(setsOut, null, 2).replace(/"([a-zA-Z0-9]+)":/g, '$1:').replace(/"/g, "'")};

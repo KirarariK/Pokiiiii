@@ -119,7 +119,7 @@ Les packs ne se battent pas : sur 11 027 tables et 1 497 états du coffre, le re
 
 Le compte de résultat est reproduit à l'euro, mais il reposait sur trois hypothèses favorables :
 
-- **la TVA** : 4 111 € par mois dans la lecture retenue, 10 952 € vente par vente (résultat : 950 € au lieu de 7 791 €), 28 067 € sur tout le prix (perte de 16 165 €). Le pilotage affiche désormais les trois ;
+- **la TVA** : 4 111 € par mois dans la lecture retenue, 10 952 € vente par vente (résultat : 950 € au lieu de 7 791 €), 28 067 € sur tout le prix (perte de 16 165 €) ; chiffres du 27 novembre, avant la cote prudente : voir `docs/GERANT.md` pour les valeurs à jour. Le pilotage affiche désormais les trois ;
 - **le prix d'achat des cartes** à 75 % de la cote : le résultat s'annule vers 95 % ;
 - **le stock et sa trésorerie**, absents du compte : environ 80 000 € immobilisés pour le coffre d'exemple.
 

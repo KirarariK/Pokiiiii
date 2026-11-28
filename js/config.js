@@ -123,4 +123,4 @@ export const STOCK_KEY = 'coffreo.stock.v1';
 export const ADMIN_KEY = 'coffreo.admin.v1';
 
 /** Date de la dernière mise à jour des cotes embarquées (voir scripts/build-cards.mjs). */
-export { PRICES_DATE } from './data/cards.js';
+export { PRICES_DATE, PRICES_OLDEST } from './data/cards.js';

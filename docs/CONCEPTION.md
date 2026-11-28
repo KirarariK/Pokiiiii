@@ -11,20 +11,20 @@ pas de serveur). Les règles et les calculs, eux, sont ceux d'un vrai produit.
 ## 1. Une gamme calibrée
 
 Chaque pack a son **retour théorique**, affiché sur sa page : ce que le joueur
-récupère en moyenne en revendant la carte aussitôt. Il va de 86 % à 92 % ; le
+récupère en moyenne en revendant la carte aussitôt. Il va de 86 % à 90 % ; le
 reste est la marge du site. Les petits packs margent plus, les gros moins :
 c'est là que le joueur compare.
 
 | Pack | Prix | Cotes | Cartes | Cote moyenne | Retour théorique | Marge affichée | Carte ≥ prix |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Pack Rosée | 8,00 € | 4 à 293 € | 771 | 7,82 € | 88,0 % | 12,0 % | 23,2 % |
-| Pack Prisme | 18,00 € | 5 à 627 € | 88 | 17,80 € | 89,0 % | 11,0 % | 19,0 % |
-| Pack Orage | 28,00 € | 11 à 544 € | 607 | 28,00 € | 90,0 % | 10,0 % | 22,8 % |
-| Pack Millésime | 35,00 € | 12 à 627 € | 182 | 34,61 € | 89,0 % | 11,0 % | 22,2 % |
-| Pack Brasier | 45,00 € | 18 à 544 € | 68 | 43,00 € | 86,0 % | 14,0 % | 17,1 % |
-| Pack Canopée | 60,00 € | 24 à 635 € | 480 | 60,00 € | 90,0 % | 10,0 % | 24,3 % |
-| Pack Zénith | 120,00 € | 48 à 779 € | 266 | 121,33 € | 91,0 % | 9,0 % | 28,7 % |
-| Pack Joyau | 300,00 € | 121 à 1538 € | 108 | 306,67 € | 92,0 % | 8,0 % | 25,7 % |
+| Pack Rosée | 8,00 € | 4 à 295 € | 765 | 7,73 € | 87,0 % | 13,0 % | 23,5 % |
+| Pack Prisme | 18,00 € | 5 à 560 € | 86 | 17,60 € | 88,0 % | 12,0 % | 20,3 % |
+| Pack Orage | 28,00 € | 11 à 538 € | 596 | 27,69 € | 89,0 % | 11,0 % | 21,7 % |
+| Pack Millésime | 35,00 € | 12 à 560 € | 174 | 34,22 € | 88,0 % | 12,0 % | 21,7 % |
+| Pack Brasier | 45,00 € | 18 à 531 € | 65 | 43,00 € | 86,0 % | 14,0 % | 21,2 % |
+| Pack Canopée | 60,00 € | 24 à 701 € | 450 | 59,33 € | 89,0 % | 11,0 % | 24,1 % |
+| Pack Zénith | 120,00 € | 48 à 927 € | 230 | 118,67 € | 89,0 % | 11,0 % | 26,8 % |
+| Pack Joyau | 300,00 € | 120 à 1384 € | 95 | 300,00 € | 90,0 % | 10,0 % | 29,8 % |
 
 Comment c'est obtenu, à chaque mouvement du coffre (`packTable()` dans `js/catalog.js`) :
 

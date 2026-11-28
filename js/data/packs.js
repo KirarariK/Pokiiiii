@@ -3,8 +3,9 @@
 // Chaque pack a une cible de retour théorique (target) : la part du prix que le
 // joueur récupère, en moyenne, en revendant aussitôt sa carte. La marge du site
 // sur ce parcours vaut donc 1 − target. Les cibles ne sont pas uniformes :
-//   - les petits packs portent plus de marge (88-89 %) ;
-//   - les gros packs sont plus serrés (91-92 %), pour retenir les gros joueurs ;
+//   - les petits packs portent plus de marge (87-88 %) ;
+//   - les gros packs sont un peu plus serrés (89-90 %), pour retenir les gros joueurs ; leur
+//     marge reste d'au moins 10 % parce qu'un seul tirage y pèse beaucoup (cartes jusqu'à 1 500 €) ;
 //   - le pack événement est à 86 % : ses points de marge en plus financent le
 //     giveaway qui lui est attaché (voir js/data/giveaways.js).
 //
@@ -45,7 +46,7 @@ export const PACKS = [
     price: 8_00,
     theme: 'glacier',
     tagline: 'Le premier pas',
-    target: 0.88,
+    target: 0.87,
     tiers: tiers([3, 5], [6, 9], [10, 17], [18, 34], [35, 79], [80, 300]),
   },
   {
@@ -56,7 +57,7 @@ export const PACKS = [
     theme: 'prisme',
     tagline: 'Évoli et ses huit évolutions',
     filter: { names: /(Eevee|Vaporeon|Jolteon|Flareon|Espeon|Umbreon|Leafeon|Glaceon|Sylveon)/ },
-    target: 0.89,
+    target: 0.88,
     tiers: tiers([5, 8], [9, 17], [18, 37], [38, 79], [80, 159], [160, 650]),
   },
   {
@@ -66,7 +67,7 @@ export const PACKS = [
     price: 28_00,
     theme: 'orage',
     tagline: 'Le juste milieu',
-    target: 0.9,
+    target: 0.89,
     tiers: tiers([11, 17], [18, 29], [30, 54], [55, 109], [110, 259], [260, 550]),
   },
   {
@@ -77,7 +78,7 @@ export const PACKS = [
     theme: 'millesime',
     tagline: 'Les séries de 1999 à 2002',
     filter: { sets: ['base1', 'base2', 'base3', 'base5', 'gym1', 'gym2', 'neo1', 'neo2', 'neo3', 'neo4'] },
-    target: 0.89,
+    target: 0.88,
     tiers: tiers([12, 19], [20, 34], [35, 64], [65, 129], [130, 259], [260, 700]),
   },
   {
@@ -101,7 +102,7 @@ export const PACKS = [
     price: 60_00,
     theme: 'jungle',
     tagline: 'Sélection resserrée',
-    target: 0.9,
+    target: 0.89,
     tiers: tiers([24, 35], [36, 59], [60, 99], [100, 179], [180, 349], [350, 750]),
   },
   {
@@ -111,7 +112,7 @@ export const PACKS = [
     price: 120_00,
     theme: 'zenith',
     tagline: 'Pour viser haut',
-    target: 0.91,
+    target: 0.89,
     tiers: tiers([48, 71], [72, 119], [120, 189], [190, 319], [320, 549], [550, 1200]),
   },
   {
@@ -121,7 +122,7 @@ export const PACKS = [
     price: 300_00,
     theme: 'joyau',
     tagline: 'Les plus grosses cartes du coffre',
-    target: 0.92,
+    target: 0.9,
     tiers: tiers([120, 179], [180, 259], [260, 379], [380, 549], [550, 799], [800, 1600]),
   },
 ];
