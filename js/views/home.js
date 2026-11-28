@@ -133,22 +133,17 @@ function feed() {
     </div>
     ${
       rows.length
-        ? `<div class="table-wrap"><table class="table table--feed">
-            <thead><tr><th>Joueur</th><th>Pack</th><th>Carte</th><th class="num">Cote</th><th class="num">Gain</th><th class="num">Quand</th></tr></thead>
-            <tbody>${rows
-              .map(({ at, pseudo, pack, card, value, rarity }) => {
-                const mult = value / pack.price;
-                return `<tr>
-                  <td><span class="feed__who"><span class="avatar avatar--sm" aria-hidden="true">${esc(initials(pseudo))}</span>${esc(pseudo)}</span></td>
-                  <td><a href="#/packs/${pack.slug}">${esc(pack.short)}</a></td>
-                  <td><span class="drop"><span class="drop__img">${cardImage(card)}</span><span><strong>${esc(card.name)}</strong>${rarityBadge(rarity)}</span></span></td>
-                  <td class="num">${eur(value)}</td>
-                  <td class="num"><span class="mult ${mult >= 1 ? 'is-up' : ''}">×${mult.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span></td>
-                  <td class="num muted nowrap">${ago(at)}</td>
-                </tr>`;
-              })
-              .join('')}</tbody>
-          </table></div>`
+        ? `<ul class="feed" aria-label="Dernières ouvertures">${rows
+            .map(({ at, pseudo, pack, card, value, rarity }) => {
+              const mult = value / pack.price;
+              return `<li class="feed__row">
+                <span class="feed__who"><span class="avatar avatar--sm" aria-hidden="true">${esc(initials(pseudo))}</span><span class="feed__name">${esc(pseudo)}</span></span>
+                <span class="feed__card"><span class="drop__img">${cardImage(card)}</span><span class="feed__what"><strong>${esc(card.name)}</strong><span class="feed__sub"><a href="#/packs/${pack.slug}">${esc(pack.short)}</a>${rarityBadge(rarity)}</span></span></span>
+                <span class="feed__gain"><span class="mult ${mult >= 1 ? 'is-up' : ''}">×${mult.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span><span class="feed__value">${eur(value)}</span></span>
+                <span class="feed__when muted">${ago(at)}</span>
+              </li>`;
+            })
+            .join('')}</ul>`
         : `<p class="muted">${ui.feed === 'mine' ? "Tu n'as encore rien ouvert." : 'Aucune ouverture pour le moment.'}</p>`
     }`;
 }
