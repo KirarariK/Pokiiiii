@@ -65,7 +65,7 @@ const DOCS = {
       ['Contact', `${BRAND.email} ; téléphone à compléter.`],
       ['Médiateur de la consommation', 'Nom, adresse et site à compléter avant toute vente.'],
       ['Indépendance', `${BRAND.name} est un site indépendant. Il n'est ni édité, ni approuvé, ni parrainé par The Pokémon Company, Nintendo, Creatures Inc. ou GAME FREAK inc. Pokémon, les noms des Pokémon et des extensions sont des marques de leurs titulaires ; les illustrations des cartes leur appartiennent. Ils ne sont cités que pour désigner les cartes. Les packs sont composés par le site : ce ne sont ni des produits officiels ni des boosters scellés.`],
-      ['Crédits', "Visuels et données de cartes : API Pokémon TCG (pokemontcg.io). Cotes : Cardmarket, via la même API. Icônes : Lucide (licence ISC). Polices : Unbounded et Manrope (licence OFL). Illustrations des packs et logo : images générées par IA, retouchées."],
+      ['Crédits', "Visuels et données de cartes : API Pokémon TCG (pokemontcg.io). Cotes : Cardmarket, via la même API. Icônes : Lucide (licence ISC). Polices : Unbounded et Manrope (licence OFL). Illustrations des packs : images générées par IA représentant des Pokémon, personnages appartenant à leurs titulaires. Logo : propre au site."],
     ],
   },
 };

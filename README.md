@@ -170,9 +170,11 @@ Ce dépôt ne contient que l'interface. Restent à construire ou à obtenir :
 
 - Visuels et données des cartes : [API Pokémon TCG](https://pokemontcg.io) ;
   cotes Cardmarket (moyenne 30 jours), indicatives.
-- Illustrations des boosters et marque du logo : générées par IA (outil de
-  génération d'images de Figma), puis détourées. Elles ne reprennent aucun
-  personnage ni visuel officiel ; le nom des packs est du texte posé par le site.
+- Illustrations des boosters : générées par IA (Gemini) puis détourées. Elles
+  **représentent des Pokémon**, personnages protégés : à réserver à la
+  démonstration, à retirer ou à licencier avant toute ouverture au public. Le nom
+  des packs est du texte posé par le site.
+- Logo : tracé vectoriel propre au site.
 - Icônes : [Lucide](https://lucide.dev), licence ISC.
 - Polices : Unbounded et Manrope, licence SIL OFL (voir `assets/fonts/`).
 

@@ -152,7 +152,8 @@ Revendre des cartes authentiques et les nommer est licite en principe (épuiseme
 Autres points :
 
 - **Données** : l'API pokemontcg.io annonce sa fermeture au 1er mars 2027 ; les conditions de TCGplayer et de Cardmarket n'autorisent pas la réutilisation commerciale de leurs prix. Une cote qui fixe un rachat demande une source sous licence, nommée et datée.
-- **Illustrations des packs et logo générés par IA** : propres (ni Poké Ball, ni personnage, ni logo, ni symbole officiel), mais probablement pas protégeables par le droit d'auteur.
+- **Illustrations des packs** : celles auditées le 27 novembre étaient propres (aucun personnage protégé). Elles ont été remplacées depuis, à la demande du porteur du projet, par des visuels générés par IA qui **représentent des Pokémon** (Pikachu, Dracaufeu, Mewtwo…). Ce sont des œuvres dérivées de personnages protégés : acceptable pour une démonstration privée, à retirer ou à licencier avant toute exploitation ou communication publique.
+- **Logo** : dessiné à la main en vectoriel d'après une piste générée par IA ; aucun élément protégé.
 - **Gamme reprise du concurrent** : noms et prix de quatre packs, paliers, règles. Risque de parasitisme ; la gamme a été refaite (voir [`AUDIT_PROJET.md`](AUDIT_PROJET.md)).
 - **Licences** : polices sous licence OFL, conformes ; texte de la licence ISC des icônes ajouté ; mention d'indépendance complétée.
 
