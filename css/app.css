@@ -1559,3 +1559,15 @@ html[data-motion='off'] .trial__card.is-in { animation: none; }
 .opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__slit, .opening:not([data-phase='idle']):not([data-phase='ripping']) .opening__tip { opacity: 0 !important; transition: opacity 0.3s; }
 .opening[data-phase='ripping'] .opening__aura { opacity: 0.9; scale: 1.25; }
 @media (prefers-reduced-motion: reduce) { .opening__pack-top { transform: none !important; } }
+
+/* Écrans tactiles : toute commande offre une cible d'au moins 44 × 44 px (recommandation WCAG 2.5.5). */
+@media (pointer: coarse) {
+  .btn, .tab, .nav-item, .balance, .input, select.input, .input--sm { min-height: 44px; }
+  .btn--icon, .btn--icon.btn--sm, .avatar, .topbar__topup { min-width: 44px; width: auto; min-height: 44px; }
+  .avatar { height: 44px; }
+  .chip-radio span { min-height: 44px; align-items: center; }
+  .logo, .link-more, .back-link { min-height: 44px; display: inline-flex; align-items: center; }
+  .logo--topbar { min-width: 44px; justify-content: center; }
+  .footer__grid a:not(.logo) { display: inline-flex; align-items: center; min-height: 44px; }
+  .skip-link { min-height: 44px; display: inline-flex; align-items: center; }
+}
